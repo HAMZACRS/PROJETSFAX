@@ -1358,6 +1358,8 @@ body.guest-mode .form-guest-lock::after {
       <button class="drawer-nav-btn" onclick="exportDB();closeDrawer()"><span class="d-icon">💾</span> تصدير قاعدة البيانات</button>
       <button class="drawer-nav-btn" onclick="document.getElementById('importFile').click();closeDrawer()"><span class="d-icon">📂</span> استيراد نسخة احتياطية</button>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importDB(event)">
+      <button class="drawer-nav-btn" style="background:rgba(16,185,129,0.12);color:#065f46;border:1px solid rgba(16,185,129,0.3)" onclick="syncLocalToSupabase();closeDrawer()"><span class="d-icon">☁️</span> مزامنة مع Supabase</button>
+      <button class="drawer-nav-btn" style="background:rgba(37,99,235,0.08);color:#1e3a8a;border:1px solid rgba(37,99,235,0.2)" onclick="checkSupabaseConnection().then(v=>{updateSyncIndicator();showNotification(v?'✅ Supabase متصل':'❌ Supabase غير متصل — وضع محلي',v?'success':'error')});closeDrawer()"><span class="d-icon">🔌</span> حالة الاتصال بـ Supabase</button>
       <button class="drawer-nav-btn" onclick="openPrintModal();closeDrawer()"><span class="d-icon">🖨️</span> طباعة المشاريع</button>
       <button class="drawer-nav-btn" onclick="manualAutoLoad();closeDrawer()" style="background:rgba(46,125,50,0.2)"><span class="d-icon">⚡</span> تحميل تلقائي</button>
       <div id="admin-section" style="display:none">
@@ -2324,7 +2326,86 @@ body.guest-mode .form-guest-lock::after {
 
 <button class="scroll-top-btn" onclick="document.getElementById('mainScroll').scrollTo({top:0,behavior:'smooth'})" title="العودة للأعلى">⬆</button>
 <script>
-// ===== DATABASE (IndexedDB) =====
+// ===== SUPABASE CONFIG =====
+// 🔧 REMPLACER CES VALEURS PAR TES CREDENTIALS SUPABASE
+// → Dashboard Supabase → Settings → API
+const SUPABASE_URL  = 'VOTRE_SUPABASE_URL';   // ex: https://xxxx.supabase.co
+const SUPABASE_ANON = 'VOTRE_SUPABASE_ANON_KEY'; // clé publique anon
+
+// ── Client Supabase léger (sans SDK, fetch natif) ────────────────────────────
+const _sb = {
+  headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+  url: (table, params='') => `${SUPABASE_URL}/rest/v1/${table}${params}`,
+
+  async select(table, filter='') {
+    const r = await fetch(this.url(table, `?${filter}&order=id.asc`), { headers: this.headers });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  async selectOne(table, id) {
+    const r = await fetch(this.url(table, `?id=eq.${id}`), { headers: this.headers });
+    if (!r.ok) throw new Error(await r.text());
+    const arr = await r.json();
+    return arr[0] || null;
+  },
+  async insert(table, obj) {
+    const r = await fetch(this.url(table), { method:'POST', headers: this.headers, body: JSON.stringify(obj) });
+    if (!r.ok) throw new Error(await r.text());
+    const arr = await r.json();
+    return arr[0];
+  },
+  async upsert(table, obj) {
+    const h = {...this.headers, 'Prefer':'return=representation,resolution=merge-duplicates'};
+    const r = await fetch(this.url(table), { method:'POST', headers: h, body: JSON.stringify(obj) });
+    if (!r.ok) throw new Error(await r.text());
+    const arr = await r.json();
+    return arr[0];
+  },
+  async update(table, id, obj) {
+    const r = await fetch(this.url(table, `?id=eq.${id}`), { method:'PATCH', headers: this.headers, body: JSON.stringify(obj) });
+    if (!r.ok) throw new Error(await r.text());
+    const arr = await r.json();
+    return arr[0];
+  },
+  async delete(table, id) {
+    const r = await fetch(this.url(table, `?id=eq.${id}`), { method:'DELETE', headers: this.headers });
+    if (!r.ok) throw new Error(await r.text());
+  }
+};
+
+// ── Connexion Supabase active ? ──────────────────────────────────────────────
+let SUPABASE_ONLINE = false;
+async function checkSupabaseConnection() {
+  if (!SUPABASE_URL || SUPABASE_URL === 'VOTRE_SUPABASE_URL') return false;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/projets?limit=1`, { headers: _sb.headers });
+    SUPABASE_ONLINE = r.ok || r.status === 406; // 406 = table existe mais no rows match
+    if (r.status === 404) SUPABASE_ONLINE = false;
+    return SUPABASE_ONLINE;
+  } catch { SUPABASE_ONLINE = false; return false; }
+}
+
+// ── Indicateur visuel de connexion ──────────────────────────────────────────
+function updateSyncIndicator() {
+  let ind = document.getElementById('supabase-indicator');
+  if (!ind) {
+    ind = document.createElement('div');
+    ind.id = 'supabase-indicator';
+    ind.style.cssText = 'position:fixed;bottom:72px;left:12px;z-index:999;font-size:11px;padding:4px 9px;border-radius:20px;font-weight:700;direction:rtl;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;';
+    ind.title = 'حالة الاتصال بـ Supabase';
+    ind.addEventListener('click', () => { checkSupabaseConnection().then(updateSyncIndicator); });
+    document.body.appendChild(ind);
+  }
+  if (SUPABASE_ONLINE) {
+    ind.textContent = '☁️ Supabase متصل';
+    ind.style.background = '#d1fae5'; ind.style.color = '#065f46';
+  } else {
+    ind.textContent = '💾 وضع محلي';
+    ind.style.background = '#fef3c7'; ind.style.color = '#92400e';
+  }
+}
+
+// ===== DATABASE (IndexedDB — cache local) =====
 const DB_NAME = 'ProjetsPublics';
 const DB_VERSION = 3;
 const STORE = 'projets';
@@ -2349,7 +2430,8 @@ function initDB() {
   });
 }
 
-function dbGetAll() {
+// ── IndexedDB helpers (cache) ────────────────────────────────────────────────
+function _idbGetAll() {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readonly');
     const req = tx.objectStore(STORE).getAll();
@@ -2357,8 +2439,7 @@ function dbGetAll() {
     req.onerror = e => reject(e);
   });
 }
-
-function dbGet(id) {
+function _idbGet(id) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readonly');
     const req = tx.objectStore(STORE).get(id);
@@ -2366,25 +2447,151 @@ function dbGet(id) {
     req.onerror = e => reject(e);
   });
 }
-
-function dbPut(proj) {
+function _idbPut(proj) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite');
-    proj.updated_at = new Date().toISOString();
-    if (!proj.created_at) proj.created_at = proj.updated_at;
     const req = tx.objectStore(STORE).put(proj);
     req.onsuccess = e => resolve(e.target.result);
     req.onerror = e => reject(e);
   });
 }
-
-function dbDelete(id) {
+function _idbDelete(id) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite');
     const req = tx.objectStore(STORE).delete(id);
     req.onsuccess = e => resolve();
     req.onerror = e => reject(e);
   });
+}
+function _idbClear() {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const req = tx.objectStore(STORE).clear();
+    req.onsuccess = () => resolve();
+    req.onerror = e => reject(e);
+  });
+}
+
+// ===== DB API — Supabase (cloud) + IndexedDB (offline fallback) =====
+
+// Séparer les champs JSON imbriqués pour Supabase (colonnes JSONB)
+const JSON_COLS = ['dirassat_details','itimadat_muhala','avenants_ashghal','documents',
+                   'photos','hadhira_records','lajnah_records','jalasat_mutaba'];
+
+function _toSupabase(proj) {
+  const p = {...proj};
+  // Supabase stocke les JSON nativement — pas besoin de stringify
+  return p;
+}
+
+function _fromSupabase(row) {
+  // row vient déjà avec les colonnes JSONB parsées
+  return row;
+}
+
+async function dbGetAll() {
+  if (SUPABASE_ONLINE) {
+    try {
+      const rows = await _sb.select('projets');
+      // Rafraîchir le cache local
+      await _idbClear();
+      for (const r of rows) await _idbPut(_fromSupabase(r));
+      return rows.map(_fromSupabase);
+    } catch(e) {
+      console.warn('[Supabase] dbGetAll fallback → IndexedDB', e);
+      SUPABASE_ONLINE = false; updateSyncIndicator();
+    }
+  }
+  return _idbGetAll();
+}
+
+async function dbGet(id) {
+  if (SUPABASE_ONLINE) {
+    try {
+      const row = await _sb.selectOne('projets', id);
+      if (row) { await _idbPut(_fromSupabase(row)); return _fromSupabase(row); }
+    } catch(e) {
+      console.warn('[Supabase] dbGet fallback → IndexedDB', e);
+    }
+  }
+  return _idbGet(id);
+}
+
+async function dbPut(proj) {
+  proj.updated_at = new Date().toISOString();
+  if (!proj.created_at) proj.created_at = proj.updated_at;
+
+  if (SUPABASE_ONLINE) {
+    try {
+      const p = _toSupabase({...proj});
+      let saved;
+      if (p.id) {
+        // UPDATE
+        saved = await _sb.update('projets', p.id, p);
+      } else {
+        // INSERT
+        delete p.id;
+        saved = await _sb.insert('projets', p);
+      }
+      if (saved) {
+        proj.id = saved.id;
+        await _idbPut(_fromSupabase(saved));
+        return saved.id;
+      }
+    } catch(e) {
+      console.warn('[Supabase] dbPut error', e);
+      showNotification('⚠️ خطأ في الحفظ على Supabase — تم الحفظ محلياً', 'error');
+      SUPABASE_ONLINE = false; updateSyncIndicator();
+    }
+  }
+  // Fallback : IndexedDB
+  const localId = await _idbPut(proj);
+  proj.id = localId;
+  return localId;
+}
+
+async function dbDelete(id) {
+  if (SUPABASE_ONLINE) {
+    try {
+      await _sb.delete('projets', id);
+    } catch(e) {
+      console.warn('[Supabase] dbDelete error', e);
+    }
+  }
+  return _idbDelete(id);
+}
+
+// ── Synchronisation manuelle : pousser IndexedDB → Supabase ─────────────────
+async function syncLocalToSupabase() {
+  if (!SUPABASE_ONLINE) { showNotification('Supabase غير متصل', 'error'); return; }
+  const local = await _idbGetAll();
+  if (!local.length) { showNotification('لا توجد بيانات محلية للمزامنة', 'error'); return; }
+  showNotification(`⏳ مزامنة ${local.length} مشروع مع Supabase…`);
+  let ok = 0, fail = 0;
+  for (const proj of local) {
+    try {
+      const p = _toSupabase({...proj});
+      if (p.id) { await _sb.update('projets', p.id, p); }
+      else { delete p.id; const saved = await _sb.insert('projets', p); proj.id = saved.id; await _idbPut(proj); }
+      ok++;
+    } catch(e) { fail++; console.warn('[Sync]', e); }
+  }
+  showNotification(`✅ مزامنة: ${ok} نجاح${fail ? ' / '+fail+' فشل' : ''}`);
+}
+
+// ── Import JSON → Supabase directement ───────────────────────────────────────
+async function importJSONToSupabase(payload) {
+  if (!SUPABASE_ONLINE) return false;
+  let ok = 0;
+  for (const proj of payload.data) {
+    try {
+      const p = _toSupabase({...proj});
+      delete p.id; // laisser Supabase générer les IDs
+      await _sb.insert('projets', p);
+      ok++;
+    } catch(e) { console.warn('[ImportSupa]', e); }
+  }
+  return ok;
 }
 
 // ===== DIRASSAT ROWS =====
@@ -5445,7 +5652,8 @@ function geolocateMe(latId, lngId, mapDivId) {
 // ╚══════════════════════════════════════════════════════════╝
 
 // ── DB helpers ───────────────────────────────────────────────────────────────
-function propDbGetAll() {
+// ── Proposals IndexedDB helpers (cache) ──────────────────────────────────────
+function _propIdbGetAll() {
   return new Promise((res, rej) => {
     const tx = db.transaction('proposals', 'readonly');
     const req = tx.objectStore('proposals').getAll();
@@ -5453,21 +5661,53 @@ function propDbGetAll() {
     req.onerror = e => rej(e);
   });
 }
-function propDbPut(p) {
+function _propIdbPut(p) {
   return new Promise((res, rej) => {
     const tx = db.transaction('proposals', 'readwrite');
-    p.updated_at = new Date().toISOString();
-    if (!p.created_at) p.created_at = p.updated_at;
     const req = tx.objectStore('proposals').put(p);
     req.onsuccess = e => res(e.target.result);
     req.onerror = e => rej(e);
   });
 }
-function propDbDelete(id) {
+function _propIdbDelete(id) {
   return new Promise((res, rej) => {
     const tx = db.transaction('proposals', 'readwrite');
     tx.objectStore('proposals').delete(id).onsuccess = () => res();
   });
+}
+
+// ── Proposals Supabase + fallback ────────────────────────────────────────────
+async function propDbGetAll() {
+  if (SUPABASE_ONLINE) {
+    try {
+      const rows = await _sb.select('proposals');
+      // Sync cache
+      const tx = db.transaction('proposals', 'readwrite');
+      tx.objectStore('proposals').clear();
+      for (const r of rows) tx.objectStore('proposals').put(r);
+      return rows;
+    } catch(e) { console.warn('[Supabase] propDbGetAll fallback', e); }
+  }
+  return _propIdbGetAll();
+}
+async function propDbPut(p) {
+  p.updated_at = new Date().toISOString();
+  if (!p.created_at) p.created_at = p.updated_at;
+  if (SUPABASE_ONLINE) {
+    try {
+      let saved;
+      if (p.id) { saved = await _sb.update('proposals', p.id, {...p}); }
+      else { const q = {...p}; delete q.id; saved = await _sb.insert('proposals', q); }
+      if (saved) { p.id = saved.id; await _propIdbPut(saved); return saved.id; }
+    } catch(e) { console.warn('[Supabase] propDbPut error', e); }
+  }
+  return _propIdbPut(p);
+}
+async function propDbDelete(id) {
+  if (SUPABASE_ONLINE) {
+    try { await _sb.delete('proposals', id); } catch(e) { console.warn('[Supabase] propDbDelete error', e); }
+  }
+  return _propIdbDelete(id);
 }
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -8231,16 +8471,25 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   await initDB();
 
+  // ── Connexion Supabase ──
+  await checkSupabaseConnection();
+  updateSyncIndicator();
+
   // ── Tentative de chargement automatique si la base est vide ──
+  // Si Supabase est connecté, les données viennent directement du cloud
   // Seed built-in data if DB is empty
   await seedIfEmpty();
 
-  const autoResult = await autoLoadFromLocalJSON(false);
+  const autoResult = SUPABASE_ONLINE
+    ? { loaded: false } // Supabase fournit les données via dbGetAll()
+    : await autoLoadFromLocalJSON(false);
+
   if (autoResult.loaded) {
     await loadDashboard();
     showAutoLoadBanner(autoResult);
   } else {
     await loadDashboard();
+    if (SUPABASE_ONLINE) showNotification('☁️ البيانات محملة من Supabase');
   }
 
   await updateFawadilBadge();
