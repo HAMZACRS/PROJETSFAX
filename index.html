@@ -2542,9 +2542,8 @@ body.guest-mode .form-guest-lock::after {
 // ===== SUPABASE CONFIG =====
 // 🔧 REMPLACER CES VALEURS PAR TES CREDENTIALS SUPABASE
 // → Dashboard Supabase → Settings → API
-const SUPABASE_URL  = https://kbneplhhiwqairtvauyf.supabase.co/rest/v1/
- const SUPABASE_ANON= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibmVwbGhoaXdxYWlydHZhdXlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNDYwMTgsImV4cCI6MjA5NTkyMjAxOH0.tIjqHiOd8kkCpFtElj5ylYDCvX4uL9ZXRvhHRJrJACY
-
+const SUPABASE_URL  = 'https://kbneplhhiwqairtvauyf.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibmVwbGhoaXdxYWlydHZhdXlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNDYwMTgsImV4cCI6MjA5NTkyMjAxOH0.tIjqHiOd8kkCpFtElj5ylYDCvX4uL9ZXRvhHRJrJACY';
 // ── Client Supabase léger (fetch natif, sans SDK) ────────────────────────────
 const _sb = {
   headers: {
