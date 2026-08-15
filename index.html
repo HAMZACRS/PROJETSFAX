@@ -864,6 +864,8 @@ body.guest-mode .nav-btn.guest-disabled { opacity: 0.38; cursor: not-allowed !im
 body.guest-mode button:not(.btn-guest-allowed):not(.nav-btn):not(.nav-item):not([data-guest-ok]) { opacity: 0.38; cursor: not-allowed !important; pointer-events: none; }
 body.guest-mode .form-guest-lock { position: relative; }
 body.guest-mode #view-fawadil { display: none !important; }
+body.guest-mode #form-studies-section { display: none !important; }
+body.guest-mode #docSec-dirassat { display: none !important; }
 body.guest-mode .form-guest-lock::after {
   content: '🔒 وضع القراءة فقط — سجّل دخولك للتعديل';
   position: absolute; inset: 0;
@@ -1260,12 +1262,30 @@ body.guest-mode .form-guest-lock::after {
       <p>ولاية صفاقس — خلية متابعة المشاريع</p>
     </div>
     <div class="auth-body">
-      <div class="auth-tabs">
+      <div class="auth-tabs" id="auth-tabs-row">
         <button class="auth-tab active" onclick="authSwitchTab('login')">🔑 دخول</button>
         <button class="auth-tab" onclick="authSwitchTab('request')">📩 طلب</button>
         <button class="auth-tab" onclick="authSwitchTab('guest')" style="color:#6b7280">👁️ زائر</button>
       </div>
-      <div class="auth-panel active" id="panel-login">
+      <!-- PREMIÈRE INSTALLATION — création du mot de passe admin (aucun mot de passe par défaut dans le code) -->
+      <div class="auth-panel active" id="panel-setup">
+        <div style="text-align:center;padding:6px 0 10px">
+          <div style="font-size:40px;margin-bottom:6px">🛡️</div>
+          <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">إعداد أول تشغيل</h3>
+          <p style="font-size:12px;color:var(--text-muted);line-height:1.7">لم يتم العثور على حساب مسؤول. يرجى إنشاء كلمة مرور المسؤول الآن.</p>
+        </div>
+        <div class="auth-field">
+          <label>كلمة مرور المسؤول الجديدة</label>
+          <input type="password" id="setup-password" placeholder="8 أحرف على الأقل" dir="ltr" style="text-align:left" onkeydown="if(event.key==='Enter')document.getElementById('setup-password2').focus()">
+        </div>
+        <div class="auth-field">
+          <label>تأكيد كلمة المرور</label>
+          <input type="password" id="setup-password2" placeholder="أعد كتابة كلمة المرور" dir="ltr" style="text-align:left" onkeydown="if(event.key==='Enter')doInitialSetup()">
+        </div>
+        <button class="auth-btn auth-btn-login" onclick="doInitialSetup()" id="btn-setup">🛡️ إنشاء حساب المسؤول</button>
+        <div class="auth-msg" id="setup-msg"></div>
+      </div>
+      <div class="auth-panel" id="panel-login">
         <div class="auth-field">
           <label>المعرّف</label>
           <input type="text" id="login-email" placeholder="المعرّف" dir="ltr" style="text-align:left">
@@ -1277,6 +1297,7 @@ body.guest-mode .form-guest-lock::after {
         <button class="auth-btn auth-btn-login" onclick="doLogin()" id="btn-login">🔑 تسجيل الدخول</button>
         <div class="auth-msg" id="login-msg"></div>
       </div>
+      <!-- /panel-login -->
       <div class="auth-panel" id="panel-request">
         <div class="auth-field"><label>الاسم الكامل</label><input type="text" id="req-name" placeholder="أدخل اسمك الكامل"></div>
         <div class="auth-field"><label>البريد الإلكتروني</label><input type="email" id="req-email" placeholder="example@email.com" dir="ltr" style="text-align:left"></div>
@@ -1347,12 +1368,12 @@ body.guest-mode .form-guest-lock::after {
     <nav class="drawer-nav">
       <div class="drawer-nav-label">التنقل</div>
       <button class="drawer-nav-btn active" data-guest-ok onclick="showView('dashboard');closeDrawer()" id="nav-dashboard"><span class="d-icon">📊</span> لوحة القيادة</button>
-      <button class="drawer-nav-btn" data-guest-ok onclick="showView('big-projects');closeDrawer()" id="nav-big-projects"><span class="d-icon">💼</span> المشاريع الكبرى</button>
       <button class="drawer-nav-btn" data-guest-ok onclick="showView('list');closeDrawer()" id="nav-list"><span class="d-icon">📋</span> قائمة المشاريع</button>
+      <button class="drawer-nav-btn" data-guest-ok onclick="showView('programmed');closeDrawer()" id="nav-programmed"><span class="d-icon">🗓️</span> المشاريع المبرمجة</button>
+      <button class="drawer-nav-btn" data-guest-ok onclick="showView('unallocated');closeDrawer()" id="nav-unallocated"><span class="d-icon">⚠️</span> اعتمادات غير محالة</button>
       <button class="drawer-nav-btn" data-guest-ok onclick="showView('fawadil');closeDrawer()" id="nav-fawadil"><span class="d-icon">📉</span> فواضل الاعتمادات</button>
       <button class="drawer-nav-btn" data-guest-ok onclick="showView('overview');closeDrawer()" id="nav-overview"><span class="d-icon">🔭</span> نظرة عامة</button>
       <button class="drawer-nav-btn" data-guest-ok onclick="showView('map');closeDrawer()" id="nav-map"><span class="d-icon">🗺️</span> خريطة المشاريع</button>
-      <button class="drawer-nav-btn" data-guest-ok onclick="showView('big-projects-map');closeDrawer()" id="nav-big-projects-map"><span class="d-icon">🗺️💼</span> خريطة المشاريع الكبرى</button>
       <button class="drawer-nav-btn" data-guest-ok onclick="showView('proposals');closeDrawer()" id="nav-proposals"><span class="d-icon">💡</span> المشاريع المقترحة</button>
       <div class="drawer-nav-label" style="margin-top:8px">النسخ الاحتياطي</div>
       <button class="drawer-nav-btn" onclick="exportDB();closeDrawer()"><span class="d-icon">💾</span> تصدير قاعدة البيانات</button>
@@ -1572,6 +1593,10 @@ body.guest-mode .form-guest-lock::after {
               <input type="number" id="f-sana_barmaja" placeholder="مثال: 2025" min="2000" max="2100">
             </div>
             <div class="form-group">
+              <label>🗓️ الاعتماد المبرمج (د.ت)</label>
+              <input type="text" id="f-aitimed_mubarmaj" placeholder="المبلغ المبرمج">
+            </div>
+            <div class="form-group">
               <label>🏛️ المؤسسة المعنية</label>
               <input type="text" id="f-mouassassa" placeholder="أدخل أو اختر المؤسسة" list="dl-mouassassa" autocomplete="off">
               <datalist id="dl-mouassassa"></datalist>
@@ -1597,76 +1622,120 @@ body.guest-mode .form-guest-lock::after {
         </div>
       </div>
 
-      <!-- Studies Section -->
-      <div class="card" style="border-radius:0;border-top:none;border-bottom:none">
+      <!-- Studies Section — bouton qui ouvre la modale دراسات -->
+      <div class="card" id="form-studies-section" style="border-radius:0;border-top:none;border-bottom:none">
         <div class="card-header">
           <h3>📐 الدراسات</h3>
           <span class="card-icon">📚</span>
         </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+          <!-- Résumé rapide des données déjà saisies -->
+          <div id="dirassat-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;background:rgba(37,99,235,0.05);border:1px solid rgba(37,99,235,0.18);border-radius:8px;font-size:12px;color:var(--primary)"></div>
+          <button type="button" onclick="openDirassatModal()" style="display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,var(--primary),#2563EB);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(26,58,92,0.25);width:100%;justify-content:center;">
+            <span style="font-size:20px">📐</span>
+            دراسات
+            <span style="font-size:11px;opacity:0.8;margin-right:auto;font-weight:400" id="dirassat-btn-badge"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════
+           MODALE دراسات (full-screen)
+      ═══════════════════════════════ -->
+      <div id="dirassatModalOverlay" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.55);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeDirassatModal()">
+        <div style="background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-height:92dvh;overflow-y:auto;direction:rtl;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);">
+
+          <!-- Header de la modale -->
+          <div style="background:linear-gradient(135deg,var(--primary),#2563EB);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;border-radius:18px 18px 0 0;flex-shrink:0;">
+            <h3 style="font-size:16px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px">📐 الدراسات ومحاضر اللجنة الفنية</h3>
+            <button onclick="closeDirassatModal()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+          </div>
+
+          <!-- Corps de la modale -->
+          <div style="padding:16px;display:flex;flex-direction:column;gap:0;flex:1;">
+
+            <!-- Champs Baab / Fasl / Fiqra / Date -->
+            <div style="background:rgba(37,99,235,0.04);border:1px solid rgba(37,99,235,0.15);border-radius:10px;padding:14px;margin-bottom:14px;">
+              <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:10px;display:flex;align-items:center;gap:6px;">📁 بيانات الباب والفصل</div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>الباب</label>
+                  <input type="text" id="f-dirassat_bab" placeholder="رقم الباب">
+                </div>
+                <div class="form-group">
+                  <label>الفصل</label>
+                  <input type="text" id="f-dirassat_fasl" placeholder="رقم الفصل">
+                </div>
+                <div class="form-group">
+                  <label>الفقرة</label>
+                  <input type="text" id="f-dirassat_fiqra" placeholder="رقم الفقرة">
+                </div>
+                <div class="form-group">
+                  <label>تاريخ انطلاق الدراسات</label>
+                  <input type="date" id="f-tarikh_intilaq_dirassat">
+                </div>
+              </div>
+            </div>
+
+            <!-- Tableau des aqsat -->
+            <div class="section-divider">
+              <div class="divider-line"></div>
+              <div class="divider-label">تفاصيل الدراسات (الأقساط)</div>
+              <div class="divider-line"></div>
+            </div>
+
+            <div class="studies-row-header">
+              <div>القسط</div>
+              <div>المكلف بالإنجاز</div>
+              <div>تاريخ التعيين</div>
+              <div>الكلفة</div>
+              <div>دفوعات</div>
+              <div>نسبة الإنجاز %</div>
+              <div>تاريخ المصادقة</div>
+              <div style="color:#7c3aed">ملحق</div>
+              <div></div>
+            </div>
+            <div id="dirassatRows"></div>
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+              <button class="btn btn-outline btn-sm" onclick="addDirassatRow()">➕ إضافة قسط</button>
+              <button class="btn btn-avenant btn-sm" onclick="openAvenantDirassat()">📎 إضافة ملحق</button>
+            </div>
+
+            <!-- Procès-verbaux Lajnah -->
+            <div class="section-divider" style="margin-top:20px">
+              <div class="divider-line"></div>
+              <div class="divider-label">محاضر اللجنة الفنية</div>
+              <div class="divider-line"></div>
+            </div>
+            <button class="lajnah-btn" onclick="openLajnahPopup()">
+              📋 إضافة محضر لجنة فنية
+            </button>
+            <div class="lajnah-list" id="lajnahList"></div>
+
+          </div>
+
+          <!-- Footer de la modale -->
+          <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0;flex-shrink:0;">
+            <button class="btn btn-outline" onclick="closeDirassatModal()">إغلاق</button>
+            <button class="btn btn-primary" onclick="closeDirassatModal()">✅ تأكيد وإغلاق</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Réunions de suivi Section -->
+      <div class="card" style="border-radius:0;border-top:none;border-bottom:none">
+        <div class="card-header" style="background:#ffd54f;color:#333">
+          <h3>📅 جلسات المتابعة</h3>
+          <span class="card-icon">👥</span>
+        </div>
         <div class="card-body">
-          <div class="form-grid" style="margin-bottom:14px">
-            <div class="form-group">
-              <label>الباب</label>
-              <input type="text" id="f-dirassat_bab" placeholder="رقم الباب">
-            </div>
-            <div class="form-group">
-              <label>الفصل</label>
-              <input type="text" id="f-dirassat_fasl" placeholder="رقم الفصل">
-            </div>
-            <div class="form-group">
-              <label>الفقرة</label>
-              <input type="text" id="f-dirassat_fiqra" placeholder="رقم الفقرة">
-            </div>
-            <div class="form-group">
-              <label>تاريخ انطلاق الدراسات</label>
-              <input type="date" id="f-tarikh_intilaq_dirassat">
-            </div>
-          </div>
-
-          <div class="section-divider">
-            <div class="divider-line"></div>
-            <div class="divider-label">تفاصيل الدراسات (الأقساط)</div>
-            <div class="divider-line"></div>
-          </div>
-
-          <div class="studies-row-header">
-            <div>القسط</div>
-            <div>المكلف بالإنجاز</div>
-            <div>تاريخ التعيين</div>
-            <div>الكلفة</div>
-            <div>دفوعات</div>
-            <div>نسبة الإنجاز %</div>
-            <div>تاريخ المصادقة</div>
-            <div style="color:#7c3aed">ملحق</div>
-            <div></div>
-          </div>
-          <div id="dirassatRows"></div>
-          <button class="btn btn-outline btn-sm" onclick="addDirassatRow()" style="margin-top:8px">
-            ➕ إضافة قسط
+          <p style="font-size:12px;color:#666;margin-bottom:12px">تسجيل جلسات المتابعة والاجتماعات</p>
+          
+          <div id="jalasat-container"></div>
+          
+          <button class="btn btn-outline btn-sm" onclick="addJalasaRow()" style="margin-top:8px">
+            ➕ إضافة جلسة متابعة
           </button>
-          <button class="btn btn-avenant btn-sm" onclick="openAvenantDirassat()" style="margin-top:8px;margin-right:8px">
-            📎 إضافة ملحق
-          </button>
-
-          <div class="section-divider" style="margin-top:18px">
-            <div class="divider-line"></div>
-            <div class="divider-label">محاضر اللجنة الفنية</div>
-            <div class="divider-line"></div>
-          </div>
-          <button class="lajnah-btn" onclick="openLajnahPopup()">
-            📋 إضافة محضر لجنة فنية
-          </button>
-          <div class="lajnah-list" id="lajnahList"></div>
-
-          <div class="section-divider" style="margin-top:18px">
-            <div class="divider-line"></div>
-            <div class="divider-label">محاضر اللجنة الفنية</div>
-            <div class="divider-line"></div>
-          </div>
-          <button class="lajnah-btn" onclick="openLajnahPopup()">
-            📋 إضافة محضر لجنة فنية
-          </button>
-          <div class="lajnah-list" id="lajnahList"></div>
         </div>
       </div>
 
@@ -1964,9 +2033,11 @@ body.guest-mode .form-guest-lock::after {
     <div class="view" id="view-overview">
       <div class="topbar">
         <div class="topbar-title">🔭 نظرة عامة — إحصائيات المشاريع</div>
-        <div class="topbar-actions">
-          <button class="btn btn-outline" onclick="renderOverview()">🔄 تحديث</button>
-          <button class="btn btn-primary" onclick="printOverview()">🖨️ طباعة التقرير</button>
+        <div class="topbar-actions" style="flex-wrap:wrap;gap:6px">
+          <button class="btn btn-outline btn-sm" onclick="renderOverview()">🔄 تحديث</button>
+          <button class="btn btn-primary btn-sm" onclick="printOverview()">🖨️ طباعة</button>
+          <button class="btn btn-sm" onclick="exportOverviewPDF()" style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-weight:700">📄 PDF</button>
+          <button class="btn btn-sm" onclick="exportOverviewPPTX()" style="background:linear-gradient(135deg,#d97706,#b45309);color:#fff;font-weight:700">📊 PPTX</button>
         </div>
       </div>
 
@@ -2164,6 +2235,98 @@ body.guest-mode .form-guest-lock::after {
                 onfocus="this.style.borderColor='var(--primary-light)'" onblur="this.style.borderColor='var(--border)'">
             </div>
             <div style="flex:1">
+
+    <!-- PROGRAMMED PROJECTS VIEW — المشاريع المبرمجة -->
+    <div class="view" id="view-programmed">
+      <div class="topbar">
+        <div class="topbar-title">🗓️ المشاريع المبرمجة</div>
+        <div class="topbar-actions">
+          <button class="btn btn-outline" onclick="loadProgrammed()">🔄 تحديث</button>
+          <button class="btn btn-primary" onclick="openProgrammedForm()">➕ إضافة مشروع مبرمج</button>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-row" id="prg-statsRow" style="margin-bottom:18px">
+        <div class="stat-card">
+          <div class="stat-num" id="prg-stat-total">0</div>
+          <div class="stat-label">إجمالي المشاريع المبرمجة</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="prg-stat-cost">0</div>
+          <div class="stat-label">إجمالي الاعتماد المبرمج (د.ت)</div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap">
+        <table id="programmedTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>بيان المشروع</th>
+              <th>القطاع/الوزارة</th>
+              <th>المعتمدية</th>
+              <th>الاعتماد المبرمج (د.ت)</th>
+              <th>سنة البرمجة</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="programmedTableBody">
+            <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">جاري التحميل...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PROGRAMMED PROJECT FORM MODAL -->
+    <div id="programmedModal" style="position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:2000;align-items:center;justify-content:center;padding:20px">
+      <div style="background:var(--surface);border-radius:14px;box-shadow:0 8px 48px rgba(0,0,0,0.28);width:100%;max-width:600px;max-height:90vh;overflow-y:auto;direction:rtl">
+        <div style="background:var(--primary);color:#fff;border-radius:14px 14px 0 0;padding:18px 24px;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:18px;font-weight:700">🗓️ إضافة مشروع مبرمج</div>
+          <button onclick="closeProgrammedForm()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1">✕</button>
+        </div>
+        <div style="padding:24px;display:flex;flex-direction:column;gap:14px">
+          <div>
+            <label style="display:block;font-weight:700;font-size:13px;color:var(--text-muted);margin-bottom:6px">بيان المشروع <span style="color:#dc2626">*</span></label>
+            <textarea id="prg-bayan" rows="3" placeholder="وصف المشروع المبرمج..."
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:15px;direction:rtl;background:#fff;resize:vertical;outline:none;box-sizing:border-box"
+              onfocus="this.style.borderColor='var(--primary-light)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+          </div>
+          <div>
+            <label style="display:block;font-weight:700;font-size:13px;color:var(--text-muted);margin-bottom:6px">القطاع/الوزارة <span style="color:#dc2626">*</span></label>
+            <input type="text" id="prg-qita" placeholder="القطاع أو الوزارة المعنية"
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:15px;direction:rtl;background:#fff;outline:none;box-sizing:border-box"
+              onfocus="this.style.borderColor='var(--primary-light)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+          <div style="display:flex;gap:14px">
+            <div style="flex:1">
+              <label style="display:block;font-weight:700;font-size:13px;color:var(--text-muted);margin-bottom:6px">الاعتماد المبرمج (د.ت) <span style="color:#dc2626">*</span></label>
+              <input type="text" id="prg-iaitimed" placeholder="المبلغ"
+                style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:15px;direction:rtl;background:#fff;outline:none;box-sizing:border-box"
+                onfocus="this.style.borderColor='var(--primary-light)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+            <div style="flex:1">
+              <label style="display:block;font-weight:700;font-size:13px;color:var(--text-muted);margin-bottom:6px">المعتمدية <span style="color:#dc2626">*</span></label>
+              <input type="text" id="prg-muta" placeholder="المعتمدية"
+                style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:15px;direction:rtl;background:#fff;outline:none;box-sizing:border-box"
+                onfocus="this.style.borderColor='var(--primary-light)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+          </div>
+          <div>
+            <label style="display:block;font-weight:700;font-size:13px;color:var(--text-muted);margin-bottom:6px">سنة البرمجة <span style="color:#dc2626">*</span></label>
+            <input type="text" id="prg-sana" placeholder="مثال: 2026"
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:15px;direction:rtl;background:#fff;outline:none;box-sizing:border-box"
+              onfocus="this.style.borderColor='var(--primary-light)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:6px">
+            <button class="btn btn-outline" onclick="closeProgrammedForm()">إلغاء</button>
+            <button class="btn btn-primary" onclick="saveProgrammed()">💾 حفظ وإضافة إلى قائمة المشاريع</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
               <label style="display:block;font-weight:700;font-size:13px;color:var(--text-muted);margin-bottom:6px">سنة البرمجة</label>
               <input type="number" id="prop-sana" placeholder="مثال: 2025" min="2000" max="2100"
                 style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:15px;direction:rtl;background:#fff;outline:none;box-sizing:border-box"
@@ -2233,6 +2396,56 @@ body.guest-mode .form-guest-lock::after {
       </div>
     </div>
 
+
+    <!-- UNALLOCATED CREDITS VIEW — اعتمادات غير محالة -->
+    <div class="view" id="view-unallocated">
+      <div class="topbar">
+        <div class="topbar-title">⚠️ اعتمادات غير محالة — مشاريع منجزة بكلفة تتجاوز الاعتمادات المحالة</div>
+        <div class="topbar-actions" style="flex-wrap:wrap;gap:6px">
+          <button class="btn btn-outline btn-sm" onclick="loadUnallocated()">🔄 تحديث</button>
+          <button class="btn btn-primary btn-sm" onclick="printUnallocated()">🖨️ طباعة</button>
+          <button class="btn btn-sm" onclick="exportUnallocatedPDF()" style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-weight:700">📄 PDF</button>
+        </div>
+      </div>
+      <div class="stats-row" id="unal-statsRow" style="margin-bottom:18px">
+        <div class="stat-card">
+          <div class="stat-num" id="unal-stat-total" style="color:#dc2626">0</div>
+          <div class="stat-label">مشاريع معنية</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="unal-stat-kulfa">—</div>
+          <div class="stat-label">مجموع الكلفة الإجمالية</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="unal-stat-muhala">—</div>
+          <div class="stat-label">مجموع الاعتمادات المحالة</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="unal-stat-diff" style="color:#dc2626">—</div>
+          <div class="stat-label">الفارق غير المحال</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="unallocatedTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>بيان المشروع</th>
+              <th>المعتمدية</th>
+              <th>القطاع</th>
+              <th>كلفة المشروع (د.ت)</th>
+              <th>الاعتمادات المحالة (د.ت)</th>
+              <th>الفارق (د.ت)</th>
+              <th>نسبة الإنجاز</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="unallocatedTableBody">
+            <tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text-muted)">جاري التحميل...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     <!-- MAP VIEW — خريطة المشاريع -->
     <div class="view" id="view-map" style="position:relative">
@@ -2329,15 +2542,20 @@ body.guest-mode .form-guest-lock::after {
 // ===== SUPABASE CONFIG =====
 // 🔧 REMPLACER CES VALEURS PAR TES CREDENTIALS SUPABASE
 // → Dashboard Supabase → Settings → API
-const SUPABASE_URL  = 'VOTRE_SUPABASE_URL';   // ex: https://xxxx.supabase.co
+const SUPABASE_URL  = 'VOTRE_SUPABASE_URL';     // ex: https://xxxx.supabase.co
 const SUPABASE_ANON = 'VOTRE_SUPABASE_ANON_KEY'; // clé publique anon
 
-// ── Client Supabase léger (sans SDK, fetch natif) ────────────────────────────
+// ── Client Supabase léger (fetch natif, sans SDK) ────────────────────────────
 const _sb = {
-  headers: { 'apikey': SUPABASE_ANON, 'Authorization': `Bearer ${SUPABASE_ANON}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-  url: (table, params='') => `${SUPABASE_URL}/rest/v1/${table}${params}`,
+  headers: {
+    'apikey': SUPABASE_ANON,
+    'Authorization': `Bearer ${SUPABASE_ANON}`,
+    'Content-Type': 'application/json',
+    'Prefer': 'return=representation'
+  },
+  url: (table, params = '') => `${SUPABASE_URL}/rest/v1/${table}${params}`,
 
-  async select(table, filter='') {
+  async select(table, filter = '') {
     const r = await fetch(this.url(table, `?${filter}&order=id.asc`), { headers: this.headers });
     if (!r.ok) throw new Error(await r.text());
     return r.json();
@@ -2349,37 +2567,31 @@ const _sb = {
     return arr[0] || null;
   },
   async insert(table, obj) {
-    const r = await fetch(this.url(table), { method:'POST', headers: this.headers, body: JSON.stringify(obj) });
-    if (!r.ok) throw new Error(await r.text());
-    const arr = await r.json();
-    return arr[0];
-  },
-  async upsert(table, obj) {
-    const h = {...this.headers, 'Prefer':'return=representation,resolution=merge-duplicates'};
-    const r = await fetch(this.url(table), { method:'POST', headers: h, body: JSON.stringify(obj) });
+    const r = await fetch(this.url(table), { method: 'POST', headers: this.headers, body: JSON.stringify(obj) });
     if (!r.ok) throw new Error(await r.text());
     const arr = await r.json();
     return arr[0];
   },
   async update(table, id, obj) {
-    const r = await fetch(this.url(table, `?id=eq.${id}`), { method:'PATCH', headers: this.headers, body: JSON.stringify(obj) });
+    const r = await fetch(this.url(table, `?id=eq.${id}`), { method: 'PATCH', headers: this.headers, body: JSON.stringify(obj) });
     if (!r.ok) throw new Error(await r.text());
     const arr = await r.json();
     return arr[0];
   },
   async delete(table, id) {
-    const r = await fetch(this.url(table, `?id=eq.${id}`), { method:'DELETE', headers: this.headers });
+    const r = await fetch(this.url(table, `?id=eq.${id}`), { method: 'DELETE', headers: this.headers });
     if (!r.ok) throw new Error(await r.text());
   }
 };
 
-// ── Connexion Supabase active ? ──────────────────────────────────────────────
+// ── État de la connexion Supabase ────────────────────────────────────────────
 let SUPABASE_ONLINE = false;
+
 async function checkSupabaseConnection() {
   if (!SUPABASE_URL || SUPABASE_URL === 'VOTRE_SUPABASE_URL') return false;
   try {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/projets?limit=1`, { headers: _sb.headers });
-    SUPABASE_ONLINE = r.ok || r.status === 406; // 406 = table existe mais no rows match
+    SUPABASE_ONLINE = r.ok || r.status === 406;
     if (r.status === 404) SUPABASE_ONLINE = false;
     return SUPABASE_ONLINE;
   } catch { SUPABASE_ONLINE = false; return false; }
@@ -2392,8 +2604,8 @@ function updateSyncIndicator() {
     ind = document.createElement('div');
     ind.id = 'supabase-indicator';
     ind.style.cssText = 'position:fixed;bottom:72px;left:12px;z-index:999;font-size:11px;padding:4px 9px;border-radius:20px;font-weight:700;direction:rtl;box-shadow:0 2px 8px rgba(0,0,0,0.2);cursor:pointer;';
-    ind.title = 'حالة الاتصال بـ Supabase';
-    ind.addEventListener('click', () => { checkSupabaseConnection().then(updateSyncIndicator); });
+    ind.title = 'حالة الاتصال بـ Supabase — انقر للتحديث';
+    ind.addEventListener('click', () => checkSupabaseConnection().then(updateSyncIndicator));
     document.body.appendChild(ind);
   }
   if (SUPABASE_ONLINE) {
@@ -2405,7 +2617,7 @@ function updateSyncIndicator() {
   }
 }
 
-// ===== DATABASE (IndexedDB — cache local) =====
+// ===== DATABASE (IndexedDB — cache local offline) =====
 const DB_NAME = 'ProjetsPublics';
 const DB_VERSION = 3;
 const STORE = 'projets';
@@ -2430,7 +2642,7 @@ function initDB() {
   });
 }
 
-// ── IndexedDB helpers (cache) ────────────────────────────────────────────────
+// ── IndexedDB helpers (cache local) ─────────────────────────────────────────
 function _idbGetAll() {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readonly');
@@ -2474,31 +2686,16 @@ function _idbClear() {
 
 // ===== DB API — Supabase (cloud) + IndexedDB (offline fallback) =====
 
-// Séparer les champs JSON imbriqués pour Supabase (colonnes JSONB)
-const JSON_COLS = ['dirassat_details','itimadat_muhala','avenants_ashghal','documents',
-                   'photos','hadhira_records','lajnah_records','jalasat_mutaba'];
-
-function _toSupabase(proj) {
-  const p = {...proj};
-  // Supabase stocke les JSON nativement — pas besoin de stringify
-  return p;
-}
-
-function _fromSupabase(row) {
-  // row vient déjà avec les colonnes JSONB parsées
-  return row;
-}
-
 async function dbGetAll() {
   if (SUPABASE_ONLINE) {
     try {
       const rows = await _sb.select('projets');
       // Rafraîchir le cache local
       await _idbClear();
-      for (const r of rows) await _idbPut(_fromSupabase(r));
-      return rows.map(_fromSupabase);
+      for (const r of rows) await _idbPut(r);
+      return rows;
     } catch(e) {
-      console.warn('[Supabase] dbGetAll fallback → IndexedDB', e);
+      console.warn('[Supabase] dbGetAll → fallback IndexedDB', e);
       SUPABASE_ONLINE = false; updateSyncIndicator();
     }
   }
@@ -2509,9 +2706,9 @@ async function dbGet(id) {
   if (SUPABASE_ONLINE) {
     try {
       const row = await _sb.selectOne('projets', id);
-      if (row) { await _idbPut(_fromSupabase(row)); return _fromSupabase(row); }
+      if (row) { await _idbPut(row); return row; }
     } catch(e) {
-      console.warn('[Supabase] dbGet fallback → IndexedDB', e);
+      console.warn('[Supabase] dbGet → fallback IndexedDB', e);
     }
   }
   return _idbGet(id);
@@ -2523,19 +2720,17 @@ async function dbPut(proj) {
 
   if (SUPABASE_ONLINE) {
     try {
-      const p = _toSupabase({...proj});
+      const p = { ...proj };
       let saved;
       if (p.id) {
-        // UPDATE
         saved = await _sb.update('projets', p.id, p);
       } else {
-        // INSERT
         delete p.id;
         saved = await _sb.insert('projets', p);
       }
       if (saved) {
         proj.id = saved.id;
-        await _idbPut(_fromSupabase(saved));
+        await _idbPut(saved);
         return saved.id;
       }
     } catch(e) {
@@ -2544,7 +2739,6 @@ async function dbPut(proj) {
       SUPABASE_ONLINE = false; updateSyncIndicator();
     }
   }
-  // Fallback : IndexedDB
   const localId = await _idbPut(proj);
   proj.id = localId;
   return localId;
@@ -2552,16 +2746,13 @@ async function dbPut(proj) {
 
 async function dbDelete(id) {
   if (SUPABASE_ONLINE) {
-    try {
-      await _sb.delete('projets', id);
-    } catch(e) {
-      console.warn('[Supabase] dbDelete error', e);
-    }
+    try { await _sb.delete('projets', id); }
+    catch(e) { console.warn('[Supabase] dbDelete error', e); }
   }
   return _idbDelete(id);
 }
 
-// ── Synchronisation manuelle : pousser IndexedDB → Supabase ─────────────────
+// ── Synchronisation manuelle : IndexedDB → Supabase ─────────────────────────
 async function syncLocalToSupabase() {
   if (!SUPABASE_ONLINE) { showNotification('Supabase غير متصل', 'error'); return; }
   const local = await _idbGetAll();
@@ -2570,28 +2761,53 @@ async function syncLocalToSupabase() {
   let ok = 0, fail = 0;
   for (const proj of local) {
     try {
-      const p = _toSupabase({...proj});
+      const p = { ...proj };
       if (p.id) { await _sb.update('projets', p.id, p); }
       else { delete p.id; const saved = await _sb.insert('projets', p); proj.id = saved.id; await _idbPut(proj); }
       ok++;
     } catch(e) { fail++; console.warn('[Sync]', e); }
   }
-  showNotification(`✅ مزامنة: ${ok} نجاح${fail ? ' / '+fail+' فشل' : ''}`);
+  showNotification(`✅ مزامنة: ${ok} نجاح${fail ? ' / ' + fail + ' فشل' : ''}`);
 }
 
-// ── Import JSON → Supabase directement ───────────────────────────────────────
-async function importJSONToSupabase(payload) {
-  if (!SUPABASE_ONLINE) return false;
-  let ok = 0;
-  for (const proj of payload.data) {
-    try {
-      const p = _toSupabase({...proj});
-      delete p.id; // laisser Supabase générer les IDs
-      await _sb.insert('projets', p);
-      ok++;
-    } catch(e) { console.warn('[ImportSupa]', e); }
+// ===== MODALE DIRASSAT =====
+function openDirassatModal() {
+  const overlay = document.getElementById('dirassatModalOverlay');
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDirassatModal() {
+  const overlay = document.getElementById('dirassatModalOverlay');
+  overlay.style.display = 'none';
+  document.body.style.overflow = '';
+  updateDirassatBtnBadge();
+}
+
+function updateDirassatBtnBadge() {
+  const badge = document.getElementById('dirassat-btn-badge');
+  const summaryBar = document.getElementById('dirassat-summary-bar');
+  if (!badge) return;
+
+  const bab = (document.getElementById('f-dirassat_bab')?.value || '').trim();
+  const rowCount = dirassatRows.length;
+  const lajnahCount = (window.currentLajnahRecords || []).length;
+
+  const parts = [];
+  if (bab) parts.push('باب: ' + bab);
+  if (rowCount > 0) parts.push(rowCount + ' قسط');
+  if (lajnahCount > 0) parts.push(lajnahCount + ' محضر');
+
+  badge.textContent = parts.length > 0 ? '(' + parts.join(' · ') + ')' : '';
+
+  if (summaryBar) {
+    if (parts.length > 0) {
+      summaryBar.style.display = 'flex';
+      summaryBar.innerHTML = parts.map(p => '<span style="background:rgba(37,99,235,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(37,99,235,0.2)">📌 ' + p + '</span>').join('');
+    } else {
+      summaryBar.style.display = 'none';
+    }
   }
-  return ok;
 }
 
 // ===== DIRASSAT ROWS =====
@@ -2620,7 +2836,12 @@ function addDirassatRow(data = {}) {
   btnDel.textContent = '✕';
   btnDel.addEventListener('click', () => removeDirassatRow(idx, div));
 
-  const mkInput = (type, placeholder, val, onch) => {
+  const mkField = (label, type, placeholder, val, onch) => {
+    const field = document.createElement('div');
+    field.style.cssText = 'display:flex;flex-direction:column;gap:3px;flex:1';
+    const lbl = document.createElement('label');
+    lbl.style.cssText = 'font-size:11px;font-weight:700;color:var(--text-muted);display:block';
+    lbl.textContent = label;
     const inp = document.createElement('input');
     inp.type = type;
     if (placeholder) inp.placeholder = placeholder;
@@ -2628,20 +2849,108 @@ function addDirassatRow(data = {}) {
     if (type === 'number') inp.style.textAlign = 'center';
     inp.style.direction = 'rtl';
     inp.addEventListener('change', onch);
-    return inp;
+    field.appendChild(lbl);
+    field.appendChild(inp);
+    return field;
   };
 
-  div.appendChild(mkInput('text','القسط', data.qist||'', e => { dirassatRows[idx].qist = e.target.value; }));
-  div.appendChild(mkInput('text','المكلف', data.mukallaf||'', e => { dirassatRows[idx].mukallaf = e.target.value; }));
-  div.appendChild(mkInput('date','', data.tarikh_tayin||'', e => { dirassatRows[idx].tarikh_tayin = e.target.value; }));
-  div.appendChild(mkInput('text','الكلفة', data.kulfa||'', e => { dirassatRows[idx].kulfa = e.target.value; }));
-  div.appendChild(mkInput('text','دفوعات', data.dufuat_dirassat||'', e => { dirassatRows[idx].dufuat_dirassat = e.target.value; }));
-  const nInput = mkInput('number','%', data.nisbat_dirassat||'', e => { dirassatRows[idx].nisbat_dirassat = e.target.value; });
+  const fieldsContainer = document.createElement('div');
+  fieldsContainer.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:8px';
+  fieldsContainer.appendChild(mkField('القسط', 'text', 'رقم', data.qist||'', e => { dirassatRows[idx].qist = e.target.value; }));
+  fieldsContainer.appendChild(mkField('المكلف بالإنجاز', 'text', 'الاسم', data.mukallaf||'', e => { dirassatRows[idx].mukallaf = e.target.value; }));
+  fieldsContainer.appendChild(mkField('تاريخ التعيين', 'date', '', data.tarikh_tayin||'', e => { dirassatRows[idx].tarikh_tayin = e.target.value; }));
+  fieldsContainer.appendChild(mkField('الكلفة (د.ت)', 'text', 'المبلغ', data.kulfa||'', e => { dirassatRows[idx].kulfa = e.target.value; }));
+  fieldsContainer.appendChild(mkField('الدفوعات (د.ت)', 'text', 'المبلغ', data.dufuat_dirassat||'', e => { dirassatRows[idx].dufuat_dirassat = e.target.value; }));
+  const nField = document.createElement('div');
+  nField.style.cssText = 'display:flex;flex-direction:column;gap:3px;flex:1';
+  const nLbl = document.createElement('label');
+  nLbl.style.cssText = 'font-size:11px;font-weight:700;color:var(--text-muted);display:block';
+  nLbl.textContent = 'نسبة الإنجاز %';
+  const nInput = document.createElement('input');
+  nInput.type = 'number';
+  nInput.style.textAlign = 'center';
   nInput.min = '0'; nInput.max = '100';
-  div.appendChild(nInput);
-  div.appendChild(mkInput('date','', data.tarikh_musadaqa||'', e => { dirassatRows[idx].tarikh_musadaqa = e.target.value; }));
-  div.appendChild(btnMlhq);
-  div.appendChild(btnDel);
+  nInput.placeholder = '%';
+  if (data.nisbat_dirassat) nInput.value = data.nisbat_dirassat;
+  nInput.style.direction = 'rtl';
+  nInput.addEventListener('change', e => { dirassatRows[idx].nisbat_dirassat = e.target.value; });
+  nField.appendChild(nLbl);
+  nField.appendChild(nInput);
+  fieldsContainer.appendChild(nField);
+  fieldsContainer.appendChild(mkField('تاريخ المصادقة', 'date', '', data.tarikh_musadaqa||'', e => { dirassatRows[idx].tarikh_musadaqa = e.target.value; }));
+  div.appendChild(fieldsContainer);
+
+  // ===== روابط PDF (يمكن إضافة أكثر من رابط لكل قسط) =====
+  if (!Array.isArray(dirassatRows[idx].pdf_links)) {
+    dirassatRows[idx].pdf_links = data.pdf_links && Array.isArray(data.pdf_links) ? data.pdf_links : [];
+  }
+  const pdfWrap = document.createElement('div');
+  pdfWrap.style.cssText = 'margin:8px 0;padding:8px 10px;background:rgba(220,38,38,0.04);border:1px dashed rgba(220,38,38,0.3);border-radius:8px';
+
+  const pdfHeader = document.createElement('div');
+  pdfHeader.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:6px';
+  const pdfTitle = document.createElement('span');
+  pdfTitle.style.cssText = 'font-size:11px;font-weight:700;color:#dc2626';
+  pdfTitle.textContent = '📄 روابط PDF الخاصة بهذا القسط';
+  const pdfAddBtn = document.createElement('button');
+  pdfAddBtn.type = 'button';
+  pdfAddBtn.className = 'btn btn-sm';
+  pdfAddBtn.style.cssText = 'background:#dc2626;color:#fff;font-size:11px;padding:3px 10px';
+  pdfAddBtn.textContent = '+ إضافة رابط';
+  pdfHeader.appendChild(pdfTitle);
+  pdfHeader.appendChild(pdfAddBtn);
+  pdfWrap.appendChild(pdfHeader);
+
+  const pdfListDiv = document.createElement('div');
+  pdfListDiv.style.cssText = 'display:flex;flex-direction:column;gap:6px';
+  pdfWrap.appendChild(pdfListDiv);
+
+  function renderPdfLinkRow(linkIdx) {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:6px;align-items:center';
+    const urlInput = document.createElement('input');
+    urlInput.type = 'url';
+    urlInput.placeholder = 'https://...pdf';
+    urlInput.style.cssText = 'flex:1;direction:ltr;text-align:left;font-size:12px';
+    urlInput.value = dirassatRows[idx].pdf_links[linkIdx] || '';
+    urlInput.addEventListener('change', e => { dirassatRows[idx].pdf_links[linkIdx] = e.target.value.trim(); });
+    const rmBtn = document.createElement('button');
+    rmBtn.type = 'button';
+    rmBtn.className = 'btn btn-danger btn-sm';
+    rmBtn.textContent = '✕';
+    rmBtn.addEventListener('click', () => {
+      dirassatRows[idx].pdf_links.splice(linkIdx, 1);
+      renderAllPdfLinks();
+    });
+    row.appendChild(urlInput);
+    row.appendChild(rmBtn);
+    return row;
+  }
+
+  function renderAllPdfLinks() {
+    pdfListDiv.innerHTML = '';
+    dirassatRows[idx].pdf_links.forEach((_, i) => pdfListDiv.appendChild(renderPdfLinkRow(i)));
+    if (dirassatRows[idx].pdf_links.length === 0) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'font-size:11px;color:var(--text-muted)';
+      empty.textContent = 'لا توجد روابط بعد';
+      pdfListDiv.appendChild(empty);
+    }
+  }
+
+  pdfAddBtn.addEventListener('click', () => {
+    dirassatRows[idx].pdf_links.push('');
+    renderAllPdfLinks();
+  });
+
+  renderAllPdfLinks();
+  div.appendChild(pdfWrap);
+  
+  const actionsDiv = document.createElement('div');
+  actionsDiv.style.cssText = 'display:flex;gap:6px;justify-content:flex-end';
+  actionsDiv.appendChild(btnMlhq);
+  actionsDiv.appendChild(btnDel);
+  div.appendChild(actionsDiv);
   container.appendChild(div);
 }
 
@@ -2821,6 +3130,207 @@ function getItimadatMuhalaData() {
     .map(r => ({ ...r, daf: (r.daf || []).filter(d => d !== null) }));
 }
 
+// ===== جلسات متابعة (Réunions de suivi) =====
+let jalasatMutabaRows = [];
+
+function addJalasaRow(data = {}) {
+  const idx = jalasatMutabaRows.length;
+  jalasatMutabaRows[idx] = { ...data, hadhirun: data.hadhirun || (
+    // migration ancienne version avec champs séparés
+    (data.hadirin_ism || data.hadirin_laqab || data.hadirin_safaa) ?
+    [{ ism: data.hadirin_ism||'', laqab: data.hadirin_laqab||'', sifa: data.hadirin_safaa||'' }] : []
+  )};
+
+  const container = document.getElementById('jalasat-container');
+  if (!container) return;
+
+  const div = document.createElement('div');
+  div.className = 'jalasa-row';
+  div.style.cssText = 'background:#fffbeb;padding:14px;margin-bottom:12px;border-radius:8px;border:1.5px solid #fcd34d;position:relative';
+
+  const mkField = (label, type, placeholder, val, onch) => {
+    const field = document.createElement('div');
+    field.style.cssText = 'display:flex;flex-direction:column;gap:3px;flex:1';
+    const lbl = document.createElement('label');
+    lbl.style.cssText = 'font-size:11px;font-weight:700;color:#92400e;display:block';
+    lbl.textContent = label;
+    const inp = type === 'textarea' ? document.createElement('textarea') : document.createElement('input');
+    if (type !== 'textarea') inp.type = type;
+    if (placeholder) inp.placeholder = placeholder;
+    if (val !== undefined && val !== null) inp.value = val;
+    if (type === 'textarea') inp.style.cssText = 'height:65px;resize:none;font-family:inherit;direction:rtl;border-radius:5px;padding:6px';
+    inp.style.direction = 'rtl';
+    inp.addEventListener('change', onch);
+    field.appendChild(lbl);
+    field.appendChild(inp);
+    return field;
+  };
+
+  // --- En-tête ---
+  const header = document.createElement('div');
+  header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #fcd34d';
+  const rowNumEl = document.createElement('span');
+  rowNumEl.textContent = `📅 جلسة متابعة #${idx+1}`;
+  rowNumEl.style.cssText = 'font-weight:700;font-size:13px;color:#92400e';
+  const btnDel = document.createElement('button');
+  btnDel.innerHTML = '✕ حذف الجلسة';
+  btnDel.style.cssText = 'padding:5px 10px;background:#ffebee;color:#c62828;border:1px solid #ef5350;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600';
+  btnDel.onclick = () => { jalasatMutabaRows[idx] = null; div.remove(); };
+  header.appendChild(rowNumEl);
+  header.appendChild(btnDel);
+  div.appendChild(header);
+
+  // --- Champs principaux ---
+  const mainGrid = document.createElement('div');
+  mainGrid.style.cssText = 'display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px';
+  mainGrid.appendChild(mkField('تاريخ آخر جلسة متابعة', 'date', '', jalasatMutabaRows[idx].tarikh_jalasa||'',
+    e => { jalasatMutabaRows[idx].tarikh_jalasa = e.target.value; }));
+  div.appendChild(mainGrid);
+
+  // --- Section Participants ---
+  const partSection = document.createElement('div');
+  partSection.style.cssText = 'border:1px solid #fcd34d;border-radius:6px;padding:10px;margin-bottom:12px;background:#fefce8';
+
+  const partTitle = document.createElement('div');
+  partTitle.style.cssText = 'font-size:12px;font-weight:700;color:#92400e;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between';
+  partTitle.innerHTML = '<span>👥 الحاضرون (الاسم واللقب والصفة)</span>';
+
+  const btnAddPart = document.createElement('button');
+  btnAddPart.innerHTML = '+ إضافة حاضر';
+  btnAddPart.style.cssText = 'padding:3px 8px;background:#fef08a;color:#713f12;border:1px solid #fcd34d;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600';
+  partTitle.appendChild(btnAddPart);
+  partSection.appendChild(partTitle);
+
+  const partList = document.createElement('div');
+  partList.style.cssText = 'display:flex;flex-direction:column;gap:7px';
+  partSection.appendChild(partList);
+
+  const addParticipant = (pdata = {}) => {
+    const pDiv = document.createElement('div');
+    pDiv.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;align-items:start';
+
+    const pIdx = jalasatMutabaRows[idx].hadhirun.length;
+    jalasatMutabaRows[idx].hadhirun.push({ ism: pdata.ism||'', laqab: pdata.laqab||'', sifa: pdata.sifa||'' });
+
+    const mkPField = (label, val, key) => {
+      const f = document.createElement('div');
+      f.style.cssText = 'display:flex;flex-direction:column;gap:2px';
+      const l = document.createElement('label');
+      l.style.cssText = 'font-size:10px;font-weight:700;color:#a16207';
+      l.textContent = label;
+      const i = document.createElement('input');
+      i.type = 'text'; i.value = val; i.style.direction = 'rtl';
+      i.addEventListener('change', e => {
+        if (jalasatMutabaRows[idx] && jalasatMutabaRows[idx].hadhirun[pIdx])
+          jalasatMutabaRows[idx].hadhirun[pIdx][key] = e.target.value;
+      });
+      f.appendChild(l); f.appendChild(i);
+      return f;
+    };
+
+    pDiv.appendChild(mkPField('الاسم', pdata.ism||'', 'ism'));
+    pDiv.appendChild(mkPField('اللقب', pdata.laqab||'', 'laqab'));
+    pDiv.appendChild(mkPField('الصفة', pdata.sifa||'', 'sifa'));
+
+    const bDel = document.createElement('button');
+    bDel.innerHTML = '✕';
+    bDel.style.cssText = 'margin-top:18px;padding:4px 8px;background:#ffebee;color:#c62828;border:1px solid #ef5350;border-radius:4px;cursor:pointer;font-size:11px;align-self:start';
+    bDel.onclick = () => {
+      if (jalasatMutabaRows[idx]) jalasatMutabaRows[idx].hadhirun[pIdx] = null;
+      pDiv.remove();
+    };
+    pDiv.appendChild(bDel);
+    partList.appendChild(pDiv);
+  };
+
+  // Charger participants existants
+  (jalasatMutabaRows[idx].hadhirun || []).forEach(p => { if (p) addParticipant(p); });
+  jalasatMutabaRows[idx].hadhirun = [];
+  (jalasatMutabaRows[idx].hadhirun || []);
+  // Re-init
+  jalasatMutabaRows[idx].hadhirun = [];
+  (data.hadhirun || (
+    (data.hadirin_ism || data.hadirin_laqab || data.hadirin_safaa) ?
+    [{ ism: data.hadirin_ism||'', laqab: data.hadirin_laqab||'', sifa: data.hadirin_safaa||'' }] : []
+  )).forEach(p => { if (p) addParticipant(p); });
+
+  btnAddPart.onclick = () => addParticipant();
+  div.appendChild(partSection);
+
+  // --- Ishkaliyat & Hulul ---
+  const issuesGrid = document.createElement('div');
+  issuesGrid.style.cssText = 'display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px';
+  issuesGrid.appendChild(mkField('الإشكاليات المسجلة', 'textarea', 'اذكر الإشكاليات...', jalasatMutabaRows[idx].ishkaliyat||'',
+    e => { jalasatMutabaRows[idx].ishkaliyat = e.target.value; }));
+  issuesGrid.appendChild(mkField('الحلول المتخذة على المستوى الجهوي', 'textarea', 'اذكر الحلول المتخذة...', jalasatMutabaRows[idx].hulul_mutakhadha||'',
+    e => { jalasatMutabaRows[idx].hulul_mutakhadha = e.target.value; }));
+  issuesGrid.appendChild(mkField('الحلول المقترحة', 'textarea', 'اذكر الحلول المقترحة...', jalasatMutabaRows[idx].hulul_muqtaraha||'',
+    e => { jalasatMutabaRows[idx].hulul_muqtaraha = e.target.value; }));
+  div.appendChild(issuesGrid);
+
+  // --- Lien محضر ---
+  const linkDiv = document.createElement('div');
+  linkDiv.style.cssText = 'display:flex;flex-direction:column;gap:4px';
+  const linkLbl = document.createElement('label');
+  linkLbl.style.cssText = 'font-size:11px;font-weight:700;color:#92400e';
+  linkLbl.textContent = '📄 محضر الجلسة (رابط Drive PDF)';
+  const linkInp = document.createElement('input');
+  linkInp.type = 'url';
+  linkInp.placeholder = 'https://drive.google.com/...';
+  linkInp.style.cssText = 'direction:ltr;font-size:12px';
+  linkInp.value = jalasatMutabaRows[idx].muhdar_link||'';
+  linkInp.addEventListener('change', e => { jalasatMutabaRows[idx].muhdar_link = e.target.value; });
+  linkDiv.appendChild(linkLbl);
+  linkDiv.appendChild(linkInp);
+  div.appendChild(linkDiv);
+
+  container.appendChild(div);
+}
+
+function buildJalasatMutabaSection(records) {
+  if (!records || !records.length) return '';
+  const items = records.map((r, i) => {
+    if (!r) return '';
+    const dateStr = r.tarikh_jalasa
+      ? new Date(r.tarikh_jalasa).toLocaleDateString('ar-TN', {year:'numeric', month:'long', day:'numeric'})
+      : '—';
+    const hadhirun = (r.hadhirun || []).filter(Boolean);
+    // migration ancienne version
+    if (!hadhirun.length && (r.hadirin_ism || r.hadirin_laqab))
+      hadhirun.push({ ism: r.hadirin_ism||'', laqab: r.hadirin_laqab||'', sifa: r.hadirin_safaa||'' });
+
+    const partHTML = hadhirun.length
+      ? hadhirun.map(p => `<span style="display:inline-flex;align-items:center;gap:4px;background:#fef9c3;border:1px solid #fcd34d;border-radius:20px;padding:2px 10px;font-size:11px;color:#713f12"><b>${p.ism||''} ${p.laqab||''}</b>${p.sifa ? ' — ' + p.sifa : ''}</span>`).join(' ')
+      : '<span style="color:#9ca3af;font-size:11px">—</span>';
+
+    return `<div style="background:#fff;border:1px solid #fcd34d;border-radius:8px;padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-size:13px;font-weight:700;color:#92400e">📅 جلسة متابعة #${i+1} — ${dateStr}</div>
+        ${r.muhdar_link ? `<a href="${r.muhdar_link}" target="_blank" style="background:#fef08a;color:#713f12;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;text-decoration:none;border:1px solid #fcd34d">📄 محضر الجلسة</a>` : ''}
+      </div>
+      ${hadhirun.length ? `<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:#a16207;margin-bottom:5px">👥 الحاضرون</div><div style="display:flex;flex-wrap:wrap;gap:5px">${partHTML}</div></div>` : ''}
+      ${r.ishkaliyat ? `<div style="margin-bottom:7px"><div style="font-size:11px;font-weight:700;color:#b45309;margin-bottom:3px">⚠️ الإشكاليات المسجلة</div><div style="font-size:12px;color:#374151;background:#fef9c3;padding:7px 10px;border-radius:6px;border:1px solid #fcd34d">${r.ishkaliyat}</div></div>` : ''}
+      ${r.hulul_mutakhadha ? `<div style="margin-bottom:7px"><div style="font-size:11px;font-weight:700;color:#065f46;margin-bottom:3px">✅ الحلول المتخذة على المستوى الجهوي</div><div style="font-size:12px;color:#374151;background:#ecfdf5;padding:7px 10px;border-radius:6px;border:1px solid #6ee7b7">${r.hulul_mutakhadha}</div></div>` : ''}
+      ${r.hulul_muqtaraha ? `<div><div style="font-size:11px;font-weight:700;color:#1e40af;margin-bottom:3px">💡 الحلول المقترحة</div><div style="font-size:12px;color:#374151;background:#eff6ff;padding:7px 10px;border-radius:6px;border:1px solid #bfdbfe">${r.hulul_muqtaraha}</div></div>` : ''}
+    </div>`;
+  }).join('');
+
+  return `<div style="margin:14px 0;padding:12px 14px;background:rgba(251,191,36,0.05);border:1.5px solid #fcd34d;border-radius:10px">
+    <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+      <span>📅 جلسات المتابعة</span>
+      <span style="background:#fef08a;color:#713f12;border-radius:20px;padding:2px 10px;font-size:11px;border:1px solid #fcd34d">${records.length} جلسة</span>
+    </div>
+    ${items}
+  </div>`;
+}
+
+function getJalasatData() {
+  return jalasatMutabaRows.filter(r => r !== null && r !== undefined).map(r => ({
+    ...r,
+    hadhirun: (r.hadhirun || []).filter(Boolean)
+  }));
+}
+
 // ===== VIEWS =====
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -2840,6 +3350,8 @@ function showView(name) {
     loadFawadil();
   }
   if (name === 'proposals') loadProposals();
+  if (name === 'programmed') loadProgrammed();
+  if (name === 'unallocated') loadUnallocated();
   if (name === 'map') initProjectsMap();
   if (name === 'big-projects-map') initBigProjectsMap();
   if (name === 'overview') renderOverview();
@@ -3049,6 +3561,7 @@ async function loadDashboard() {
   updateSidebar(allProjects);
   populateDashboardFilters(allProjects);
   applyDashboardFilters();
+  updateUnallocatedBadge();
 }
 
 function populateDashboardFilters(projects) {
@@ -3141,53 +3654,116 @@ function renderDashboardCards(projects) {
       </div>`;
     return;
   }
-  // الترتيب: جاري الإنجاز (1-99%) → لم يبدأ (0%) → منجز (100%) → مُغلق
-  const sortPriority = p => {
-    const n = parseInt(p.nisbat_injaz) || 0;
-    if (p.cloture)       return 3; // مُغلق في الأخير
-    if (n >= 100)        return 2; // منجز
-    if (n === 0)         return 1; // لم يبدأ
-    return 0;                      // جاري الإنجاز — الأول
-  };
-  const sorted = [...projects].sort((a, b) => {
-    const pa = sortPriority(a), pb = sortPriority(b);
-    if (pa !== pb) return pa - pb;
-    // داخل نفس الفئة: حسب آخر تحديث (الأحدث أولاً)
-    return (b.updated_at||'').localeCompare(a.updated_at||'');
-  });
-  container.innerHTML = sorted.map(p => {
+
+  // ── دالة استخراج الكلفة الإجمالية كرقم قابل للترتيب ──────────────────────
+  function parseCost(p) {
+    const total = getTotalProjectCost ? getTotalProjectCost(p) : 0;
+    if (total && total > 0) return total;
+    // fallback: champ kulfa texte → extraire le premier nombre
+    const raw = String(p.kulfa || '').replace(/[^\d.,]/g, '').replace(',', '.');
+    return parseFloat(raw) || 0;
+  }
+
+  // ── الترتيب التنازلي حسب الكلفة ──────────────────────────────────────────
+  const sorted = [...projects].sort((a, b) => parseCost(b) - parseCost(a));
+
+  // ── بناء البطاقات ─────────────────────────────────────────────────────────
+  container.innerHTML = sorted.map((p, rank) => {
     const nisbat      = parseInt(p.nisbat_injaz) || 0;
     const isZero      = nisbat === 0;
     const isCloture   = !!(p.cloture);
     const statusColor = nisbat >= 100 ? '#059669' : nisbat >= 50 ? '#2563EB' : isZero ? '#dc2626' : '#d97706';
     const statusLabel = nisbat >= 100 ? 'منجز ✅' : nisbat > 0 ? 'جاري الإنجاز 🔧' : 'لم يبدأ ⏳';
-    const clotureTag  = isCloture
-      ? `<span style="background:#2e7d32;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;margin-right:6px">🔒 مُغلق</span>`
+
+    // Coût formaté
+    const costNum = parseCost(p);
+    const costFormatted = costNum > 0
+      ? costNum.toLocaleString('ar-TN', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' د.ت'
+      : (p.kulfa || '—');
+
+    // Rang (médaille pour les 3 premiers)
+    const medal = rank === 0 ? '🥇' : rank === 1 ? '🥈' : rank === 2 ? '🥉' : `#${rank + 1}`;
+
+    // ── Photos : chercher dans tous les dossiers de documents ────────────────
+    const allDocKeys = ['morasalat','dirassat','achghal','rabt','situ','recep'];
+    let firstPhoto = null;
+    let photoCount = 0;
+    for (const key of allDocKeys) {
+      const docs = p['docs_' + key] || [];
+      const imgs = docs.filter(d => d && d.type && d.type.startsWith('image/'));
+      photoCount += imgs.length;
+      if (!firstPhoto && imgs.length) firstPhoto = imgs[0];
+    }
+    // Also check legacy photos field
+    if (!firstPhoto && p.photos && p.photos.length) {
+      firstPhoto = p.photos[0];
+      photoCount += p.photos.length;
+    }
+
+    const photoHTML = firstPhoto
+      ? `<div style="position:relative;height:140px;overflow:hidden;border-radius:0;background:#e8edf5;flex-shrink:0">
+           <img src="${firstPhoto.data || firstPhoto.url || firstPhoto}" alt="صورة المشروع"
+             style="width:100%;height:100%;object-fit:cover;display:block"
+             onerror="this.parentElement.style.display='none'">
+           ${photoCount > 1 ? `<div style="position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,0.55);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px">📷 ${photoCount}</div>` : ''}
+         </div>`
       : '';
+
+    const clotureTag = isCloture
+      ? `<span style="background:#2e7d32;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px">🔒 مُغلق</span>`
+      : '';
+
     return `
-      <div class="proj-card${isZero && !isCloture ? ' zero-progress' : ''}${isCloture ? ' card-cloture' : ''}" onclick="viewProject(${p.id})">
-        <div class="proj-card-header">
-          <span class="proj-card-id">#${p.id}</span>
-          <span class="proj-card-name">${(p.bayan_mashrou||'مشروع').substring(0,40)}${(p.bayan_mashrou||'').length>40?'...':''}</span>
+      <div class="proj-card${isZero && !isCloture ? ' zero-progress' : ''}${isCloture ? ' card-cloture' : ''}"
+           onclick="viewProject(${p.id})"
+           style="display:flex;flex-direction:column;overflow:hidden;cursor:pointer">
+
+        <!-- صورة المشروع -->
+        ${photoHTML}
+
+        <!-- رأس البطاقة -->
+        <div class="proj-card-header" style="gap:6px;flex-wrap:wrap;align-items:flex-start">
+          <span style="font-size:15px;flex-shrink:0;margin-top:2px">${medal}</span>
+          <span class="proj-card-id" style="flex-shrink:0">#${p.id}</span>
+          <span class="proj-card-name" style="font-size:13px;flex:1;white-space:normal;word-break:break-word;line-height:1.45;min-width:0">${p.bayan_mashrou||'مشروع'}</span>
           ${clotureTag}
-          ${isZero && !isCloture ? '<span class="zero-badge">⚠️ لم يبدأ</span>' : ''}
+          ${isZero && !isCloture ? '<span class="zero-badge" style="font-size:10px">⚠️ لم يبدأ</span>' : ''}
         </div>
-        <div class="proj-card-body">
-          <div class="proj-card-meta">
-            ${p.muta_madiyya ? `<span class="meta-badge" style="background:rgba(200,150,12,0.1);color:var(--accent);border-color:rgba(200,150,12,0.3)">🏙️ ${p.muta_madiyya}</span>` : ''}
-            ${p.qita ? `<span class="meta-badge" style="background:rgba(26,58,92,0.08);color:var(--primary);border-color:rgba(26,58,92,0.2)">🏗️ ${p.qita}</span>` : ''}
-            ${p.mouassassa ? `<span class="meta-badge" style="background:rgba(46,125,50,0.08);color:#2e7d32;border-color:rgba(46,125,50,0.25)">🏛️ ${p.mouassassa.substring(0,22)}</span>` : ''}
-            ${p.ashghal_bab ? `<span class="meta-badge">باب: ${p.ashghal_bab}</span>` : ''}
-            ${p.mukallaf_binjaz ? `<span class="meta-badge green">${p.mukallaf_binjaz.substring(0,20)}</span>` : ''}
-            <span class="meta-badge" style="background:rgba(${nisbat>=100?'5,150,105':nisbat>=50?'37,99,235':isZero?'220,38,38':'217,119,6'},0.1);color:${statusColor};border-color:currentColor">${statusLabel}</span>
+
+        <!-- جسم البطاقة -->
+        <div class="proj-card-body" style="flex:1">
+
+          <!-- الكلفة — عنصر بارز -->
+          <div style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(200,150,12,0.12),rgba(200,150,12,0.04));border:1.5px solid rgba(200,150,12,0.35);border-radius:8px;padding:8px 12px;margin-bottom:10px">
+            <span style="font-size:18px">💰</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:10px;font-weight:700;color:var(--text-muted);margin-bottom:1px">الكلفة الإجمالية</div>
+              <div style="font-size:15px;font-weight:800;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${costFormatted}</div>
+            </div>
           </div>
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">
-            ${p.tarikh_intilaq_ashghal ? '📅 بداية: '+formatDate(p.tarikh_intilaq_ashghal) : ''}
-            ${p.kulfa ? ' · 💰 '+p.kulfa : ''}
+
+          <!-- نسبة الإنجاز -->
+          <div style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span style="font-size:11px;font-weight:700;color:var(--text-muted)">نسبة الإنجاز</span>
+              <span style="font-size:14px;font-weight:800;color:${isCloture?'#2e7d32':statusColor}">${isCloture?'🔒 مُغلق':nisbat+'%'}</span>
+            </div>
+            <div class="progress-bar" style="height:10px">
+              <div class="progress-fill" style="width:${nisbat}%;background:${isCloture?'#4caf50':statusColor}"></div>
+            </div>
+            <div style="font-size:11px;color:${statusColor};font-weight:700;margin-top:3px;text-align:left">${statusLabel}</div>
           </div>
-          <div style="font-size:12px;font-weight:700;color:${isCloture?'#2e7d32':statusColor};margin-bottom:4px">${isCloture?'🔒 مشروع مُغلق':nisbat+'% مُنجز'}</div>
-          <div class="progress-bar"><div class="progress-fill" style="width:${nisbat}%;background:${isCloture?'#4caf50':statusColor}"></div></div>
+
+          <!-- معلومات إضافية -->
+          <div class="proj-card-meta" style="gap:4px">
+            ${p.muta_madiyya ? `<span class="meta-badge" style="background:rgba(200,150,12,0.1);color:var(--accent);border-color:rgba(200,150,12,0.3);font-size:10px">🏙️ ${p.muta_madiyya}</span>` : ''}
+            ${p.qita ? `<span class="meta-badge" style="background:rgba(26,58,92,0.08);color:var(--primary);border-color:rgba(26,58,92,0.2);font-size:10px">🏗️ ${p.qita}</span>` : ''}
+            ${p.mouassassa ? `<span class="meta-badge" style="background:rgba(46,125,50,0.08);color:#2e7d32;border-color:rgba(46,125,50,0.25);font-size:10px">🏛️ ${p.mouassassa.substring(0,20)}</span>` : ''}
+            ${p.tarikh_intilaq_ashghal ? `<span class="meta-badge" style="font-size:10px">📅 ${formatDate(p.tarikh_intilaq_ashghal)}</span>` : ''}
+          </div>
         </div>
+
+        <!-- أزرار الإجراءات -->
         <div class="proj-card-actions" onclick="event.stopPropagation()">
           <button class="btn btn-warning btn-sm" onclick="editProject(${p.id})">✏️ تعديل</button>
           <button class="btn btn-primary btn-sm" onclick="openPrintModal('single',${p.id})">🖨️ طباعة</button>
@@ -3337,7 +3913,7 @@ async function printProjectById(id) {
 }
 
 function clearForm() {
-  const fields = ['bayan_mashrou','ref_annee','ref_bab','ref_fasl','muta_madiyya','tamwil_mashrou','qita','sana_barmaja','mouassassa',
+  const fields = ['bayan_mashrou','ref_annee','ref_bab','ref_fasl','muta_madiyya','tamwil_mashrou','qita','sana_barmaja','aitimed_mubarmaj','mouassassa',
     'dirassat_bab','dirassat_fasl','dirassat_fiqra','tarikh_intilaq_dirassat',
     'ashghal_bab','ashghal_fasl','ashghal_fiqra','tarikh_intilaq_ashghal','tarikh_intiha_ashghal',
     'mukallaf_binjaz','kulfa','dufuat','tarikh_musadaqa',
@@ -3359,11 +3935,14 @@ function clearForm() {
   renderLajnahList();
   hadhiraRecords = [];
   renderHadhiraList();
+  jalasatMutabaRows = [];
+  const jc = document.getElementById('jalasat-container');
+  if (jc) jc.innerHTML = '';
 }
 
 function fillForm(p) {
   clearForm();
-  const fields = ['bayan_mashrou','ref_annee','ref_bab','ref_fasl','muta_madiyya','tamwil_mashrou','qita','sana_barmaja','mouassassa',
+  const fields = ['bayan_mashrou','ref_annee','ref_bab','ref_fasl','muta_madiyya','tamwil_mashrou','qita','sana_barmaja','aitimed_mubarmaj','mouassassa',
     'dirassat_bab','dirassat_fasl','dirassat_fiqra','tarikh_intilaq_dirassat',
     'ashghal_bab','ashghal_fasl','ashghal_fiqra','tarikh_intilaq_ashghal','tarikh_intiha_ashghal',
     'mukallaf_binjaz','kulfa','dufuat','tarikh_musadaqa',
@@ -3391,6 +3970,14 @@ function fillForm(p) {
   });
   // Restaurer les avenants الأشغال
   window._avenants_ashghal = Array.isArray(p.avenants_ashghal) ? [...p.avenants_ashghal] : [];
+  
+  // Charger les جلسات متابعة
+  jalasatMutabaRows = [];
+  const jcFill = document.getElementById('jalasat-container');
+  if (jcFill) jcFill.innerHTML = '';
+  if (p.jalasat_mutaba && Array.isArray(p.jalasat_mutaba)) {
+    p.jalasat_mutaba.forEach(row => addJalasaRow(row));
+  }
 
   // Refresh map picker with saved location
   setTimeout(() => {
@@ -3401,7 +3988,7 @@ function fillForm(p) {
 }
 
 function getFormData() {
-  const fields = ['bayan_mashrou','ref_annee','ref_bab','ref_fasl','muta_madiyya','tamwil_mashrou','qita','sana_barmaja','mouassassa',
+  const fields = ['bayan_mashrou','ref_annee','ref_bab','ref_fasl','muta_madiyya','tamwil_mashrou','qita','sana_barmaja','aitimed_mubarmaj','mouassassa',
     'dirassat_bab','dirassat_fasl','dirassat_fiqra','tarikh_intilaq_dirassat',
     'ashghal_bab','ashghal_fasl','ashghal_fiqra','tarikh_intilaq_ashghal','tarikh_intiha_ashghal',
     'mukallaf_binjaz','kulfa','dufuat','tarikh_musadaqa',
@@ -3417,6 +4004,7 @@ function getFormData() {
   data.hadhira_records  = hadhiraRecords.filter(r => r !== null);
   data.cloture = !!(window._currentCloture);
   data.avenants_ashghal = window._avenants_ashghal ? [...window._avenants_ashghal] : [];
+  data.jalasat_mutaba   = getJalasatData();
   return data;
 }
 
@@ -3464,11 +4052,11 @@ async function saveProject() {
   if (currentProjectId) {
     data.id = currentProjectId;
     await dbPut(data);
-    showNotification('✅ تم تحديث المشروع بنجاح'); updateFawadilBadge();
+    showNotification('✅ تم تحديث المشروع بنجاح'); updateFawadilBadge(); updateUnallocatedBadge();
   } else {
     const id = await dbPut(data);
     currentProjectId = id;
-    showNotification('✅ تم إضافة المشروع بنجاح'); updateFawadilBadge();
+    showNotification('✅ تم إضافة المشروع بنجاح'); updateFawadilBadge(); updateUnallocatedBadge();
   }
   // Mettre à jour les combos avec les nouvelles valeurs éventuellement saisies
   populateComboDatalists();
@@ -3501,18 +4089,23 @@ async function renderDetail(p) {
           <thead><tr>
             <th>القسط</th><th>المكلف بالإنجاز</th><th>تاريخ التعيين</th><th>الكلفة</th>
             <th>اعتماد تعهد</th><th>اعتماد دفع</th><th>دفوعات</th>
-            <th>نسبة الإنجاز</th><th>تاريخ المصادقة</th>
+            <th>نسبة الإنجاز</th><th>تاريخ المصادقة</th><th>📄 PDF</th>
           </tr></thead>
           <tbody>
             ${p.dirassat_details.map(r => {
               const nd = parseInt(r.nisbat_dirassat)||0;
               const cd = nd>=100?'#059669':nd>=50?'#2563EB':'#d97706';
+              const links = Array.isArray(r.pdf_links) ? r.pdf_links.filter(u => u && u.trim()) : [];
+              const pdfCell = links.length
+                ? links.map((u,i) => `<button class="btn btn-sm" style="background:#dc2626;color:#fff;padding:3px 8px;font-size:11px;margin:1px" onclick="window.open('${u.replace(/'/g,"\\'")}', '_blank')">📄 ${links.length>1?(i+1):''}</button>`).join(' ')
+                : '<span style="color:var(--text-muted);font-size:11px">—</span>';
               return `<tr>
                 <td>${r.qist||'—'}</td><td>${r.mukallaf||'—'}</td><td>${formatDate(r.tarikh_tayin)}</td>
                 <td>${r.kulfa||'—'}</td><td>${r.itimad_tahhud||'—'}</td><td>${r.itimad_daf||'—'}</td>
                 <td>${r.dufuat_dirassat||'—'}</td>
                 <td><span style="font-weight:700;color:${cd}">${nd}%</span></td>
                 <td>${formatDate(r.tarikh_musadaqa)}</td>
+                <td style="white-space:nowrap">${pdfCell}</td>
               </tr>`;}).join('')}
           </tbody>
         </table>
@@ -3543,6 +4136,7 @@ async function renderDetail(p) {
         ${p.tamwil_mashrou ? `<div class="detail-row"><span class="detail-label">💰 مصدر التمويل:</span><span class="detail-value">${p.tamwil_mashrou}</span></div>` : ''}
         ${p.qita ? `<div class="detail-row"><span class="detail-label">🏗️ القطاع:</span><span class="detail-value">${p.qita}</span></div>` : ''}
         ${p.sana_barmaja ? `<div class="detail-row"><span class="detail-label">📅 سنة البرمجة:</span><span class="detail-value">${p.sana_barmaja}</span></div>` : ''}
+        ${p.aitimed_mubarmaj ? `<div class="detail-row"><span class="detail-label">🗓️ الاعتماد المبرمج:</span><span class="detail-value" style="font-weight:800;color:var(--accent)">${p.aitimed_mubarmaj} د.ت</span></div>` : ''}
         ${(p.lat && p.lng) ? `<div class="detail-row"><span class="detail-label">📍 الموقع:</span><span class="detail-value"><span style="font-family:monospace;font-size:13px;color:var(--primary-light)">${parseFloat(p.lat).toFixed(5)}, ${parseFloat(p.lng).toFixed(5)}</span> <a href="https://www.openstreetmap.org/?mlat=${p.lat}&mlon=${p.lng}&zoom=16" target="_blank" style="margin-right:8px;font-size:12px;color:var(--primary-light)">🗺️ عرض على الخريطة</a></span></div>` : ''}
         <div class="detail-row">
           <span class="detail-label">نسبة الإنجاز:</span>
@@ -3628,6 +4222,9 @@ async function renderDetail(p) {
     </div>
 
     ${buildItimadatMuhalaDetailHTML(p)}
+
+    <!-- جلسات المتابعة -->
+    ${buildJalasatMutabaSection(p.jalasat_mutaba)}
 
     <!-- Conclusion Card -->
     <div class="conclusion-card">
@@ -4059,7 +4656,16 @@ async function renderOverview() {
     if (!groups[key]) groups[key] = [];
     groups[key].push(p);
   });
-  const sortedKeys = Object.keys(groups).sort();
+  // ترتيب المشاريع داخل كل مجموعة تنازلياً حسب الكلفة
+  Object.keys(groups).forEach(k => {
+    groups[k].sort((a,b) => (parseCost(b.kulfa)||0) - (parseCost(a.kulfa)||0));
+  });
+  // ترتيب المجموعات تنازلياً حسب إجمالي كلفتها
+  const sortedKeys = Object.keys(groups).sort((a,b) => {
+    const ca = groups[a].reduce((s,p)=>s+(parseCost(p.kulfa)||0),0);
+    const cb = groups[b].reduce((s,p)=>s+(parseCost(p.kulfa)||0),0);
+    return cb - ca;
+  });
 
   const totalProj      = projects.length;
   const avgProgress    = totalProj ? projects.reduce((s,p)=>s+(parseInt(p.nisbat_injaz)||0),0)/totalProj : 0;
@@ -4269,7 +4875,16 @@ async function printOverview() {
 
   const groups = {};
   projects.forEach(p => { const k=(p[groupKey]||'').trim()||'(غير محدد)'; if(!groups[k])groups[k]=[]; groups[k].push(p); });
-  const sortedKeys = Object.keys(groups).sort();
+  // ترتيب المشاريع داخل كل مجموعة تنازلياً حسب الكلفة
+  Object.keys(groups).forEach(k => {
+    groups[k].sort((a,b) => (parseCost(b.kulfa)||0) - (parseCost(a.kulfa)||0));
+  });
+  // ترتيب المجموعات تنازلياً حسب إجمالي كلفتها
+  const sortedKeys = Object.keys(groups).sort((a,b) => {
+    const ca = groups[a].reduce((s,p)=>s+(parseCost(p.kulfa)||0),0);
+    const cb = groups[b].reduce((s,p)=>s+(parseCost(p.kulfa)||0),0);
+    return cb - ca;
+  });
 
   const avgProg = projects.reduce((s,p)=>s+(parseInt(p.nisbat_injaz)||0),0)/projects.length;
 
@@ -4342,6 +4957,7 @@ ${sortedKeys.map(key=>{
       <th style="color:#fff">#</th>
       <th style="color:#fff">بيان المشروع</th>
       <th style="color:#fff">${secLabel}</th>
+      <th style="color:#fff">مصدر التمويل</th>
       <th style="color:#fff">الكلفة</th>
       <th style="color:#fff;text-align:center">نسبة الإنجاز</th>
       <th style="color:#fff;text-align:center">الحالة</th>
@@ -4353,6 +4969,7 @@ ${sortedKeys.map(key=>{
         <td style="color:#666">${p.id}</td>
         <td style="font-weight:700">${p.bayan_mashrou||'—'}</td>
         <td>${overviewTab==='muta'?(p.qita||'—'):(p.muta_madiyya||'—')}</td>
+        <td style="color:#2563EB;font-weight:700">${p.tamwil_mashrou||'—'}</td>
         <td style="color:#c8960c;font-weight:700">${fmtKulfa(p.kulfa)}</td>
         <td style="text-align:center;font-weight:700;color:${barColor(n)}">${n}%</td>
         <td style="text-align:center">${n>=100?'✅ منجز':n===0?'⏳ لم يبدأ':'🔧 جارٍ'}</td>
@@ -4368,6 +4985,327 @@ ${sortedKeys.map(key=>{
   const win = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
   win.document.write(html);
   win.document.close();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 📄 تصدير نظرة عامة — PDF
+// ═══════════════════════════════════════════════════════════════════
+async function exportOverviewPDF() {
+  let projects = await dbGetAll();
+  const filterMuta   = (document.getElementById('ov-filter-muta')?.value||'').trim();
+  const filterQita   = (document.getElementById('ov-filter-qita')?.value||'').trim();
+  const filterTamwil = (document.getElementById('ov-filter-tamwil')?.value||'').trim();
+  const filterSana   = (document.getElementById('ov-filter-sana')?.value||'').trim();
+  if (filterMuta)   projects = projects.filter(p=>(p.muta_madiyya||'').trim()===filterMuta);
+  if (filterQita)   projects = projects.filter(p=>(p.qita||'').trim()===filterQita);
+  if (filterTamwil) projects = projects.filter(p=>(p.tamwil_mashrou||'').trim()===filterTamwil);
+  if (filterSana)   projects = projects.filter(p=>String(p.sana_barmaja||'').trim()===filterSana);
+  if (!projects.length) { showNotification('لا توجد مشاريع', 'error'); return; }
+
+  const groupKey   = overviewTab === 'muta' ? 'muta_madiyya' : 'qita';
+  const groupLabel = overviewTab === 'muta' ? 'المعتمدية' : 'القطاع';
+  const groupIcon  = overviewTab === 'muta' ? '🏙️' : '🏗️';
+  const secLabel   = overviewTab === 'muta' ? 'القطاع' : 'المعتمدية';
+  const parseCost = v => { if(!v)return null; const n=parseFloat(String(v).replace(/[^\d.]/g,'')); return isNaN(n)?null:n; };
+  const fmtKulfa  = v => { if(!v)return '—'; const n=parseCost(v); return n!==null?n.toLocaleString('ar-TN',{minimumFractionDigits:3,maximumFractionDigits:3})+' د.ت':String(v); };
+  const sumKulfa  = arr => { const t=arr.reduce((s,p)=>{const n=parseCost(p.kulfa);return s+(n||0);},0); return t?t.toLocaleString('ar-TN',{minimumFractionDigits:3,maximumFractionDigits:3})+' د.ت':'—'; };
+  const barColor  = v => v>=100?'#059669':v>=50?'#2563EB':v>0?'#d97706':'#dc2626';
+  const fmtPct    = v => Math.round(v)+'%';
+
+  const groups = {};
+  projects.forEach(p => { const k=(p[groupKey]||'').trim()||'(غير محدد)'; if(!groups[k])groups[k]=[]; groups[k].push(p); });
+  // ترتيب المشاريع داخل كل مجموعة تنازلياً حسب الكلفة
+  Object.keys(groups).forEach(k => {
+    groups[k].sort((a,b) => (parseCost(b.kulfa)||0) - (parseCost(a.kulfa)||0));
+  });
+  // ترتيب المجموعات تنازلياً حسب إجمالي كلفتها
+  const sortedKeys = Object.keys(groups).sort((a,b) => {
+    const ca = groups[a].reduce((s,p)=>s+(parseCost(p.kulfa)||0),0);
+    const cb = groups[b].reduce((s,p)=>s+(parseCost(p.kulfa)||0),0);
+    return cb - ca;
+  });
+  const avgProg = projects.reduce((s,p)=>s+(parseInt(p.nisbat_injaz)||0),0)/projects.length;
+  const printDate = new Date().toLocaleDateString('ar-TN',{year:'numeric',month:'long',day:'numeric'});
+
+  const html = `<!DOCTYPE html><html lang="ar" dir="rtl">
+<head><meta charset="UTF-8"><title>نظرة عامة — PDF</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Amiri',serif;font-size:12px;direction:rtl;background:#fff;color:#111}
+  .ctrl{position:fixed;top:0;left:0;right:0;background:#dc2626;padding:8px 16px;display:flex;gap:10px;align-items:center;z-index:999}
+  .ctrl button{padding:6px 16px;border:none;border-radius:6px;cursor:pointer;font-family:'Amiri',serif;font-size:14px;font-weight:700}
+  .content{margin-top:50px;padding:16px;max-width:900px;margin-left:auto;margin-right:auto}
+  .hdr{text-align:center;padding:10px 0 14px;border-bottom:3px double #1a3a5c;margin-bottom:16px}
+  .hdr h1{font-size:17px;color:#1a3a5c;margin-top:5px}
+  .hdr p{font-size:12px;color:#666;margin-top:4px}
+  .stats-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;justify-content:center}
+  .sb{border:1.5px solid #ccc;border-radius:7px;padding:8px 14px;text-align:center;min-width:100px}
+  .sn{font-size:20px;font-weight:700}.sl{font-size:11px;color:#666;margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:16px}
+  th{background:#1a3a5c;color:#fff;padding:7px 8px;text-align:right}
+  td{padding:5px 8px;border:1px solid #ddd}
+  tr:nth-child(even) td{background:#f9f7f2}
+  .grp-hdr{background:#1a3a5c;color:#fff;padding:7px 12px;border-radius:4px 4px 0 0;font-weight:700;margin-top:14px;font-size:13px}
+  @media print{.ctrl{display:none!important}.content{margin-top:0!important}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style></head><body>
+<div class="ctrl">
+  <button onclick="savePDF()" id="btnSave" style="background:#fff;color:#dc2626">💾 حفظ PDF</button>
+  <button onclick="window.print()" style="background:#1a3a5c;color:#fff">🖨️ طباعة</button>
+  <button onclick="window.close()" style="background:rgba(255,255,255,0.2);color:#fff">✕ إغلاق</button>
+  <span style="color:rgba(255,255,255,0.8);font-size:13px;margin-right:8px">📄 تصدير PDF — نظرة عامة على المشاريع</span>
+</div>
+<div class="content" id="pdfContent">
+  <div class="hdr">
+    <div style="font-size:13px;font-weight:700;color:#1a3a5c">الجمهورية التونسية — وزارة الداخلية — ولاية صفاقس</div>
+    <h1>🔭 نظرة عامة على المشاريع العمومية — حسب ${groupLabel}</h1>
+    <p>تاريخ التصدير: ${printDate} — إجمالي: ${projects.length} مشروع</p>
+  </div>
+  <div class="stats-row">
+    <div class="sb"><div class="sn" style="color:#1a3a5c">${projects.length}</div><div class="sl">إجمالي المشاريع</div></div>
+    <div class="sb"><div class="sn" style="color:${barColor(avgProg)}">${fmtPct(avgProg)}</div><div class="sl">متوسط الإنجاز</div></div>
+    <div class="sb"><div class="sn" style="color:#059669">${projects.filter(p=>(parseInt(p.nisbat_injaz)||0)>=100).length}</div><div class="sl">✅ منجزة</div></div>
+    <div class="sb"><div class="sn" style="color:#2563EB">${projects.filter(p=>{const n=parseInt(p.nisbat_injaz)||0;return n>0&&n<100;}).length}</div><div class="sl">🔧 جارية</div></div>
+    <div class="sb"><div class="sn" style="color:#dc2626">${projects.filter(p=>(parseInt(p.nisbat_injaz)||0)===0).length}</div><div class="sl">⏳ لم تبدأ</div></div>
+    <div class="sb"><div class="sn" style="color:#c8960c">${sumKulfa(projects)}</div><div class="sl">إجمالي الكلفة</div></div>
+  </div>
+  <table>
+    <thead><tr><th>${groupLabel}</th><th>عدد المشاريع</th><th>إجمالي الكلفة</th><th>متوسط الإنجاز</th><th>منجزة ✅</th><th>جارية 🔧</th><th>لم تبدأ ⏳</th></tr></thead>
+    <tbody>${sortedKeys.map(key=>{
+      const g=groups[key];
+      const ga=g.reduce((s,p)=>s+(parseInt(p.nisbat_injaz)||0),0)/g.length;
+      return `<tr><td style="font-weight:700">${key}</td><td style="text-align:center">${g.length}</td><td style="color:#c8960c;font-weight:700">${sumKulfa(g)}</td>
+        <td style="text-align:center;color:${barColor(ga)};font-weight:700">${fmtPct(ga)}</td>
+        <td style="text-align:center;color:#059669;font-weight:700">${g.filter(p=>(parseInt(p.nisbat_injaz)||0)>=100).length}</td>
+        <td style="text-align:center;color:#2563EB;font-weight:700">${g.filter(p=>{const n=parseInt(p.nisbat_injaz)||0;return n>0&&n<100;}).length}</td>
+        <td style="text-align:center;color:#dc2626;font-weight:700">${g.filter(p=>(parseInt(p.nisbat_injaz)||0)===0).length}</td></tr>`;
+    }).join('')}</tbody>
+  </table>
+  ${sortedKeys.map(key=>{
+    const g=groups[key];
+    return `<div class="grp-hdr">${groupIcon} ${key} — ${g.length} مشروع | ${sumKulfa(g)}</div>
+    <table style="margin-bottom:0;page-break-inside:avoid">
+      <thead><tr style="background:#2563EB">
+        <th style="color:#fff">#</th><th style="color:#fff">بيان المشروع</th>
+        <th style="color:#fff">${secLabel}</th><th style="color:#fff">مصدر التمويل</th>
+        <th style="color:#fff">الكلفة</th>
+        <th style="color:#fff;text-align:center">الإنجاز</th><th style="color:#fff;text-align:center">الحالة</th>
+      </tr></thead>
+      <tbody>${g.map((p,i)=>{
+        const n=parseInt(p.nisbat_injaz)||0;
+        return `<tr${i%2===1?' style="background:#f9f7f2"':''}><td style="color:#666;white-space:nowrap">${p.id}</td>
+          <td style="font-weight:700">${p.bayan_mashrou||'—'}</td>
+          <td>${overviewTab==='muta'?(p.qita||'—'):(p.muta_madiyya||'—')}</td>
+          <td style="color:#2563EB;font-weight:700">${p.tamwil_mashrou||'—'}</td>
+          <td style="color:#c8960c;font-weight:700;white-space:nowrap">${fmtKulfa(p.kulfa)}</td>
+          <td style="text-align:center;font-weight:700;color:${barColor(n)}">${n}%</td>
+          <td style="text-align:center">${n>=100?'✅ منجز':n===0?'⏳ لم يبدأ':'🔧 جارٍ'}</td></tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  }).join('')}
+</div>
+<script>
+async function savePDF(){
+  const btn=document.getElementById('btnSave');
+  btn.disabled=true;btn.textContent='⏳ جاري التحضير...';
+  const el=document.getElementById('pdfContent');
+  const opt={
+    margin:[8,8,8,8],
+    filename:'نظرة_عامة_المشاريع_${new Date().toISOString().split('T')[0]}.pdf',
+    image:{type:'jpeg',quality:0.95},
+    html2canvas:{scale:2,useCORS:true,logging:false},
+    jsPDF:{unit:'mm',format:'a4',orientation:'landscape'},
+    pagebreak:{mode:['avoid-all','css','legacy']}
+  };
+  try{await html2pdf().set(opt).from(el).save();}catch(e){}
+  btn.disabled=false;btn.textContent='💾 حفظ PDF';
+}
+<\/script>
+</body></html>`;
+
+  const win=window.open('','_blank','width=1000,height=760,scrollbars=yes');
+  if(!win){showNotification('⚠️ يرجى السماح بالنوافذ المنبثقة','error');return;}
+  win.document.write(html);win.document.close();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 📊 تصدير نظرة عامة — PPTX (PptxGenJS via CDN)
+// ═══════════════════════════════════════════════════════════════════
+async function exportOverviewPPTX() {
+  let projects = await dbGetAll();
+  const filterMuta   = (document.getElementById('ov-filter-muta')?.value||'').trim();
+  const filterQita   = (document.getElementById('ov-filter-qita')?.value||'').trim();
+  const filterTamwil = (document.getElementById('ov-filter-tamwil')?.value||'').trim();
+  const filterSana   = (document.getElementById('ov-filter-sana')?.value||'').trim();
+  if (filterMuta)   projects = projects.filter(p=>(p.muta_madiyya||'').trim()===filterMuta);
+  if (filterQita)   projects = projects.filter(p=>(p.qita||'').trim()===filterQita);
+  if (filterTamwil) projects = projects.filter(p=>(p.tamwil_mashrou||'').trim()===filterTamwil);
+  if (filterSana)   projects = projects.filter(p=>String(p.sana_barmaja||'').trim()===filterSana);
+  if (!projects.length) { showNotification('لا توجد مشاريع', 'error'); return; }
+
+  showNotification('⏳ جاري إنشاء ملف PPTX...');
+
+  const groupKey   = overviewTab === 'muta' ? 'muta_madiyya' : 'qita';
+  const groupLabel = overviewTab === 'muta' ? 'المعتمدية' : 'القطاع';
+  const groupIcon  = overviewTab === 'muta' ? '🏙️' : '🏗️';
+  const secLabel   = overviewTab === 'muta' ? 'القطاع' : 'المعتمدية';
+  const parseCost  = v => { if(!v)return 0; const n=parseFloat(String(v).replace(/[^\d.]/g,'')); return isNaN(n)?0:n; };
+  const fmtKulfa   = v => { const n=parseCost(v); return n?n.toLocaleString('ar-TN',{minimumFractionDigits:3,maximumFractionDigits:3})+' د.ت':'—'; };
+  const sumKulfa   = arr => { const t=arr.reduce((s,p)=>s+parseCost(p.kulfa),0); return t?t.toLocaleString('ar-TN',{minimumFractionDigits:3,maximumFractionDigits:3})+' د.ت':'—'; };
+  const barColor   = v => v>=100?'059669':v>=50?'2563EB':v>0?'d97706':'dc2626';
+  const fmtPct     = v => Math.round(v)+'%';
+
+  const groups = {};
+  projects.forEach(p => { const k=(p[groupKey]||'').trim()||'(غير محدد)'; if(!groups[k])groups[k]=[]; groups[k].push(p); });
+  // ترتيب المشاريع داخل كل مجموعة تنازلياً حسب الكلفة
+  Object.keys(groups).forEach(k => {
+    groups[k].sort((a,b) => (parseCost(b.kulfa)||0) - (parseCost(a.kulfa)||0));
+  });
+  // ترتيب المجموعات تنازلياً حسب إجمالي كلفتها
+  const sortedKeys = Object.keys(groups).sort((a,b) => {
+    const ca = groups[a].reduce((s,p)=>s+(parseCost(p.kulfa)||0),0);
+    const cb = groups[b].reduce((s,p)=>s+(parseCost(p.kulfa)||0),0);
+    return cb - ca;
+  });
+  const avgProg    = projects.reduce((s,p)=>s+(parseInt(p.nisbat_injaz)||0),0)/projects.length;
+  const printDate  = new Date().toLocaleDateString('ar-TN',{year:'numeric',month:'long',day:'numeric'});
+
+  // Load PptxGenJS dynamically
+  if (!window.PptxGenJS) {
+    await new Promise((res,rej) => {
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundled.js';
+      s.onload=res; s.onerror=rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  const pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE'; // 13.33" x 7.5"
+  pptx.rtl    = true;
+
+  const C = { navy:'1a3a5c', gold:'c8960c', white:'FFFFFF', light:'f0ece3', green:'059669', blue:'2563EB', red:'dc2626', amber:'d97706' };
+
+  // ── Slide 1 : Titre ──────────────────────────────────────────────────────────
+  const s1 = pptx.addSlide();
+  s1.background = { color: C.navy };
+  s1.addText('الجمهورية التونسية — وزارة الداخلية', { x:0.3,y:0.4,w:'93%',h:0.45,fontSize:16,color:C.white,align:'center',fontFace:'Arial' });
+  s1.addText('ولاية صفاقس — مصلحة التنمية', { x:0.3,y:0.85,w:'93%',h:0.35,fontSize:13,color:'f0c040',align:'center',fontFace:'Arial' });
+  s1.addShape(pptx.ShapeType.line, { x:1,y:1.35,w:11.33,h:0,line:{color:C.gold,width:2} });
+  s1.addText('نظرة عامة على المشاريع العمومية', { x:0.3,y:1.6,w:'93%',h:0.8,fontSize:32,color:C.gold,align:'center',bold:true,fontFace:'Arial' });
+  s1.addText(`حسب ${groupLabel}`, { x:0.3,y:2.5,w:'93%',h:0.45,fontSize:18,color:C.white,align:'center',fontFace:'Arial' });
+  s1.addText(`تاريخ التصدير: ${printDate}`, { x:0.3,y:6.8,w:'93%',h:0.35,fontSize:12,color:'aaaaaa',align:'center',fontFace:'Arial' });
+
+  // ── Slide 2 : إحصائيات عامة ──────────────────────────────────────────────────
+  const s2 = pptx.addSlide();
+  s2.background = { color: C.light };
+  s2.addText('📊 الإحصائيات العامة', { x:0.3,y:0.15,w:'93%',h:0.5,fontSize:20,color:C.navy,bold:true,fontFace:'Arial',align:'center' });
+  s2.addShape(pptx.ShapeType.rect, { x:0.3,y:0.72,w:12.73,h:0.04,fill:{color:C.navy} });
+
+  const stats = [
+    { label:'إجمالي المشاريع', val:String(projects.length), color:C.navy },
+    { label:'متوسط الإنجاز',   val:fmtPct(avgProg),         color:barColor(avgProg) },
+    { label:'منجزة ✅',         val:String(projects.filter(p=>(parseInt(p.nisbat_injaz)||0)>=100).length), color:C.green },
+    { label:'جارية الإنجاز 🔧', val:String(projects.filter(p=>{const n=parseInt(p.nisbat_injaz)||0;return n>0&&n<100;}).length), color:C.blue },
+    { label:'لم تبدأ ⏳',       val:String(projects.filter(p=>(parseInt(p.nisbat_injaz)||0)===0).length), color:C.red },
+    { label:'إجمالي الكلفة',   val:sumKulfa(projects),       color:C.gold },
+  ];
+  const bw=2.0, bh=1.6, startX=0.35, startY=1.0, gap=0.17;
+  stats.forEach((st,i) => {
+    const col=i%6, rx=startX+col*(bw+gap);
+    s2.addShape(pptx.ShapeType.rect, { x:rx,y:startY,w:bw,h:bh,fill:{color:'ffffff'},line:{color:'cccccc',width:1},shadow:{type:'outer',blur:4,offset:2,angle:45,color:'888888',opacity:0.2} });
+    s2.addText(st.val, { x:rx,y:startY+0.15,w:bw,h:0.9,fontSize:i===5?16:26,bold:true,color:st.color,align:'center',fontFace:'Arial' });
+    s2.addText(st.label, { x:rx,y:startY+1.05,w:bw,h:0.45,fontSize:11,color:'555555',align:'center',fontFace:'Arial' });
+  });
+
+  // Barre de progression globale
+  s2.addText('نسبة الإنجاز الإجمالية:', { x:0.35,y:2.85,w:3,h:0.35,fontSize:13,bold:true,color:C.navy,fontFace:'Arial' });
+  s2.addShape(pptx.ShapeType.rect, { x:3.5,y:2.97,w:9.5,h:0.18,fill:{color:'e5e7eb'},line:{color:'dddddd',width:1} });
+  const fillW = Math.max(0.1, 9.5*(avgProg/100));
+  s2.addShape(pptx.ShapeType.rect, { x:3.5,y:2.97,w:fillW,h:0.18,fill:{color:barColor(avgProg)} });
+  s2.addText(fmtPct(avgProg), { x:3.5,y:3.17,w:9.5,h:0.3,fontSize:11,bold:true,color:barColor(avgProg),align:'right',fontFace:'Arial' });
+
+  // ── Slide 3 : جدول التلخيص ───────────────────────────────────────────────────
+  const s3 = pptx.addSlide();
+  s3.background = { color: C.light };
+  s3.addText(`${groupIcon} تلخيص حسب ${groupLabel}`, { x:0.3,y:0.1,w:'93%',h:0.5,fontSize:20,color:C.navy,bold:true,fontFace:'Arial',align:'center' });
+  s3.addShape(pptx.ShapeType.rect, { x:0.3,y:0.65,w:12.73,h:0.04,fill:{color:C.navy} });
+
+  const tblData = [
+    [
+      {text:groupLabel,   options:{bold:true,color:C.white,fill:C.navy,align:'right',fontFace:'Arial'}},
+      {text:'عدد المشاريع',options:{bold:true,color:C.white,fill:C.navy,align:'center',fontFace:'Arial'}},
+      {text:'إجمالي الكلفة',options:{bold:true,color:C.white,fill:C.navy,align:'right',fontFace:'Arial'}},
+      {text:'متوسط الإنجاز',options:{bold:true,color:C.white,fill:C.navy,align:'center',fontFace:'Arial'}},
+      {text:'منجزة ✅',      options:{bold:true,color:C.white,fill:C.navy,align:'center',fontFace:'Arial'}},
+      {text:'جارية 🔧',     options:{bold:true,color:C.white,fill:C.navy,align:'center',fontFace:'Arial'}},
+      {text:'لم تبدأ ⏳',   options:{bold:true,color:C.white,fill:C.navy,align:'center',fontFace:'Arial'}},
+    ],
+    ...sortedKeys.map((key,i) => {
+      const g=groups[key];
+      const ga=g.reduce((s,p)=>s+(parseInt(p.nisbat_injaz)||0),0)/g.length;
+      const fill=i%2===0?'ffffff':'f5f0ea';
+      return [
+        {text:key,     options:{color:'111111',fill,align:'right',bold:true,fontFace:'Arial'}},
+        {text:String(g.length), options:{color:C.navy,fill,align:'center',fontFace:'Arial'}},
+        {text:sumKulfa(g), options:{color:C.gold,fill,align:'right',bold:true,fontFace:'Arial'}},
+        {text:fmtPct(ga),  options:{color:barColor(ga),fill,align:'center',bold:true,fontFace:'Arial'}},
+        {text:String(g.filter(p=>(parseInt(p.nisbat_injaz)||0)>=100).length), options:{color:C.green,fill,align:'center',bold:true,fontFace:'Arial'}},
+        {text:String(g.filter(p=>{const n=parseInt(p.nisbat_injaz)||0;return n>0&&n<100;}).length), options:{color:C.blue,fill,align:'center',bold:true,fontFace:'Arial'}},
+        {text:String(g.filter(p=>(parseInt(p.nisbat_injaz)||0)===0).length), options:{color:C.red,fill,align:'center',bold:true,fontFace:'Arial'}},
+      ];
+    })
+  ];
+  s3.addTable(tblData, {
+    x:0.3, y:0.75, w:12.73,
+    rowH:0.38, fontSize:12,
+    border:{type:'solid',color:'cccccc',pt:1},
+    autoPage:true, autoPageRepeatHeader:true
+  });
+
+  // ── Slides par groupe ─────────────────────────────────────────────────────────
+  sortedKeys.forEach(key => {
+    const g    = groups[key];
+    const gAvg = Math.round(g.reduce((s,p)=>s+(parseInt(p.nisbat_injaz)||0),0)/g.length);
+    const sl   = pptx.addSlide();
+    sl.background = { color: C.light };
+    sl.addShape(pptx.ShapeType.rect, { x:0,y:0,w:13.33,h:0.72,fill:{color:C.navy} });
+    sl.addText(`${groupIcon} ${key}`, { x:0.3,y:0.05,w:9,h:0.42,fontSize:18,color:C.white,bold:true,fontFace:'Arial' });
+    sl.addText(`${g.length} مشروع  |  ${sumKulfa(g)}  |  ${gAvg}% متوسط الإنجاز`, { x:0.3,y:0.48,w:12.73,h:0.24,fontSize:11,color:'f0c040',fontFace:'Arial' });
+
+    const rows = [
+      [
+        {text:'#',           options:{bold:true,color:C.white,fill:'2563EB',align:'center',fontFace:'Arial'}},
+        {text:'بيان المشروع',options:{bold:true,color:C.white,fill:'2563EB',align:'right',fontFace:'Arial'}},
+        {text:secLabel,      options:{bold:true,color:C.white,fill:'2563EB',align:'right',fontFace:'Arial'}},
+        {text:'الكلفة',      options:{bold:true,color:C.white,fill:'2563EB',align:'right',fontFace:'Arial'}},
+        {text:'الإنجاز',     options:{bold:true,color:C.white,fill:'2563EB',align:'center',fontFace:'Arial'}},
+        {text:'الحالة',      options:{bold:true,color:C.white,fill:'2563EB',align:'center',fontFace:'Arial'}},
+      ],
+      ...g.map((p,i) => {
+        const n=parseInt(p.nisbat_injaz)||0;
+        const fill=i%2===0?'ffffff':'f5f0ea';
+        const status=n>=100?'✅ منجز':n===0?'⏳ لم يبدأ':'🔧 جارٍ';
+        return [
+          {text:String(p.id), options:{color:'888888',fill,align:'center',fontSize:10,fontFace:'Arial'}},
+          {text:p.bayan_mashrou||'—', options:{color:'111111',fill,bold:true,align:'right',fontSize:10,fontFace:'Arial'}},
+          {text:overviewTab==='muta'?(p.qita||'—'):(p.muta_madiyya||'—'), options:{color:'555555',fill,align:'right',fontSize:10,fontFace:'Arial'}},
+          {text:fmtKulfa(p.kulfa), options:{color:C.gold,fill,bold:true,align:'right',fontSize:10,fontFace:'Arial'}},
+          {text:String(n)+'%', options:{color:barColor(n),fill,bold:true,align:'center',fontSize:11,fontFace:'Arial'}},
+          {text:status, options:{color:'333333',fill,align:'center',fontSize:10,fontFace:'Arial'}},
+        ];
+      })
+    ];
+    sl.addTable(rows, { x:0.3,y:0.82,w:12.73,rowH:0.33,fontSize:10,border:{type:'solid',color:'dddddd',pt:1},autoPage:true,autoPageRepeatHeader:true });
+  });
+
+  try {
+    await pptx.writeFile({ fileName: `نظرة_عامة_المشاريع_${new Date().toISOString().split('T')[0]}.pptx` });
+    showNotification('✅ تم تصدير ملف PPTX بنجاح');
+  } catch(e) {
+    showNotification('❌ فشل إنشاء PPTX: ' + e.message, 'error');
+  }
 }
 
 function openPrintModal(forceOpt, forceId) {
@@ -4689,6 +5627,26 @@ function buildPrintableCard(p, numero) {
 
     ${buildItimadatMuhalaPrintHTML(p)}
 
+    ${p.jalasat_mutaba && p.jalasat_mutaba.length ? `
+    <div style="margin:8px 8px 0;padding:10px 12px;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:6px">
+      <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px;border-bottom:1px solid #fcd34d;padding-bottom:6px">
+        📅 جلسات المتابعة (${p.jalasat_mutaba.length} جلسة)
+      </div>
+      ${p.jalasat_mutaba.filter(Boolean).map((r, i) => {
+        const dateStr = r.tarikh_jalasa ? new Date(r.tarikh_jalasa).toLocaleDateString('ar-TN', {year:'numeric',month:'long',day:'numeric'}) : '—';
+        const hadhirun = (r.hadhirun||[]).filter(Boolean);
+        if (!hadhirun.length && (r.hadirin_ism||r.hadirin_laqab))
+          hadhirun.push({ism:r.hadirin_ism||'',laqab:r.hadirin_laqab||'',sifa:r.hadirin_safaa||''});
+        return `<div style="border:1px solid #fcd34d;border-radius:5px;padding:8px 10px;margin-bottom:6px;background:#fff">
+          <div style="font-weight:700;font-size:12px;color:#92400e;margin-bottom:5px">📅 جلسة #${i+1} — ${dateStr}${r.muhdar_link ? ` &nbsp;|&nbsp; <a href="${r.muhdar_link}" style="color:#1d4ed8;font-size:11px">📄 محضر الجلسة</a>` : ''}</div>
+          ${hadhirun.length ? `<div style="margin-bottom:4px"><b style="font-size:11px;color:#a16207">👥 الحاضرون: </b><span style="font-size:11px">${hadhirun.map(p=>`${p.ism||''} ${p.laqab||''}${p.sifa?' ('+p.sifa+')':''}`).join(' — ')}</span></div>` : ''}
+          ${r.ishkaliyat ? `<div style="margin-bottom:3px"><b style="font-size:11px;color:#b45309">⚠️ الإشكاليات: </b><span style="font-size:11px">${r.ishkaliyat}</span></div>` : ''}
+          ${r.hulul_mutakhadha ? `<div style="margin-bottom:3px"><b style="font-size:11px;color:#065f46">✅ الحلول المتخذة: </b><span style="font-size:11px">${r.hulul_mutakhadha}</span></div>` : ''}
+          ${r.hulul_muqtaraha ? `<div><b style="font-size:11px;color:#1e40af">💡 الحلول المقترحة: </b><span style="font-size:11px">${r.hulul_muqtaraha}</span></div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+
     <div style="margin:0 8px 8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
       <div style="background:#c8960c;color:#1a1209;border-radius:12px;padding:3px 12px;font-size:11px;font-weight:700">
         🔖 ${ref}
@@ -4877,7 +5835,7 @@ async function confirmDelete() {
   closeModal();
   deleteId = null;
   currentProjectId = null;
-  showNotification('🗑️ تم حذف المشروع بنجاح'); updateFawadilBadge();
+  showNotification('🗑️ تم حذف المشروع بنجاح'); updateFawadilBadge(); updateUnallocatedBadge();
   allProjects = await dbGetAll();
   updateSidebar(allProjects);
   showView('dashboard');
@@ -4937,7 +5895,7 @@ async function importDB(event) {
     n++;
   }
   allProjects = await dbGetAll();
-  showNotification(`تم استيراد ${n} مشروع بنجاح`); updateFawadilBadge();
+  showNotification(`تم استيراد ${n} مشروع بنجاح`); updateFawadilBadge(); updateUnallocatedBadge();
   await loadDashboard(); showView('dashboard');
 }
 
@@ -5681,7 +6639,6 @@ async function propDbGetAll() {
   if (SUPABASE_ONLINE) {
     try {
       const rows = await _sb.select('proposals');
-      // Sync cache
       const tx = db.transaction('proposals', 'readwrite');
       tx.objectStore('proposals').clear();
       for (const r of rows) tx.objectStore('proposals').put(r);
@@ -5696,8 +6653,8 @@ async function propDbPut(p) {
   if (SUPABASE_ONLINE) {
     try {
       let saved;
-      if (p.id) { saved = await _sb.update('proposals', p.id, {...p}); }
-      else { const q = {...p}; delete q.id; saved = await _sb.insert('proposals', q); }
+      if (p.id) { saved = await _sb.update('proposals', p.id, { ...p }); }
+      else { const q = { ...p }; delete q.id; saved = await _sb.insert('proposals', q); }
       if (saved) { p.id = saved.id; await _propIdbPut(saved); return saved.id; }
     } catch(e) { console.warn('[Supabase] propDbPut error', e); }
   }
@@ -5715,6 +6672,349 @@ let allProposals = [];
 let _currentPropId = null;
 
 // ── Load & render ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════
+// 🖨️ طباعة اعتمادات غير محالة
+// ═══════════════════════════════════════════════════════════════════
+function printUnallocated() {
+  const tbody = document.getElementById('unallocatedTableBody');
+  if (!tbody || tbody.querySelector('td[colspan]')) {
+    showNotification('لا توجد بيانات للطباعة', 'error'); return;
+  }
+  const total  = document.getElementById('unal-stat-total').textContent;
+  const kulfa  = document.getElementById('unal-stat-kulfa').textContent;
+  const muhala = document.getElementById('unal-stat-muhala').textContent;
+  const diff   = document.getElementById('unal-stat-diff').textContent;
+  const date   = new Date().toLocaleDateString('ar-TN', { year:'numeric', month:'long', day:'numeric' });
+  const rows   = tbody.innerHTML;
+
+  const html = `<!DOCTYPE html><html lang="ar" dir="rtl">
+<head><meta charset="UTF-8"><title>اعتمادات غير محالة</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Amiri',serif;font-size:12px;direction:rtl;background:#fff;color:#111;padding:20px}
+  .hdr{text-align:center;padding:10px 0 14px;border-bottom:3px double #1a3a5c;margin-bottom:16px}
+  .hdr h1{font-size:17px;color:#1a3a5c;margin-top:5px}
+  .hdr p{font-size:12px;color:#666;margin-top:4px}
+  .stats{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;justify-content:center}
+  .sb{border:1.5px solid #ccc;border-radius:7px;padding:8px 16px;text-align:center;min-width:110px}
+  .sn{font-size:20px;font-weight:700}.sl{font-size:11px;color:#666;margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:11px}
+  th{background:#1a3a5c;color:#fff;padding:7px 8px;text-align:right}
+  td{padding:6px 8px;border:1px solid #ddd;vertical-align:middle}
+  tr:nth-child(even) td{background:#f9f7f2}
+  .diff{color:#dc2626;font-weight:800}
+  .cost{color:#c8960c;font-weight:700}
+  .muhala{color:#2563EB;font-weight:700}
+  .pct{font-weight:700}
+  @media print{body{padding:10px}button{display:none!important}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style></head><body>
+<div class="hdr">
+  <div style="font-size:13px;font-weight:700;color:#1a3a5c">الجمهورية التونسية — وزارة الداخلية — ولاية صفاقس</div>
+  <h1>⚠️ قائمة المشاريع ذات الاعتمادات غير المحالة</h1>
+  <p>تاريخ الإصدار: ${date} — إجمالي: ${total} مشروع</p>
+</div>
+<div class="stats">
+  <div class="sb"><div class="sn" style="color:#dc2626">${total}</div><div class="sl">مشاريع معنية</div></div>
+  <div class="sb"><div class="sn" style="color:#c8960c;font-size:14px">${kulfa}</div><div class="sl">مجموع الكلفة</div></div>
+  <div class="sb"><div class="sn" style="color:#2563EB;font-size:14px">${muhala}</div><div class="sl">الاعتمادات المحالة</div></div>
+  <div class="sb"><div class="sn" style="color:#dc2626;font-size:14px">${diff}</div><div class="sl">الفارق غير المحال</div></div>
+</div>
+<table>
+  <thead><tr>
+    <th>#</th><th>بيان المشروع</th><th>المعتمدية</th><th>القطاع</th>
+    <th>الكلفة (د.ت)</th><th>الاعتمادات المحالة (د.ت)</th><th>الفارق (د.ت)</th><th>نسبة الإنجاز</th>
+  </tr></thead>
+  <tbody>${rows}</tbody>
+</table>
+<div style="margin-top:40px;display:flex;justify-content:space-between;font-size:12px;color:#555">
+  <div>توقيع المسؤول: _______________________</div>
+  <div>الختم الرسمي</div>
+</div>
+<script>window.onload=()=>window.print()<\/script>
+</body></html>`;
+
+  const win = window.open('', '_blank', 'width=1000,height=720');
+  if (!win) { showNotification('⚠️ يرجى السماح بالنوافذ المنبثقة', 'error'); return; }
+  win.document.write(html);
+  win.document.close();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 📄 تصدير PDF — اعتمادات غير محالة
+// ═══════════════════════════════════════════════════════════════════
+function exportUnallocatedPDF() {
+  const tbody = document.getElementById('unallocatedTableBody');
+  if (!tbody || tbody.querySelector('td[colspan]')) {
+    showNotification('لا توجد بيانات للتصدير', 'error'); return;
+  }
+  const total  = document.getElementById('unal-stat-total').textContent;
+  const kulfa  = document.getElementById('unal-stat-kulfa').textContent;
+  const muhala = document.getElementById('unal-stat-muhala').textContent;
+  const diff   = document.getElementById('unal-stat-diff').textContent;
+  const date   = new Date().toLocaleDateString('ar-TN', { year:'numeric', month:'long', day:'numeric' });
+  const dateSlug = new Date().toISOString().split('T')[0];
+  const rows   = tbody.innerHTML;
+
+  const html = `<!DOCTYPE html><html lang="ar" dir="rtl">
+<head><meta charset="UTF-8"><title>اعتمادات غير محالة — PDF</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Amiri',serif;font-size:12px;direction:rtl;background:#fff;color:#111}
+  .ctrl{position:fixed;top:0;left:0;right:0;background:#dc2626;padding:8px 16px;display:flex;gap:10px;align-items:center;z-index:999}
+  .ctrl button{padding:6px 16px;border:none;border-radius:6px;cursor:pointer;font-family:'Amiri',serif;font-size:14px;font-weight:700}
+  .content{margin-top:52px;padding:16px;max-width:1050px;margin-left:auto;margin-right:auto}
+  .hdr{text-align:center;padding:10px 0 14px;border-bottom:3px double #1a3a5c;margin-bottom:16px}
+  .hdr h1{font-size:17px;color:#1a3a5c;margin-top:5px}
+  .hdr p{font-size:12px;color:#666;margin-top:4px}
+  .stats{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;justify-content:center}
+  .sb{border:1.5px solid #ccc;border-radius:7px;padding:8px 14px;text-align:center;min-width:100px}
+  .sn{font-size:18px;font-weight:700}.sl{font-size:11px;color:#666;margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:11px}
+  th{background:#1a3a5c;color:#fff;padding:7px 8px;text-align:right}
+  td{padding:5px 8px;border:1px solid #ddd;vertical-align:middle}
+  tr:nth-child(even) td{background:#f9f7f2}
+  td button{display:none}
+  .sign{margin-top:40px;display:flex;justify-content:space-between;font-size:12px;color:#555}
+  @media print{.ctrl{display:none!important}.content{margin-top:0!important}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style></head><body>
+<div class="ctrl">
+  <button onclick="savePDF()" id="btnSave" style="background:#fff;color:#dc2626">💾 حفظ PDF</button>
+  <button onclick="window.print()" style="background:#1a3a5c;color:#fff">🖨️ طباعة</button>
+  <button onclick="window.close()" style="background:rgba(255,255,255,0.2);color:#fff">✕ إغلاق</button>
+  <span style="color:rgba(255,255,255,0.85);font-size:13px;margin-right:8px">📄 اعتمادات غير محالة — ${date}</span>
+</div>
+<div class="content" id="pdfContent">
+  <div class="hdr">
+    <div style="font-size:13px;font-weight:700;color:#1a3a5c">الجمهورية التونسية — وزارة الداخلية — ولاية صفاقس</div>
+    <h1>⚠️ قائمة المشاريع ذات الاعتمادات غير المحالة</h1>
+    <p>تاريخ الإصدار: ${date} — إجمالي: ${total} مشروع</p>
+  </div>
+  <div class="stats">
+    <div class="sb"><div class="sn" style="color:#dc2626">${total}</div><div class="sl">مشاريع معنية</div></div>
+    <div class="sb"><div class="sn" style="color:#c8960c;font-size:13px">${kulfa}</div><div class="sl">مجموع الكلفة</div></div>
+    <div class="sb"><div class="sn" style="color:#2563EB;font-size:13px">${muhala}</div><div class="sl">الاعتمادات المحالة</div></div>
+    <div class="sb"><div class="sn" style="color:#dc2626;font-size:13px">${diff}</div><div class="sl">الفارق غير المحال</div></div>
+  </div>
+  <table>
+    <thead><tr>
+      <th>#</th><th>بيان المشروع</th><th>المعتمدية</th><th>القطاع</th>
+      <th>الكلفة (د.ت)</th><th>الاعتمادات المحالة (د.ت)</th><th>الفارق (د.ت)</th><th>نسبة الإنجاز</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="sign">
+    <div>توقيع المسؤول: _______________________</div>
+    <div>الختم الرسمي</div>
+  </div>
+</div>
+<script>
+async function savePDF() {
+  const btn = document.getElementById('btnSave');
+  btn.disabled = true; btn.textContent = '⏳ جاري التحضير...';
+  const opt = {
+    margin: [8,6,8,6],
+    filename: 'اعتمادات_غير_محالة_${dateSlug}.pdf',
+    image: { type:'jpeg', quality:0.95 },
+    html2canvas: { scale:2, useCORS:true, logging:false },
+    jsPDF: { unit:'mm', format:'a4', orientation:'landscape' },
+    pagebreak: { mode:['avoid-all','css','legacy'] }
+  };
+  try { await html2pdf().set(opt).from(document.getElementById('pdfContent')).save(); }
+  catch(e) { alert('خطأ: ' + e.message); }
+  btn.disabled = false; btn.textContent = '💾 حفظ PDF';
+}
+<\/script>
+</body></html>`;
+
+  const win = window.open('', '_blank', 'width=1050,height=760,scrollbars=yes');
+  if (!win) { showNotification('⚠️ يرجى السماح بالنوافذ المنبثقة', 'error'); return; }
+  win.document.write(html);
+  win.document.close();
+}
+// ═══════════════════════════════════════════════════════════════════
+async function loadUnallocated() {
+  const projects = await dbGetAll();
+
+  // Parsing robuste : supporte "1 234,500" "1.234.500" "1234.500" etc.
+  const pNum = v => {
+    if (!v) return 0;
+    let s = String(v).trim();
+    // Remove currency suffix
+    s = s.replace(/د\.ت|DT|TND/gi, '').trim();
+    // If contains both dot and comma → French format: 1.234,56 → remove dots, replace comma
+    if (s.includes('.') && s.includes(',')) {
+      s = s.replace(/\./g, '').replace(',', '.');
+    } else if (s.includes(',') && !s.includes('.')) {
+      // Could be 1234,56 or 1.234 (thousands sep comma)
+      const parts = s.split(',');
+      s = parts.length === 2 && parts[1].length <= 3 ? s.replace(',', '.') : s.replace(/,/g, '');
+    } else {
+      // Remove space thousands separators
+      s = s.replace(/\s/g, '');
+    }
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+  };
+
+  function sumTahhud(p) {
+    if (!p.itimadat_muhala || !Array.isArray(p.itimadat_muhala)) return 0;
+    return p.itimadat_muhala.reduce((s, row) => s + pNum(row.itimad_tahhud_muhal), 0);
+  }
+
+  // Filtre : nisbat = 100% (ou clôturé) ET kulfa > aعتمادات محالة (y compris si muhala = 0)
+  const filtered = projects.filter(p => {
+    const nisbat = parseInt(p.nisbat_injaz) || 0;
+    const isFini = nisbat >= 100 || !!p.cloture;
+    if (!isFini) return false;
+    const kulfa = pNum(p.kulfa);
+    if (kulfa <= 0) return false;           // pas de koulfa → exclure
+    const muhala = sumTahhud(p);
+    return kulfa > muhala;                  // kulfa > muhala (même si muhala = 0)
+  });
+
+  // Tri tนazliyyan حسب الفارق الأكبر
+  filtered.sort((a, b) => {
+    const dA = pNum(a.kulfa) - sumTahhud(a);
+    const dB = pNum(b.kulfa) - sumTahhud(b);
+    return dB - dA;
+  });
+
+  const totalKulfa  = filtered.reduce((s, p) => s + pNum(p.kulfa), 0);
+  const totalMuhala = filtered.reduce((s, p) => s + sumTahhud(p), 0);
+  const totalDiff   = totalKulfa - totalMuhala;
+  const fmt = v => v > 0 ? v.toLocaleString('ar-TN', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' د.ت' : '—';
+
+  document.getElementById('unal-stat-total').textContent  = filtered.length;
+  document.getElementById('unal-stat-kulfa').textContent  = fmt(totalKulfa);
+  document.getElementById('unal-stat-muhala').textContent = fmt(totalMuhala);
+  document.getElementById('unal-stat-diff').textContent   = fmt(totalDiff);
+
+  const tbody = document.getElementById('unallocatedTableBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:#059669;font-weight:700">✅ لا توجد مشاريع منجزة بكلفة تتجاوز الاعتمادات المحالة</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(p => {
+    const kulfa  = pNum(p.kulfa);
+    const muhala = sumTahhud(p);
+    const diff   = kulfa - muhala;
+    const nisbat = parseInt(p.nisbat_injaz) || 0;
+    return `<tr>
+      <td>${p.id}</td>
+      <td style="font-weight:700">${p.bayan_mashrou || '—'}</td>
+      <td>${p.muta_madiyya || '—'}</td>
+      <td>${p.qita || '—'}</td>
+      <td style="color:var(--accent);font-weight:700">${fmt(kulfa)}</td>
+      <td style="color:#2563EB;font-weight:700">${muhala > 0 ? fmt(muhala) : '<span style="color:#dc2626;font-weight:700">غير محال</span>'}</td>
+      <td style="color:#dc2626;font-weight:800">${fmt(diff)}</td>
+      <td style="text-align:center"><span style="font-weight:700;color:${nisbat>=100?'#059669':'#d97706'}">${nisbat}%</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-primary btn-sm" onclick="viewProject(${p.id})">👁️ عرض</button>
+        <button class="btn btn-warning btn-sm" onclick="editProject(${p.id})">✏️ تعديل</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 🗓️ المشاريع المبرمجة — PROGRAMMED PROJECTS
+// ═══════════════════════════════════════════════════════════════════
+let allProgrammed = [];
+
+async function loadProgrammed() {
+  const projects = await dbGetAll();
+  allProgrammed = projects.filter(p => p.is_programmed);
+  updateProgrammedStats(allProgrammed);
+  renderProgrammedTable(allProgrammed);
+}
+
+function updateProgrammedStats(list) {
+  document.getElementById('prg-stat-total').textContent = list.length;
+  const total = list.reduce((s, p) => {
+    const n = parseFloat(String(p.aitimed_mubarmaj || '').replace(/[^\d.]/g, '')) || 0;
+    return s + n;
+  }, 0);
+  document.getElementById('prg-stat-cost').textContent =
+    total > 0 ? total.toLocaleString('ar-TN', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) : '—';
+}
+
+function renderProgrammedTable(list) {
+  const tbody = document.getElementById('programmedTableBody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">لا توجد مشاريع مبرمجة مسجّلة</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(p => {
+    const cost = parseFloat(String(p.aitimed_mubarmaj || '').replace(/[^\d.]/g, '')) || 0;
+    const costFmt = cost > 0 ? cost.toLocaleString('ar-TN', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) + ' د.ت' : (p.aitimed_mubarmaj || '—');
+    return `<tr>
+      <td>${p.id}</td>
+      <td style="font-weight:700">${p.bayan_mashrou || '—'}</td>
+      <td>${p.qita || '—'}</td>
+      <td>${p.muta_madiyya || '—'}</td>
+      <td style="color:var(--accent);font-weight:700">${costFmt}</td>
+      <td>${p.sana_barmaja || '—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-warning btn-sm" onclick="editProject(${p.id})">✏️ تعديل</button>
+        <button class="btn btn-primary btn-sm" onclick="viewProject(${p.id})">👁️ عرض</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDeleteProject(${p.id})">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openProgrammedForm() {
+  ['prg-bayan','prg-qita','prg-iaitimed','prg-muta','prg-sana'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('programmedModal').style.display = 'flex';
+}
+
+function closeProgrammedForm() {
+  document.getElementById('programmedModal').style.display = 'none';
+}
+
+async function saveProgrammed() {
+  const bayan = document.getElementById('prg-bayan').value.trim();
+  const qita  = document.getElementById('prg-qita').value.trim();
+  const muta  = document.getElementById('prg-muta').value.trim();
+  const ait   = document.getElementById('prg-iaitimed').value.trim();
+  const sana  = document.getElementById('prg-sana').value.trim();
+
+  if (!bayan || !qita || !muta) {
+    showNotification('⚠️ يرجى ملء الحقول الإجبارية (البيان، القطاع، المعتمدية)', 'error');
+    return;
+  }
+
+  // Créer directement dans la liste principale des projets
+  const newProject = {
+    bayan_mashrou    : bayan,
+    qita             : qita,
+    muta_madiyya     : muta,
+    aitimed_mubarmaj : ait,
+    sana_barmaja     : sana,
+    nisbat_injaz     : 0,
+    is_programmed    : true,
+    created_at       : new Date().toISOString(),
+    updated_at       : new Date().toISOString(),
+  };
+
+  try {
+    const newId = await dbPut(newProject);
+    closeProgrammedForm();
+    showNotification(`✅ تم إضافة المشروع المبرمج إلى قائمة المشاريع (رقم: ${newId})`);
+    await loadProgrammed();
+    await loadDashboard();
+  } catch(e) {
+    showNotification('❌ خطأ في الحفظ: ' + e.message, 'error');
+  }
+}
+
 async function loadProposals() {
   allProposals = await propDbGetAll();
   allProposals.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
@@ -5811,6 +7111,35 @@ function updatePropNavBadge(n) {
   }
   badge.textContent = n || '';
   badge.style.display = n ? '' : 'none';
+}
+
+async function updateUnallocatedBadge() {
+  try {
+    const projects = await dbGetAll();
+    const pNum = v => parseFloat(String(v || '').replace(/[^\d.]/g, '')) || 0;
+    const sumTahhud = p => {
+      if (!p.itimadat_muhala || !Array.isArray(p.itimadat_muhala)) return 0;
+      return p.itimadat_muhala.reduce((s, r) => s + pNum(r.itimad_tahhud_muhal), 0);
+    };
+    const count = projects.filter(p => {
+      const n = parseInt(p.nisbat_injaz) || 0;
+      if (n < 100 && !p.cloture) return false;
+      const kulfa = pNum(p.kulfa);
+      return kulfa > 0 && kulfa > sumTahhud(p);
+    }).length;
+
+    const btn = document.getElementById('nav-unallocated');
+    if (!btn) return;
+    let badge = btn.querySelector('.unal-badge');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.className = 'unal-badge';
+      badge.style.cssText = 'background:#dc2626;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-right:4px;font-weight:700';
+      btn.appendChild(badge);
+    }
+    badge.textContent = count || '';
+    badge.style.display = count ? '' : 'none';
+  } catch(e) {}
 }
 
 // ── Form ──────────────────────────────────────────────────────────────────────
@@ -6429,6 +7758,98 @@ buildPrintableCard = function(p, numero) {
   return originalCard.slice(0, lastClosePh) + photosSection + originalCard.slice(lastClosePh);
 };
 
+// ══════════════════════════════════════════════════════════════
+// PATCH : Première page d'impression = Grand titre (bayan_mashrou)
+//         + toutes les photos du projet (triées par date)
+// ══════════════════════════════════════════════════════════════
+var _origBuildPrintableCardCoverPage = buildPrintableCard;
+buildPrintableCard = function(p, numero) {
+  var originalCard = _origBuildPrintableCardCoverPage(p, numero);
+
+  // Construire la page de couverture
+  var sujet = p.bayan_mashrou || '';
+
+  // Photos triées par date
+  var photoCover = '';
+  if (Array.isArray(p.photos) && p.photos.length) {
+    var sortedPh = p.photos.slice().sort(function(a, b) {
+      return (a.date || '9999-99-99').localeCompare(b.date || '9999-99-99');
+    });
+    photoCover += '<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:flex-start;margin-top:20px">';
+    sortedPh.forEach(function(ph) {
+      photoCover += '<div style="display:flex;flex-direction:column;align-items:center;gap:5px;page-break-inside:avoid">'
+        + '<img src="' + ph.data + '" style="width:200px;height:160px;object-fit:cover;border:2px solid #1a3a5c;border-radius:6px;-webkit-print-color-adjust:exact;print-color-adjust:exact;" alt="">'
+        + '<div style="font-size:11px;color:#1a3a5c;font-weight:700;background:#e8f0fb;padding:2px 10px;border-radius:10px">'
+        + (ph.date ? formatDate(ph.date) : '—') + '</div>'
+        + '</div>';
+    });
+    photoCover += '</div>';
+  }
+
+  var coverPage = '<div style="'
+    + 'width:100%;min-height:260mm;'
+    + 'display:flex;flex-direction:column;align-items:center;justify-content:center;'
+    + 'page-break-after:always;break-after:page;'
+    + 'padding:30px 20px;'
+    + 'font-family:\'Amiri\',serif;direction:rtl;'
+    + 'background:#fff;'
+    + '">'
+    // En-tête officielle mini (logo + titre conseil)
+    + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;border-bottom:2px solid #1a3a5c;padding-bottom:14px;width:100%">'
+    + '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH6AQGDh0RNVxjzQAAADRJREFUaN7tyEENAAAIAzDil374e3MICNB0TwAAAAAAAAAAAAAAAAAAAAAAAABAAB/gAAEAQFAAAABJRU5ErkJggg==" '
+    + 'style="width:44px;height:44px;border-radius:50%;border:2px solid #1a3a5c;flex-shrink:0" alt="شعار" onerror="this.style.display=\'none\'">'
+    + '<div style="text-align:center;flex:1">'
+    + '<div style="font-size:13px;font-weight:700;color:#1a3a5c">الجمهورية التونسية — المجلس الجهوي لصفاقس</div>'
+    + '<div style="font-size:11px;color:#666;margin-top:2px">بطاقـة مشـروع عمومي</div>'
+    + '</div>'
+    + '</div>'
+    // Grand titre = sujet du projet
+    + (sujet
+      ? '<div style="'
+        + 'font-size:28px;font-weight:900;color:#1a3a5c;'
+        + 'text-align:center;line-height:1.5;'
+        + 'border:3px solid #f0c040;border-radius:10px;'
+        + 'padding:18px 28px;margin:0 auto 10px;'
+        + 'background:linear-gradient(135deg,#f8faff 0%,#e8f0fb 100%);'
+        + 'max-width:90%;'
+        + '-webkit-print-color-adjust:exact;print-color-adjust:exact;'
+        + '">' + sujet + '</div>'
+      : '<div style="font-size:18px;color:#999;margin-bottom:10px">— مشروع بدون عنوان —</div>'
+    )
+    // Numéro et ref projet
+    + '<div style="font-size:13px;color:#666;margin-bottom:14px">'
+    + 'المشروع رقم: <strong>' + (numero || p.id) + '</strong>'
+    + (p.ref_annee ? '&nbsp;|&nbsp;السنة: <strong>' + p.ref_annee + '</strong>' : '')
+    + '</div>'
+    // Sous-titres : coût global + taux d'avancement
+    + '<div style="display:flex;gap:20px;justify-content:center;align-items:stretch;flex-wrap:wrap;margin-bottom:10px">'
+    // Coût global
+    + '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid #059669;border-radius:10px;padding:12px 24px;min-width:160px;background:linear-gradient(135deg,#f0fdf4 0%,#d1fae5 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
+    + '<div style="font-size:11px;color:#059669;font-weight:700;margin-bottom:4px">💰 الكلفة الإجمالية</div>'
+    + '<div style="font-size:20px;font-weight:900;color:#065f46">' + (p.kulfa ? p.kulfa : '—') + '</div>'
+    + '</div>'
+    // Taux d'avancement
+    + (function() {
+        var nisbat = parseInt(p.nisbat_injaz) || 0;
+        var color  = nisbat >= 100 ? '#7c3aed' : nisbat >= 60 ? '#2563eb' : nisbat >= 30 ? '#d97706' : '#dc2626';
+        var bgFrom = nisbat >= 100 ? '#f5f3ff'  : nisbat >= 60 ? '#eff6ff'  : nisbat >= 30 ? '#fffbeb'  : '#fef2f2';
+        var bgTo   = nisbat >= 100 ? '#ede9fe'  : nisbat >= 60 ? '#dbeafe'  : nisbat >= 30 ? '#fef3c7'  : '#fee2e2';
+        return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid ' + color + ';border-radius:10px;padding:12px 24px;min-width:160px;background:linear-gradient(135deg,' + bgFrom + ' 0%,' + bgTo + ' 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
+          + '<div style="font-size:11px;color:' + color + ';font-weight:700;margin-bottom:4px">📊 نسبة الإنجاز</div>'
+          + '<div style="font-size:20px;font-weight:900;color:' + color + '">' + nisbat + ' %</div>'
+          + '<div style="width:120px;height:8px;background:#e5e7eb;border-radius:4px;margin-top:6px;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
+          + '<div style="width:' + Math.min(nisbat,100) + '%;height:100%;background:' + color + ';border-radius:4px"></div>'
+          + '</div>'
+          + '</div>';
+      })()
+    + '</div>'
+    // Photos
+    + photoCover
+    + '</div>';
+
+  return coverPage + originalCard;
+};
+
 openPrintWindow = async function(projects, babLabel, babType) {
   var titleSuffix = babLabel
     ? ' — ' + (babType==='dirassat'?'باب الدراسات':'باب الأشغال') + ': ' + babLabel
@@ -6849,6 +8270,8 @@ function deleteLajnahRecord(idx) {
 }
 
 function renderLajnahList() {
+  window.currentLajnahRecords = lajnahRecords;
+  if (typeof updateDirassatBtnBadge === 'function') updateDirassatBtnBadge();
   const container = document.getElementById('lajnahList');
   if (!container) return;
   if (!lajnahRecords.length) {
@@ -6922,6 +8345,9 @@ function submitAdminReqForm() {
 // ═══════════════════════════════════════════════════════════════════
 // Les mots de passe ne sont JAMAIS stockés ni comparés en clair.
 // Seul le hash SHA-256 est conservé dans localStorage.
+// Aucun mot de passe par défaut n'est codé en dur dans la source :
+// au premier lancement (aucun compte admin), l'app impose la création
+// d'un mot de passe choisi par l'utilisateur (voir doInitialSetup()).
 
 const ADMIN_EMAIL        = 'projetsfax';
 const ADMIN_NOTIFY_EMAIL = 'celluletuneps.sfax@gmail.com';
@@ -6929,7 +8355,7 @@ const AUTH_USERS_KEY     = 'auth_approved_users';
 const AUTH_REQS_KEY      = 'auth_access_requests';
 const AUTH_SESSION_KEY   = 'auth_session';
 
-// ── Hash SHA-256 (Web Crypto, natif, sans dépendance) ───────────────
+// ── Hash SHA-256 simple (legacy, conservé pour compat ascendante) ───
 async function hashPassword(plain) {
   const encoder = new TextEncoder();
   const data    = encoder.encode(plain);
@@ -6937,10 +8363,54 @@ async function hashPassword(plain) {
   return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Hash de référence pour le mot de passe admin par défaut (pré-calculé)
-// echo -n "hamza0000" | sha256sum → valeur ci-dessous
-const ADMIN_DEFAULT_HASH = '63ef3b7ac92a741a2d3d7f62e4a09f5c8b1c6d2e7f3a84b9c1d5e6f0a2b3c4d';
-// Note: cette constante est recalculée dynamiquement au bootstrap ci-dessous
+// ── Hash renforcé PBKDF2-SHA256 (100 000 itérations, sel aléatoire) ──
+// Beaucoup plus résistant au bruteforce/GPU qu'un SHA-256 nu. Disponible
+// nativement via Web Crypto, donc aucune dépendance externe nécessaire.
+function bufToHex(buf) { return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join(''); }
+function hexToBuf(hex)  { const a = new Uint8Array(hex.length/2); for (let i=0;i<a.length;i++) a[i] = parseInt(hex.substr(i*2,2),16); return a; }
+
+async function hashPasswordStrong(plain, saltHex) {
+  const enc = new TextEncoder();
+  const salt = saltHex ? hexToBuf(saltHex) : crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(plain), { name: 'PBKDF2' }, false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    keyMaterial, 256
+  );
+  return { algo: 'pbkdf2', salt: bufToHex(salt), hash: bufToHex(bits) };
+}
+
+// Vérifie un mot de passe contre un enregistrement stocké. Supporte :
+//  - le nouveau format objet { algo:'pbkdf2', salt, hash }
+//  - l'ancien format string (hash SHA-256 simple), pour compat ascendante
+// Retourne { valid, needsUpgrade } — needsUpgrade indique qu'il faut
+// migrer ce compte vers PBKDF2 après une connexion réussie.
+async function verifyPassword(plain, stored) {
+  if (!stored) return { valid: false, needsUpgrade: false };
+  if (typeof stored === 'object' && stored.algo === 'pbkdf2') {
+    const attempt = await hashPasswordStrong(plain, stored.salt);
+    return { valid: attempt.hash === stored.hash, needsUpgrade: false };
+  }
+  // Ancien format : simple hash SHA-256 (string)
+  const legacyHash = await hashPassword(plain);
+  return { valid: legacyHash === stored, needsUpgrade: legacyHash === stored };
+}
+
+// ── Génération de mot de passe aléatoire sécurisé ───────────────────
+// Utilise crypto.getRandomValues (CSPRNG) au lieu de Math.random().
+// 10 caractères parmi un alphabet de 32 symboles (sans caractères ambigus
+// comme 0/O, 1/l/I) → environ 50 bits d'entropie, largement suffisant
+// pour résister au bruteforce, contre ~13 bits pour 'sfaxNNNN'.
+function generateSecurePassword() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  const bytes = new Uint32Array(10);
+  crypto.getRandomValues(bytes);
+  let pwd = '';
+  for (let i = 0; i < bytes.length; i++) {
+    pwd += alphabet[bytes[i] % alphabet.length];
+  }
+  return pwd;
+}
 
 function authGetUsers()     { try { return JSON.parse(localStorage.getItem(AUTH_USERS_KEY)   || '[]');    } catch(e) { return []; } }
 function authSaveUsers(u)   { try { localStorage.setItem(AUTH_USERS_KEY,   JSON.stringify(u)); } catch(e){} }
@@ -6949,46 +8419,99 @@ function authSaveRequests(r){ try { localStorage.setItem(AUTH_REQS_KEY,    JSON.
 function authGetSession()   { try { return JSON.parse(localStorage.getItem(AUTH_SESSION_KEY) || 'null');  } catch(e) { return null; } }
 function authSaveSession(s) { try { localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(s)); } catch(e){} }
 
+// authBootstrap() ne crée plus de compte admin avec un mot de passe par
+// défaut. Elle se contente de migrer les anciens comptes en clair vers
+// un hash, et signale si un compte admin existe déjà ou non.
+// Le retour indique si l'écran de "première installation" doit s'afficher.
 async function authBootstrap() {
-  const adminHash = await hashPassword('hamza0000');
-  const users     = authGetUsers();
-  const adminIdx  = users.findIndex(u => u.email === ADMIN_EMAIL);
+  const users    = authGetUsers();
+  const adminIdx = users.findIndex(u => u.email === ADMIN_EMAIL);
+
   if (adminIdx === -1) {
-    users.push({
-      email: ADMIN_EMAIL, name: 'المسؤول — خلية صفاقس',
-      passwordHash: adminHash, role: 'admin',
-      createdAt: new Date().toISOString()
-    });
-  } else {
-    users[adminIdx].role = 'admin';
-    // Migrate plain-text password to hash if needed
-    if (users[adminIdx].password && !users[adminIdx].passwordHash) {
-      users[adminIdx].passwordHash = await hashPassword(users[adminIdx].password);
-      delete users[adminIdx].password;
-    }
-    if (!users[adminIdx].passwordHash) users[adminIdx].passwordHash = adminHash;
+    // Aucun admin enregistré → première installation, aucun secret créé ici.
+    authSaveUsers(users);
+    return { needsSetup: true };
   }
+
+  // Migration d'un éventuel ancien mot de passe en clair vers un hash fort (PBKDF2).
+  if (users[adminIdx].password && !users[adminIdx].passwordHash) {
+    users[adminIdx].passwordHash = await hashPasswordStrong(users[adminIdx].password);
+    delete users[adminIdx].password;
+  }
+  users[adminIdx].role = 'admin';
   authSaveUsers(users);
+
+  // Si, malgré tout, l'admin existe sans aucun hash (état corrompu / ancienne
+  // version), on demande aussi une nouvelle création de mot de passe plutôt
+  // que d'utiliser une valeur par défaut.
+  if (!users[adminIdx].passwordHash) return { needsSetup: true };
+  return { needsSetup: false };
 }
 
-// 🔑 Reset admin password — demande la nouvelle valeur, la hache, jamais stockée en clair
-async function authResetAdmin() {
-  if (!confirm('إعادة تعيين كلمة مرور المسؤول إلى القيمة الافتراضية ؟')) return;
-  const adminHash = await hashPassword('hamza0000');
-  const users     = authGetUsers();
-  const adminIdx  = users.findIndex(u => u.email === ADMIN_EMAIL);
-  if (adminIdx === -1) {
-    users.push({ email: ADMIN_EMAIL, name: 'المسؤول — خلية صفاقس', passwordHash: adminHash, role: 'admin', createdAt: new Date().toISOString() });
-  } else {
-    users[adminIdx].passwordHash = adminHash;
-    users[adminIdx].role = 'admin';
-    delete users[adminIdx].password; // remove any legacy plain-text
+// 🛡️ Création du mot de passe admin au premier lancement.
+// Remplace l'ancien comportement qui réinitialisait vers 'hamza0000'.
+async function doInitialSetup() {
+  const pwd  = document.getElementById('setup-password').value  || '';
+  const pwd2 = document.getElementById('setup-password2').value || '';
+
+  if (pwd.length < 8) {
+    authMsg('setup-msg', 'error', 'يجب أن تتكوّن كلمة المرور من 8 أحرف على الأقل.');
+    return;
   }
+  if (pwd !== pwd2) {
+    authMsg('setup-msg', 'error', 'كلمتا المرور غير متطابقتين.');
+    return;
+  }
+
+  const pwdHash = await hashPasswordStrong(pwd);
+  const users   = authGetUsers();
+  const idx     = users.findIndex(u => u.email === ADMIN_EMAIL);
+  const adminRecord = {
+    email: ADMIN_EMAIL, name: 'المسؤول — خلية صفاقس',
+    passwordHash: pwdHash, role: 'admin',
+    createdAt: new Date().toISOString()
+  };
+  if (idx === -1) users.push(adminRecord);
+  else { users[idx] = { ...users[idx], ...adminRecord }; }
   authSaveUsers(users);
-  localStorage.removeItem('auth_session');
-  document.getElementById('login-email').value    = ADMIN_EMAIL;
-  document.getElementById('login-password').value = '';
-  authMsg('login-msg', 'success', '✅ تمت إعادة التعيين. أدخل كلمة المرور الافتراضية.');
+
+  // Effacer les champs immédiatement après usage.
+  document.getElementById('setup-password').value  = '';
+  document.getElementById('setup-password2').value = '';
+
+  authMsg('setup-msg', 'success', '✅ تم إنشاء حساب المسؤول بنجاح. يمكنك الآن تسجيل الدخول.');
+  setTimeout(() => {
+    document.getElementById('panel-setup').classList.remove('active');
+    document.getElementById('panel-login').classList.add('active');
+    const tabsRow = document.getElementById('auth-tabs-row');
+    if (tabsRow) tabsRow.style.display = '';
+    document.getElementById('login-email').value = ADMIN_EMAIL;
+  }, 900);
+}
+
+// 🔑 Réinitialisation du mot de passe admin — ne restaure plus jamais une
+// valeur par défaut codée en dur. Renvoie l'utilisateur vers l'écran de
+// création de mot de passe (panel-setup) pour qu'il en choisisse un nouveau.
+function authResetAdmin() {
+  if (!confirm('سيتم حذف كلمة مرور المسؤول الحالية وطلب إنشاء كلمة مرور جديدة. متابعة؟')) return;
+  const users    = authGetUsers();
+  const adminIdx = users.findIndex(u => u.email === ADMIN_EMAIL);
+  if (adminIdx !== -1) {
+    delete users[adminIdx].passwordHash;
+    delete users[adminIdx].password; // purge de tout résidu en clair
+    authSaveUsers(users);
+  }
+  localStorage.removeItem(AUTH_SESSION_KEY);
+  authClearAttempts(ADMIN_EMAIL);
+
+  document.getElementById('panel-login').classList.remove('active');
+  document.getElementById('panel-request').classList.remove('active');
+  const gp = document.getElementById('panel-guest');
+  if (gp) gp.classList.remove('active');
+  document.getElementById('panel-setup').classList.add('active');
+  const tabsRow = document.getElementById('auth-tabs-row');
+  if (tabsRow) tabsRow.style.display = 'none';
+  authMsg('setup-msg', 'info', 'يرجى إنشاء كلمة مرور جديدة للمسؤول.');
 }
 
 function authCheckSession() {
@@ -7073,25 +8596,80 @@ function isValidEmail(e) {
   return e.indexOf('@') > 0 && e.indexOf('.') > 0;
 }
 
+// ── Anti-bruteforce côté client (dissuasif, pas une vraie protection) ──
+// Limite à 5 tentatives par identifiant, puis verrouillage progressif.
+// NOTE: contournable en effaçant localStorage — ne remplace pas un vrai
+// rate-limiting serveur, qui nécessiterait un backend (voir limites connues).
+const LOGIN_ATTEMPTS_KEY = 'auth_login_attempts';
+function authGetAttempts()   { try { return JSON.parse(localStorage.getItem(LOGIN_ATTEMPTS_KEY) || '{}'); } catch(e) { return {}; } }
+function authSaveAttempts(a) { try { localStorage.setItem(LOGIN_ATTEMPTS_KEY, JSON.stringify(a)); } catch(e){} }
+
+function authLockoutMsRemaining(email) {
+  const a = authGetAttempts()[email];
+  if (!a || !a.lockedUntil) return 0;
+  return Math.max(0, a.lockedUntil - Date.now());
+}
+
+function authRegisterFailedAttempt(email) {
+  const all = authGetAttempts();
+  const a = all[email] || { count: 0, lockedUntil: 0 };
+  a.count = (a.count || 0) + 1;
+  // Verrouillage progressif : 5 tentatives → 30s, 8 → 2min, 10+ → 5min
+  if (a.count >= 10) a.lockedUntil = Date.now() + 5 * 60 * 1000;
+  else if (a.count >= 8) a.lockedUntil = Date.now() + 2 * 60 * 1000;
+  else if (a.count >= 5) a.lockedUntil = Date.now() + 30 * 1000;
+  all[email] = a;
+  authSaveAttempts(all);
+}
+
+function authClearAttempts(email) {
+  const all = authGetAttempts();
+  delete all[email];
+  authSaveAttempts(all);
+}
+
 async function doLogin() {
   const email    = (document.getElementById('login-email').value    || '').trim().toLowerCase();
   const password = (document.getElementById('login-password').value || '').trim();
   if (!email || !password) { authMsg('login-msg','error','يرجى ملء جميع الحقول'); return; }
+
+  const remainingMs = authLockoutMsRemaining(email);
+  if (remainingMs > 0) {
+    const sec = Math.ceil(remainingMs / 1000);
+    authMsg('login-msg','error','⏳ عدد محاولات كبير. يرجى الانتظار '+sec+' ثانية قبل إعادة المحاولة.');
+    return;
+  }
+
   const users = authGetUsers();
   const user  = users.find(u => u.email.toLowerCase() === email);
   if (!user) { authMsg('login-msg','error','المعرّف غير مسجّل. يرجى طلب صلاحية أولاً.'); return; }
 
   // Migrate legacy plain-text password on first login
   if (user.password && !user.passwordHash) {
-    user.passwordHash = await hashPassword(user.password);
+    user.passwordHash = await hashPasswordStrong(user.password);
     delete user.password;
     const allUsers = authGetUsers();
     const idx = allUsers.findIndex(u => u.email === user.email);
     if (idx !== -1) { allUsers[idx] = user; authSaveUsers(allUsers); }
   }
 
-  const inputHash = await hashPassword(password);
-  if (user.passwordHash !== inputHash) { authMsg('login-msg','error','كلمة المرور غير صحيحة.'); return; }
+  const { valid, needsUpgrade } = await verifyPassword(password, user.passwordHash);
+  if (!valid) {
+    authRegisterFailedAttempt(email);
+    authMsg('login-msg','error','كلمة المرور غير صحيحة.');
+    return;
+  }
+
+  // Migration transparente : ancien hash SHA-256 simple → PBKDF2 renforcé.
+  if (needsUpgrade) {
+    user.passwordHash = await hashPasswordStrong(password);
+    const allUsers = authGetUsers();
+    const idx = allUsers.findIndex(u => u.email === user.email);
+    if (idx !== -1) { allUsers[idx] = user; authSaveUsers(allUsers); }
+  }
+
+  // Connexion réussie : réinitialiser le compteur de tentatives.
+  authClearAttempts(email);
 
   // Clear password field immediately after use
   document.getElementById('login-password').value = '';
@@ -7415,8 +8993,8 @@ async function approveRequest(id) {
   const reqs = authGetRequests();
   const req  = reqs.find(r => r.id === id);
   if (!req) return;
-  const pwd  = 'sfax' + Math.floor(1000 + Math.random() * 9000);
-  const pwdHash = await hashPassword(pwd);
+  const pwd  = generateSecurePassword();
+  const pwdHash = await hashPasswordStrong(pwd);
 
   // Lire les permissions choisies par l'admin
   const qitaChecks   = document.querySelectorAll('#perm-qita-'+id+' input[type=checkbox]:checked');
@@ -7479,8 +9057,8 @@ function resendPassword(id) {
   const req  = reqs.find(r => r.id === id);
   if (!req) return;
   // Generate and hash a new password
-  const pwd = 'sfax' + Math.floor(1000 + Math.random() * 9000);
-  hashPassword(pwd).then(pwdHash => {
+  const pwd = generateSecurePassword();
+  hashPasswordStrong(pwd).then(pwdHash => {
     const users = authGetUsers();
     const user  = users.find(u => u.email === req.email);
     if (user) { user.passwordHash = pwdHash; delete user.password; authSaveUsers(users); }
@@ -8137,10 +9715,25 @@ function closeBigProjectInfo() {
 // Chargement des grands projets — intégré dans le patch mobile (voir section MOBILE APP UTILITIES)
 
 async function initAuth() {
-  await authBootstrap();
+  const { needsSetup } = await authBootstrap();
   authPopulateReqForm();
+  if (needsSetup) {
+    // Aucun compte admin : forcer la création du mot de passe, masquer login/request/guest.
+    document.getElementById('auth-overlay').classList.remove('hidden');
+    document.getElementById('panel-login').classList.remove('active');
+    document.getElementById('panel-request').classList.remove('active');
+    const gp = document.getElementById('panel-guest');
+    if (gp) gp.classList.remove('active');
+    document.getElementById('panel-setup').classList.add('active');
+    const tabsRow = document.getElementById('auth-tabs-row');
+    if (tabsRow) tabsRow.style.display = 'none';
+    return;
+  }
+  // Admin déjà configuré : flux normal, écran de setup invisible.
+  document.getElementById('panel-setup').classList.remove('active');
   if (!authCheckSession()) {
     document.getElementById('auth-overlay').classList.remove('hidden');
+    document.getElementById('panel-login').classList.add('active');
   }
 }
 
@@ -8476,12 +10069,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   updateSyncIndicator();
 
   // ── Tentative de chargement automatique si la base est vide ──
-  // Si Supabase est connecté, les données viennent directement du cloud
   // Seed built-in data if DB is empty
   await seedIfEmpty();
 
   const autoResult = SUPABASE_ONLINE
-    ? { loaded: false } // Supabase fournit les données via dbGetAll()
+    ? { loaded: false }
     : await autoLoadFromLocalJSON(false);
 
   if (autoResult.loaded) {
@@ -8537,7 +10129,9 @@ function updateMobileNav(view) {
     'map': '🗺️ خريطة المشاريع',
     'big-projects-map': '🗺️💼 خريطة المشاريع الكبرى',
     'overview': '🔭 نظرة عامة',
-    'proposals': '💡 المشاريع المقترحة',
+    'proposals':   '💡 المشاريع المقترحة',
+    'programmed':  '🗓️ المشاريع المبرمجة',
+    'unallocated': '⚠️ اعتمادات غير محالة',
     'detail': '📄 تفاصيل المشروع'
   };
   const titleEl = document.getElementById('mobileHeaderTitle');
