@@ -1296,8 +1296,42 @@ body.guest-mode .form-guest-lock::after {
         </div>
         <button class="auth-btn auth-btn-login" onclick="doLogin()" id="btn-login">🔑 تسجيل الدخول</button>
         <div class="auth-msg" id="login-msg"></div>
+        <div style="text-align:center;margin-top:10px">
+          <button type="button" onclick="authSwitchTab('reset')"
+            style="background:none;border:none;color:var(--primary-light);font-size:12px;cursor:pointer;text-decoration:underline;padding:0">
+            🔑 نسيت كلمة المرور؟
+          </button>
+        </div>
       </div>
       <!-- /panel-login -->
+
+      <!-- PANEL RESET MOT DE PASSE -->
+      <div class="auth-panel" id="panel-reset">
+        <div style="text-align:center;padding:4px 0 12px">
+          <div style="font-size:32px;margin-bottom:6px">🔑</div>
+          <p style="font-size:12px;color:var(--text-muted);line-height:1.6">
+            أدخل بريدك الإلكتروني المسجّل لدى المسؤول.<br>
+            سيتم فتح تطبيق البريد لإرسال طلب إعادة تعيين كلمة المرور.
+          </p>
+        </div>
+        <div class="auth-field">
+          <label>البريد الإلكتروني</label>
+          <input type="email" id="reset-email" placeholder="example@email.com" dir="ltr" style="text-align:left"
+            onkeydown="if(event.key==='Enter')doPasswordResetRequest()">
+        </div>
+        <button class="auth-btn auth-btn-request" onclick="doPasswordResetRequest()" id="btn-reset">
+          📧 إرسال طلب إعادة التعيين
+        </button>
+        <div class="auth-msg" id="reset-msg"></div>
+        <div style="text-align:center;margin-top:10px">
+          <button type="button" onclick="authSwitchTab('login')"
+            style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;text-decoration:underline;padding:0">
+            ← العودة إلى تسجيل الدخول
+          </button>
+        </div>
+      </div>
+      <!-- /panel-reset -->
+
       <div class="auth-panel" id="panel-request">
         <div class="auth-field"><label>الاسم الكامل</label><input type="text" id="req-name" placeholder="أدخل اسمك الكامل"></div>
         <div class="auth-field"><label>البريد الإلكتروني</label><input type="email" id="req-email" placeholder="example@email.com" dir="ltr" style="text-align:left"></div>
@@ -1570,7 +1604,21 @@ body.guest-mode .form-guest-lock::after {
         <div class="card-body">
           <div class="form-group" style="margin-bottom:14px">
             <label>بيان المشروع</label>
-            <textarea id="f-bayan_mashrou" placeholder="أدخل وصفاً تفصيلياً للمشروع..." rows="3"></textarea>
+            <div style="position:relative">
+              <textarea id="f-bayan_mashrou" placeholder="أدخل وصفاً تفصيلياً للمشروع..." rows="3"
+                oninput="onBayanInput(this.value)"
+                onblur="hideBayanSuggestions()"
+                style="width:100%;box-sizing:border-box"></textarea>
+              <div id="bayan-suggestions" style="
+                display:none;position:absolute;top:100%;right:0;left:0;
+                background:#fff;border:1px solid #d1d5db;border-top:none;
+                border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;
+                z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.12)"></div>
+            </div>
+            <div id="bayan-duplicate-warning" style="display:none;margin-top:6px;padding:8px 12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;color:#92400e;font-size:13px;direction:rtl">
+              ⚠️ <strong>تحذير:</strong> يوجد مشروع آخر بنفس البيان.
+              <span id="bayan-duplicate-info" style="display:block;margin-top:3px;font-size:12px;color:#78350f"></span>
+            </div>
           </div>
           <div class="form-grid" style="margin-top:10px;margin-bottom:10px">
             <div class="form-group">
@@ -2544,6 +2592,7 @@ body.guest-mode .form-guest-lock::after {
 // → Dashboard Supabase → Settings → API
 const SUPABASE_URL  = 'https://kbneplhhiwqairtvauyf.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtibmVwbGhoaXdxYWlydHZhdXlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNDYwMTgsImV4cCI6MjA5NTkyMjAxOH0.tIjqHiOd8kkCpFtElj5ylYDCvX4uL9ZXRvhHRJrJACY';
+
 // ── Client Supabase léger (fetch natif, sans SDK) ────────────────────────────
 const _sb = {
   headers: {
@@ -8576,13 +8625,18 @@ function authApplyPermFilters() {
 
 function authSwitchTab(tab) {
   const tabs = document.querySelectorAll('.auth-tab');
-  tabs[0].classList.toggle('active', tab === 'login');
-  tabs[1].classList.toggle('active', tab === 'request');
+  if (tabs[0]) tabs[0].classList.toggle('active', tab === 'login');
+  if (tabs[1]) tabs[1].classList.toggle('active', tab === 'request');
   if (tabs[2]) tabs[2].classList.toggle('active', tab === 'guest');
+  // Masquer setup panel avant de changer d'onglet
+  const sp = document.getElementById('panel-setup');
+  if (sp) sp.classList.remove('active');
   document.getElementById('panel-login').classList.toggle('active', tab === 'login');
   document.getElementById('panel-request').classList.toggle('active', tab === 'request');
   const gp = document.getElementById('panel-guest');
   if (gp) gp.classList.toggle('active', tab === 'guest');
+  const rp = document.getElementById('panel-reset');
+  if (rp) rp.classList.toggle('active', tab === 'reset');
 }
 
 function authMsg(elId, type, text) {
@@ -10520,5 +10574,89 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 
+<script>
+// ── Autocomplete بيان المشروع ─────────────────────────────────────────────
+function onBayanInput(val) {
+  const q    = (val || '').trim();
+  const box  = document.getElementById('bayan-suggestions');
+  const warn = document.getElementById('bayan-duplicate-warning');
+  const info = document.getElementById('bayan-duplicate-info');
+  if (!q || q.length < 2) {
+    if (box)  box.style.display  = 'none';
+    if (warn) warn.style.display = 'none';
+    return;
+  }
+  const lower   = q.toLowerCase();
+  const all     = (typeof allProjects !== 'undefined') ? allProjects : [];
+  const matches = all.filter(p => p.bayan_mashrou && p.bayan_mashrou.toLowerCase().includes(lower));
+  const exact   = all.find(p  => p.bayan_mashrou && p.bayan_mashrou.trim().toLowerCase() === lower);
+  const curId   = (typeof currentProjectId !== 'undefined') ? currentProjectId : '';
+  const isDup   = exact && String(exact.id) !== String(curId);
+  if (warn) {
+    warn.style.display = isDup ? '' : 'none';
+    if (isDup && info) {
+      const meta = exact.qita ? ` — القطاع: ${exact.qita}` : '';
+      info.textContent = `المشروع الموجود رقم ${exact.id}${meta}`;
+    }
+  }
+  if (!box) return;
+  if (!matches.length) { box.style.display = 'none'; return; }
+  box.innerHTML = matches.slice(0, 10).map(p => {
+    const hl  = p.bayan_mashrou.replace(
+      new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi'),
+      '<mark style="background:#fef9c3;border-radius:2px">$1</mark>'
+    );
+    const meta = [p.qita, p.muta_madiyya].filter(Boolean).join(' · ');
+    return `<div onmousedown="selectBayanSuggestion(${JSON.stringify(p.bayan_mashrou)})"
+      style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #f3f4f6;font-size:13px;direction:rtl"
+      onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background=''">
+      <div>${hl}</div>
+      ${meta ? `<div style="font-size:11px;color:#6b7280;margin-top:2px">${meta}</div>` : ''}
+    </div>`;
+  }).join('');
+  box.style.display = 'block';
+}
+
+function selectBayanSuggestion(val) {
+  const ta = document.getElementById('f-bayan_mashrou');
+  if (ta) { ta.value = val; onBayanInput(val); }
+  const box = document.getElementById('bayan-suggestions');
+  if (box) box.style.display = 'none';
+}
+
+function hideBayanSuggestions() {
+  setTimeout(() => {
+    const box = document.getElementById('bayan-suggestions');
+    if (box) box.style.display = 'none';
+  }, 200);
+}
+
+// ── Réinitialisation mot de passe par e-mail ──────────────────────────────
+async function doPasswordResetRequest() {
+  const emailInput = document.getElementById('reset-email');
+  const btn        = document.getElementById('btn-reset');
+  const email      = (emailInput ? emailInput.value : '').trim().toLowerCase();
+  if (!email) { authMsg('reset-msg','error','يرجى إدخال بريدك الإلكتروني.'); return; }
+  if (!isValidEmail(email)) { authMsg('reset-msg','error','صيغة البريد الإلكتروني غير صحيحة.'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ الفتح...'; }
+  const users     = (typeof authGetUsers === 'function') ? authGetUsers() : [];
+  const knownUser = users.find(u => (u.email || '').toLowerCase() === email);
+  const subject   = encodeURIComponent('طلب إعادة تعيين كلمة المرور — تطبيق إدارة المشاريع');
+  const body      = encodeURIComponent(
+    'السلام عليكم،\n\nأطلب إعادة تعيين كلمة المرور الخاصة بحسابي.\n\n' +
+    'البريد الإلكتروني: ' + email + '\n' +
+    (knownUser ? 'الاسم: ' + (knownUser.name || '—') + '\n' : '') +
+    '\nيرجى التواصل معي لتحديد كلمة مرور جديدة.\n\nشكراً.'
+  );
+  window.open('mailto:' + ADMIN_NOTIFY_EMAIL + '?subject=' + subject + '&body=' + body);
+  if (btn) { btn.disabled = false; btn.textContent = '📧 إرسال طلب إعادة التعيين'; }
+  authMsg('reset-msg','success','✅ تم فتح تطبيق البريد. أرسل الرسالة وسيتواصل معك المسؤول.');
+  setTimeout(() => {
+    const m = document.getElementById('reset-msg');
+    if (m && m.classList.contains('success'))
+      m.innerHTML += '<br><button onclick="authSwitchTab(\'login\')" style="margin-top:6px;background:none;border:none;color:var(--primary);text-decoration:underline;cursor:pointer;font-size:12px">← العودة إلى تسجيل الدخول</button>';
+  }, 3000);
+}
+</script>
 </body>
 </html>
