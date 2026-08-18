@@ -8505,18 +8505,73 @@ function generateSecurePassword() {
 }
 
 function authGetUsers()     { try { return JSON.parse(localStorage.getItem(AUTH_USERS_KEY)   || '[]');    } catch(e) { return []; } }
-function authSaveUsers(u)   { try { localStorage.setItem(AUTH_USERS_KEY,   JSON.stringify(u)); } catch(e){} }
+function authSaveUsers(u)   {
+  try { localStorage.setItem(AUTH_USERS_KEY,   JSON.stringify(u)); } catch(e){}
+  authPushUsersRemote(u); // synchronisation Supabase en arrière-plan (best-effort)
+}
 function authGetRequests()  { try { return JSON.parse(localStorage.getItem(AUTH_REQS_KEY)    || '[]');    } catch(e) { return []; } }
 function authSaveRequests(r){ try { localStorage.setItem(AUTH_REQS_KEY,    JSON.stringify(r)); } catch(e){} }
 function authGetSession()   { try { return JSON.parse(localStorage.getItem(AUTH_SESSION_KEY) || 'null');  } catch(e) { return null; } }
 function authSaveSession(s) { try { localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(s)); } catch(e){} }
+
+// ─────────────────────────────────────────────────────────────────────────
+// 🔄 SYNCHRONISATION DES COMPTES UTILISATEURS AVEC SUPABASE (table 'app_users')
+// Sans cette synchro, un compte créé par l'admin ne vivait que dans le
+// localStorage de SON navigateur : un autre utilisateur, sur un autre
+// appareil, ne pouvait jamais s'y connecter ("المعرّف غير مسجّل"), même avec
+// le bon identifiant/mot de passe, puisque son navigateur à lui n'avait
+// jamais entendu parler de ce compte.
+// Ces fonctions sont volontairement indépendantes du flag SUPABASE_ONLINE
+// (celui-ci n'est déterminé qu'après l'écran de connexion) : elles tentent
+// toujours l'appel réseau et retombent silencieusement sur le cache local
+// en cas d'échec (hors-ligne, table absente, etc.).
+// ⚠️ Nécessite la table 'app_users' côté Supabase — voir instructions.
+// ─────────────────────────────────────────────────────────────────────────
+async function authSyncUsersFromRemote() {
+  try {
+    const r = await fetch(_sb.url('app_users'), { headers: _sb.headers });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const rows = await r.json();
+    localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(rows));
+    return rows;
+  } catch (e) {
+    console.warn('[Supabase] authSyncUsersFromRemote → cache local', e);
+    return authGetUsers();
+  }
+}
+
+async function authPushUsersRemote(users) {
+  if (!Array.isArray(users) || !users.length) return;
+  try {
+    await fetch(_sb.url('app_users'), {
+      method: 'POST',
+      headers: { ..._sb.headers, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify(users)
+    });
+  } catch (e) {
+    console.warn('[Supabase] authPushUsersRemote failed (compte gardé en local uniquement)', e);
+  }
+}
+
+async function authDeleteUserRemote(email) {
+  try {
+    await fetch(_sb.url('app_users', `?email=eq.${encodeURIComponent(email)}`), { method: 'DELETE', headers: _sb.headers });
+  } catch (e) {
+    console.warn('[Supabase] authDeleteUserRemote failed', e);
+  }
+}
 
 // authBootstrap() ne crée plus de compte admin avec un mot de passe par
 // défaut. Elle se contente de migrer les anciens comptes en clair vers
 // un hash, et signale si un compte admin existe déjà ou non.
 // Le retour indique si l'écran de "première installation" doit s'afficher.
 async function authBootstrap() {
-  const users    = authGetUsers();
+  // ⚠️ Étape cruciale pour le multi-appareil : on essaie d'abord de récupérer
+  // la liste des comptes depuis Supabase. Sans cet appel, un appareil qui
+  // n'a jamais servi localement pourrait croire qu'aucun admin n'existe
+  // (alors qu'il existe bel et bien ailleurs) et proposer à tort l'écran de
+  // "première installation".
+  const users    = await authSyncUsersFromRemote();
   const adminIdx = users.findIndex(u => u.email === ADMIN_EMAIL);
 
   if (adminIdx === -1) {
@@ -8734,9 +8789,16 @@ async function doLogin() {
     return;
   }
 
-  const users = authGetUsers();
-  const user  = users.find(u => u.email.toLowerCase() === email);
-  if (!user) { authMsg('login-msg','error','المعرّف غير مسجّل. يرجى طلب صلاحية أولاً.'); return; }
+  let users = authGetUsers();
+  let user  = users.find(u => u.email.toLowerCase() === email);
+  if (!user) {
+    // Pas trouvé dans le cache local : peut-être un compte créé par l'admin
+    // sur un autre appareil et jamais encore synchronisé ici → on retente
+    // depuis Supabase avant de conclure à un compte inexistant.
+    users = await authSyncUsersFromRemote();
+    user  = users.find(u => u.email.toLowerCase() === email);
+  }
+  if (!user) { authMsg('login-msg','error','المعرّف غير مسجّل. يرجى التواصل مع المسؤول لإنشاء حساب.'); return; }
 
   // Migrate legacy plain-text password on first login
   if (user.password && !user.passwordHash) {
@@ -8997,12 +9059,13 @@ function authIsCurrentUserAdmin() {
   return !!s && (s.role === 'admin' || s.email === ADMIN_EMAIL);
 }
 
-function openRequestsModal() {
+async function openRequestsModal() {
   if (!authIsCurrentUserAdmin()) { showNotification('🔒 هذه الميزة مخصّصة للمسؤول فقط', 'error'); return; }
   document.getElementById('authRequestsModal').classList.add('open');
   document.getElementById('add-user-form').style.display = 'none';
   authPopulateAddUserForm();
   renderRequestsList();
+  await authSyncUsersFromRemote(); // rafraîchir avec les comptes créés depuis d'autres appareils
 }
 function closeRequestsModal() { document.getElementById('authRequestsModal').classList.remove('open'); }
 
@@ -10424,7 +10487,8 @@ async function admChangePassword() {
 }
 
 // ── Liste des utilisateurs ─────────────────────────
-function admRefreshUsers() {
+async function admRefreshUsers() {
+  await authSyncUsersFromRemote(); // rafraîchir avec les comptes créés depuis d'autres appareils
   const users = authGetUsers().filter(u => u.email !== ADMIN_EMAIL);
   const el = document.getElementById('adm-users-list');
   if (!users.length) {
@@ -10539,6 +10603,7 @@ function admSaveUserPerms(email, idx) {
 function admDeleteUser(email) {
   if (!confirm('حذف هذا المستخدم نهائياً؟')) return;
   authSaveUsers(authGetUsers().filter(u => u.email !== email));
+  authDeleteUserRemote(email); // supprime aussi côté Supabase (best-effort)
   admRefreshUsers();
   showNotification('✅ تم حذف المستخدم');
 }
