@@ -1309,25 +1309,16 @@ body.guest-mode .form-guest-lock::after {
       <div class="auth-panel" id="panel-reset">
         <div style="text-align:center;padding:4px 0 12px">
           <div style="font-size:32px;margin-bottom:6px">🔑</div>
-          <p style="font-size:12px;color:var(--text-muted);line-height:1.6">
-            أدخل بريدك الإلكتروني المسجّل لدى المسؤول.<br>
-            سيتم فتح تطبيق البريد لإرسال طلب إعادة تعيين كلمة المرور.
-          </p>
+          <p style="font-size:12px;color:var(--text-muted);line-height:1.6">أدخل بريدك الإلكتروني المسجّل لدى المسؤول.<br>سيتم فتح تطبيق البريد لإرسال طلب إعادة تعيين كلمة المرور.</p>
         </div>
         <div class="auth-field">
           <label>البريد الإلكتروني</label>
-          <input type="email" id="reset-email" placeholder="example@email.com" dir="ltr" style="text-align:left"
-            onkeydown="if(event.key==='Enter')doPasswordResetRequest()">
+          <input type="email" id="reset-email" placeholder="example@email.com" dir="ltr" style="text-align:left" onkeydown="if(event.key==='Enter')doPasswordResetRequest()">
         </div>
-        <button class="auth-btn auth-btn-request" onclick="doPasswordResetRequest()" id="btn-reset">
-          📧 إرسال طلب إعادة التعيين
-        </button>
+        <button class="auth-btn auth-btn-request" onclick="doPasswordResetRequest()" id="btn-reset">📧 إرسال طلب إعادة التعيين</button>
         <div class="auth-msg" id="reset-msg"></div>
         <div style="text-align:center;margin-top:10px">
-          <button type="button" onclick="authSwitchTab('login')"
-            style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;text-decoration:underline;padding:0">
-            ← العودة إلى تسجيل الدخول
-          </button>
+          <button type="button" onclick="authSwitchTab('login')" style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;text-decoration:underline;padding:0">← العودة إلى تسجيل الدخول</button>
         </div>
       </div>
       <!-- /panel-reset -->
@@ -1422,6 +1413,9 @@ body.guest-mode .form-guest-lock::after {
         <button class="drawer-nav-btn" onclick="openRequestsModal();closeDrawer()">
           <span class="d-icon">📋</span> طلبات الصلاحية
           <span id="pending-badge" style="background:#dc2626;color:#fff;border-radius:20px;font-size:11px;font-weight:700;padding:1px 7px;margin-right:auto;display:none"></span>
+        </button>
+        <button class="drawer-nav-btn" onclick="openAdminSettingsModal();closeDrawer()">
+          <span class="d-icon">⚙️</span> إعدادات المسؤول
         </button>
       </div>
     </nav>
@@ -1606,14 +1600,9 @@ body.guest-mode .form-guest-lock::after {
             <label>بيان المشروع</label>
             <div style="position:relative">
               <textarea id="f-bayan_mashrou" placeholder="أدخل وصفاً تفصيلياً للمشروع..." rows="3"
-                oninput="onBayanInput(this.value)"
-                onblur="hideBayanSuggestions()"
+                oninput="onBayanInput(this.value)" onblur="hideBayanSuggestions()"
                 style="width:100%;box-sizing:border-box"></textarea>
-              <div id="bayan-suggestions" style="
-                display:none;position:absolute;top:100%;right:0;left:0;
-                background:#fff;border:1px solid #d1d5db;border-top:none;
-                border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;
-                z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.12)"></div>
+              <div id="bayan-suggestions" style="display:none;position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid #d1d5db;border-top:none;border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.12)"></div>
             </div>
             <div id="bayan-duplicate-warning" style="display:none;margin-top:6px;padding:8px 12px;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;color:#92400e;font-size:13px;direction:rtl">
               ⚠️ <strong>تحذير:</strong> يوجد مشروع آخر بنفس البيان.
@@ -8628,7 +8617,6 @@ function authSwitchTab(tab) {
   if (tabs[0]) tabs[0].classList.toggle('active', tab === 'login');
   if (tabs[1]) tabs[1].classList.toggle('active', tab === 'request');
   if (tabs[2]) tabs[2].classList.toggle('active', tab === 'guest');
-  // Masquer setup panel avant de changer d'onglet
   const sp = document.getElementById('panel-setup');
   if (sp) sp.classList.remove('active');
   document.getElementById('panel-login').classList.toggle('active', tab === 'login');
@@ -8641,6 +8629,7 @@ function authSwitchTab(tab) {
 
 function authMsg(elId, type, text) {
   const el = document.getElementById(elId);
+  if (!el) return;
   el.className = 'auth-msg ' + type;
   el.textContent = text;
 }
@@ -10148,9 +10137,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }, 500);
 });
-</script>
 
-<script>
 // ===== MOBILE APP UTILITIES =====
 function toggleDrawer() {
   const drawer = document.getElementById('drawer');
@@ -10254,6 +10241,382 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 600);
 });
+
+
+
+// ═══════════════════════════════════════════════
+//  ⚙️  ADMIN SETTINGS MODAL
+// ═══════════════════════════════════════════════
+
+const ADMIN_NOTIFY_EMAIL_KEY = 'admin_notify_email_custom';
+
+function getAdminNotifyEmail() {
+  return localStorage.getItem(ADMIN_NOTIFY_EMAIL_KEY) || ADMIN_NOTIFY_EMAIL;
+}
+
+function openAdminSettingsModal() {
+  const modal = document.getElementById('adminSettingsModal');
+  if (!modal) { console.error('adminSettingsModal introuvable'); return; }
+  modal.style.display = 'block';
+  // Vider les champs mot de passe
+  ['adm-old-password','adm-new-password','adm-confirm-password'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  ['adm-pwd-msg','adm-notify-msg','adm-invite-msg'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.textContent = '';
+  });
+  // Pré-remplir l'email de notification
+  const notifyEl = document.getElementById('adm-notify-email');
+  if (notifyEl) notifyEl.value = getAdminNotifyEmail();
+  admTab('account');
+}
+
+function closeAdminSettingsModal() {
+  document.getElementById('adminSettingsModal').style.display = 'none';
+}
+
+// Fermer en cliquant sur le fond
+document.addEventListener('click', function(e) {
+  const modal = document.getElementById('adminSettingsModal');
+  if (modal && e.target === modal) closeAdminSettingsModal();
+});
+
+function admTab(tab) {
+  ['account','users','invite'].forEach(t => {
+    document.getElementById('adm-panel-' + t).style.display = t === tab ? 'block' : 'none';
+    const btn = document.getElementById('adm-tab-' + t);
+    if (btn) {
+      btn.style.color        = t === tab ? '#2563eb' : '#6b7280';
+      btn.style.borderBottom = t === tab ? '2px solid #2563eb' : '2px solid transparent';
+    }
+  });
+  if (tab === 'users')  admRefreshUsers();
+  if (tab === 'invite') admInitInvitePerms();
+}
+
+function admMsg(elId, type, text) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.textContent = text;
+  el.style.color  = type === 'success' ? '#059669' : type === 'error' ? '#dc2626' : '#6b7280';
+  el.style.fontWeight = '600';
+}
+
+// ── Changer email de notification ─────────────────
+function admSaveNotifyEmail() {
+  const val = (document.getElementById('adm-notify-email').value || '').trim();
+  if (!val || !isValidEmail(val)) { admMsg('adm-notify-msg','error','بريد إلكتروني غير صالح'); return; }
+  localStorage.setItem(ADMIN_NOTIFY_EMAIL_KEY, val);
+  // Override dynamiquement ADMIN_NOTIFY_EMAIL pour cette session
+  window.ADMIN_NOTIFY_EMAIL = val;
+  admMsg('adm-notify-msg','success','✅ تم حفظ البريد: ' + val);
+}
+
+// ── Changer mot de passe admin ────────────────────
+async function admChangePassword() {
+  const oldPwd  = document.getElementById('adm-old-password').value;
+  const newPwd  = document.getElementById('adm-new-password').value;
+  const confPwd = document.getElementById('adm-confirm-password').value;
+  admMsg('adm-pwd-msg','info','');
+
+  if (!oldPwd || !newPwd || !confPwd) { admMsg('adm-pwd-msg','error','يرجى ملء جميع الحقول'); return; }
+  if (newPwd.length < 8)              { admMsg('adm-pwd-msg','error','كلمة المرور الجديدة 8 أحرف على الأقل'); return; }
+  if (newPwd !== confPwd)             { admMsg('adm-pwd-msg','error','كلمتا المرور غير متطابقتين'); return; }
+
+  const users    = authGetUsers();
+  const adminIdx = users.findIndex(u => u.email === ADMIN_EMAIL);
+  if (adminIdx === -1) { admMsg('adm-pwd-msg','error','لم يُعثر على حساب المسؤول'); return; }
+
+  // Vérifier l'ancien mot de passe avec verifyPassword (gère PBKDF2 et legacy)
+  const check = await verifyPassword(oldPwd, users[adminIdx].passwordHash || users[adminIdx].password);
+  if (!check.valid) { admMsg('adm-pwd-msg','error','❌ كلمة المرور الحالية غير صحيحة'); return; }
+
+  // Hasher le nouveau mot de passe avec PBKDF2
+  users[adminIdx].passwordHash = await hashPasswordStrong(newPwd);
+  delete users[adminIdx].password;
+  authSaveUsers(users);
+
+  ['adm-old-password','adm-new-password','adm-confirm-password'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  admMsg('adm-pwd-msg','success','✅ تم تغيير كلمة المرور بنجاح');
+}
+
+// ── Liste des utilisateurs ─────────────────────────
+function admRefreshUsers() {
+  const users = authGetUsers().filter(u => u.email !== ADMIN_EMAIL);
+  const el = document.getElementById('adm-users-list');
+  if (!users.length) {
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px">لا يوجد مستخدمون معتمدون حتى الآن</div>';
+    return;
+  }
+  // Stocker les users dans une variable globale pour éviter les problèmes de quotes dans onclick
+  window._admUsers = users;
+  el.innerHTML = users.map((u, i) => {
+    const qita   = (u.allowedQita   || []).join('، ') || 'الكل';
+    const tamwil = (u.allowedTamwil || []).join('، ') || 'الكل';
+    const since  = u.createdAt ? new Date(u.createdAt).toLocaleDateString('ar-TN') : '—';
+    return `<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px;direction:rtl">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:13px;color:#1e293b;margin-bottom:2px">${u.name || '—'}</div>
+          <div style="font-size:11px;color:#6b7280;direction:ltr;text-align:right">${u.email}</div>
+          <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">
+            <span style="background:#dbeafe;color:#1d4ed8;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700">🏗️ ${qita}</span>
+            <span style="background:#dcfce7;color:#15803d;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700">💰 ${tamwil}</span>
+          </div>
+          <div style="font-size:10px;color:#9ca3af;margin-top:4px">منذ ${since}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          <button data-aidx="${i}" data-action="reset"
+            style="padding:5px 10px;background:#f59e0b;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">🔑 كلمة مرور</button>
+          <button data-aidx="${i}" data-action="edit"
+            style="padding:5px 10px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">✏️ صلاحيات</button>
+          <button data-aidx="${i}" data-action="delete"
+            style="padding:5px 10px;background:#dc2626;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">🗑️ حذف</button>
+        </div>
+      </div>
+      <div id="adm-user-edit-${i}" style="display:none;margin-top:10px;border-top:1px solid #e5e7eb;padding-top:10px"></div>
+    </div>`;
+  }).join('');
+
+  // Délégation d'événements — évite tout problème de quotes dans onclick
+  el.onclick = function(e) {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const idx    = parseInt(btn.dataset.aidx);
+    const action = btn.dataset.action;
+    const u      = window._admUsers[idx];
+    if (!u) return;
+    if (action === 'reset')  admResetUserPassword(u.email, u.name || '', idx);
+    if (action === 'edit')   admEditUserPerms(u.email, idx);
+    if (action === 'delete') admDeleteUser(u.email);
+  };
+}
+
+async function admResetUserPassword(email, name, idx) {
+  if (!confirm('إعادة توليد كلمة مرور جديدة لـ ' + name + '؟')) return;
+  const pwd     = generateSecurePassword();
+  const users   = authGetUsers();
+  const user    = users.find(u => u.email === email);
+  if (!user) return;
+  user.passwordHash = await hashPasswordStrong(pwd);
+  delete user.password;
+  authSaveUsers(users);
+  const sub  = encodeURIComponent('منظومة متابعة المشاريع — كلمة مرور جديدة');
+  const body = encodeURIComponent(
+    'السلام عليكم ' + name + ',\n\n'
+    + 'تم إعادة تعيين كلمة المرور الخاصة بك.\n\n'
+    + 'المعرّف: ' + email + '\n'
+    + 'كلمة المرور الجديدة: ' + pwd + '\n\n'
+    + 'الرابط: https://suiviprojetsfax.netlify.app/\n\n'
+    + 'خلية متابعة المشاريع العمومية — ولاية صفاقس'
+  );
+  window.open('mailto:' + email + '?subject=' + sub + '&body=' + body);
+  showNotification('✅ تم توليد كلمة مرور جديدة وفتح البريد');
+}
+
+function admEditUserPerms(email, idx) {
+  const users   = authGetUsers();
+  const user    = users.find(u => u.email === email);
+  const panel   = document.getElementById('adm-user-edit-' + idx);
+  if (!user || !panel) return;
+  if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
+
+  const allQita   = [...new Set((typeof allProjects !== 'undefined' ? allProjects : []).map(p => p.qita).filter(Boolean))].sort();
+  const allTamwil = [...new Set((typeof allProjects !== 'undefined' ? allProjects : []).map(p => p.tamwil_mashrou).filter(Boolean))].sort();
+
+  const mkChecks = (list, allowed, prefix) => list.map(v =>
+    `<label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;white-space:nowrap">
+      <input type="checkbox" value="${v}" ${(!allowed || allowed.includes(v)) ? 'checked' : ''} data-perm="${prefix}"> ${v}
+    </label>`).join('');
+
+  panel.innerHTML = `
+    <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">🏗️ القطاعات:</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px">${mkChecks(allQita, user.allowedQita, 'qita')}</div>
+    <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:5px">💰 مصادر التمويل:</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">${mkChecks(allTamwil, user.allowedTamwil, 'tamwil')}</div>
+    <button onclick="admSaveUserPerms('${email}',${idx})" style="padding:7px 14px;background:#059669;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">💾 حفظ الصلاحيات</button>
+    <span id="adm-perms-msg-${idx}" style="font-size:11px;margin-right:8px;color:#059669"></span>`;
+  panel.style.display = 'block';
+}
+
+function admSaveUserPerms(email, idx) {
+  const users = authGetUsers();
+  const user  = users.find(u => u.email === email);
+  if (!user) return;
+  const qitaChecked   = [...document.querySelectorAll(`#adm-user-edit-${idx} input[data-perm="qita"]:checked`)].map(c => c.value);
+  const tamwilChecked = [...document.querySelectorAll(`#adm-user-edit-${idx} input[data-perm="tamwil"]:checked`)].map(c => c.value);
+  user.allowedQita   = qitaChecked.length   ? qitaChecked   : null;
+  user.allowedTamwil = tamwilChecked.length ? tamwilChecked : null;
+  authSaveUsers(users);
+  const msg = document.getElementById('adm-perms-msg-' + idx);
+  if (msg) msg.textContent = '✅ تم الحفظ';
+  setTimeout(() => { if (msg) msg.textContent = ''; }, 2000);
+}
+
+function admDeleteUser(email) {
+  if (!confirm('حذف هذا المستخدم نهائياً؟')) return;
+  authSaveUsers(authGetUsers().filter(u => u.email !== email));
+  admRefreshUsers();
+  showNotification('✅ تم حذف المستخدم');
+}
+
+// ── Invitation ─────────────────────────────────────
+function admInitInvitePerms() {
+  const allQita   = [...new Set((typeof allProjects !== 'undefined' ? allProjects : []).map(p => p.qita).filter(Boolean))].sort();
+  const allTamwil = [...new Set((typeof allProjects !== 'undefined' ? allProjects : []).map(p => p.tamwil_mashrou).filter(Boolean))].sort();
+  const mkChips = (list, containerId) => {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = list.map(v =>
+      `<label style="display:flex;align-items:center;gap:4px;font-size:11px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:20px;padding:4px 9px;cursor:pointer">
+        <input type="checkbox" value="${v}"> ${v}
+      </label>`).join('');
+  };
+  mkChips(allQita,   'inv-qita-list');
+  mkChips(allTamwil, 'inv-tamwil-list');
+  // Pré-remplir avec un mot de passe généré
+  if (!document.getElementById('inv-password').value)
+    document.getElementById('inv-password').value = generateSecurePassword();
+}
+
+function admGenPassword() {
+  document.getElementById('inv-password').value = generateSecurePassword();
+}
+
+async function admSendInvite() {
+  const name  = (document.getElementById('inv-name').value  || '').trim();
+  const email = (document.getElementById('inv-email').value || '').trim().toLowerCase();
+  let   pwd   = (document.getElementById('inv-password').value || '').trim();
+  admMsg('adm-invite-msg','info','');
+
+  if (!name)  { admMsg('adm-invite-msg','error','يرجى إدخال الاسم الكامل'); return; }
+  if (!email || !isValidEmail(email)) { admMsg('adm-invite-msg','error','بريد إلكتروني غير صالح'); return; }
+  if (!pwd || pwd.length < 6) { pwd = generateSecurePassword(); document.getElementById('inv-password').value = pwd; }
+
+  const qitaChecked   = [...document.querySelectorAll('#inv-qita-list input:checked')].map(c => c.value);
+  const tamwilChecked = [...document.querySelectorAll('#inv-tamwil-list input:checked')].map(c => c.value);
+
+  const users   = authGetUsers();
+  const ex      = users.find(u => u.email === email);
+  if (ex) {
+    ex.name = name; ex.passwordHash = await hashPasswordStrong(pwd); delete ex.password;
+    ex.allowedQita   = qitaChecked.length   ? qitaChecked   : null;
+    ex.allowedTamwil = tamwilChecked.length ? tamwilChecked : null;
+  } else {
+    const newHash = await hashPasswordStrong(pwd);
+    users.push({ email, name, passwordHash: newHash, role: 'user',
+      allowedQita:   qitaChecked.length   ? qitaChecked   : null,
+      allowedTamwil: tamwilChecked.length ? tamwilChecked : null,
+      createdAt: new Date().toISOString() });
+  }
+  authSaveUsers(users);
+
+  const qStr = qitaChecked.length   ? qitaChecked.join('، ')   : 'كاملة';
+  const tStr = tamwilChecked.length ? tamwilChecked.join('، ') : 'كاملة';
+  const sub  = encodeURIComponent('دعوة — منظومة متابعة المشاريع العمومية ولاية صفاقس');
+  const body = encodeURIComponent(
+    'السلام عليكم ' + name + ',\n\n'
+    + 'يسعدنا دعوتك للانضمام إلى منظومة متابعة المشاريع العمومية — ولاية صفاقس.\n\n'
+    + '🔗 الرابط: https://suiviprojetsfax.netlify.app/\n'
+    + '👤 المعرّف: ' + email + '\n'
+    + '🔑 كلمة المرور: ' + pwd + '\n\n'
+    + '🔒 الصلاحيات الممنوحة:\n'
+    + '   • القطاعات: ' + qStr + '\n'
+    + '   • مصادر التمويل: ' + tStr + '\n\n'
+    + 'يُرجى تغيير كلمة المرور بعد أول تسجيل دخول.\n\n'
+    + 'خلية متابعة المشاريع العمومية — ولاية صفاقس'
+  );
+  window.open('mailto:' + email + '?subject=' + sub + '&body=' + body);
+  admMsg('adm-invite-msg','success','✅ تم إنشاء الحساب وفتح البريد للإرسال!');
+
+  // Reset le formulaire
+  setTimeout(() => {
+    document.getElementById('inv-name').value  = '';
+    document.getElementById('inv-email').value = '';
+    document.getElementById('inv-password').value = generateSecurePassword();
+    document.querySelectorAll('#inv-qita-list input, #inv-tamwil-list input').forEach(c => c.checked = false);
+    admMsg('adm-invite-msg','info','');
+  }, 3000);
+}
+
+// ═══════════════════════════════════════════════
+//  Autocomplete بيان المشروع
+// ═══════════════════════════════════════════════
+function onBayanInput(val) {
+  const q    = (val || '').trim();
+  const box  = document.getElementById('bayan-suggestions');
+  const warn = document.getElementById('bayan-duplicate-warning');
+  const info = document.getElementById('bayan-duplicate-info');
+  if (!q || q.length < 2) {
+    if (box)  box.style.display  = 'none';
+    if (warn) warn.style.display = 'none';
+    return;
+  }
+  const lower   = q.toLowerCase();
+  const all     = (typeof allProjects !== 'undefined') ? allProjects : [];
+  const matches = all.filter(p => p.bayan_mashrou && p.bayan_mashrou.toLowerCase().includes(lower));
+  const exact   = all.find(p  => p.bayan_mashrou && p.bayan_mashrou.trim().toLowerCase() === lower);
+  const curId   = (typeof currentProjectId !== 'undefined') ? currentProjectId : '';
+  const isDup   = exact && String(exact.id) !== String(curId);
+  if (warn) {
+    warn.style.display = isDup ? '' : 'none';
+    if (isDup && info) {
+      info.textContent = `المشروع الموجود رقم ${exact.id}${exact.qita ? ' — القطاع: '+exact.qita : ''}`;
+    }
+  }
+  if (!box) return;
+  if (!matches.length) { box.style.display = 'none'; return; }
+  box.innerHTML = matches.slice(0, 10).map(p => {
+    const hl   = p.bayan_mashrou.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:#fef9c3;border-radius:2px">$1</mark>');
+    const meta = [p.qita, p.muta_madiyya].filter(Boolean).join(' · ');
+    return `<div onmousedown="selectBayanSuggestion(${JSON.stringify(p.bayan_mashrou)})"
+      style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #f3f4f6;font-size:13px;direction:rtl"
+      onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background=''">
+      <div>${hl}</div>${meta ? `<div style="font-size:11px;color:#6b7280;margin-top:2px">${meta}</div>` : ''}
+    </div>`;
+  }).join('');
+  box.style.display = 'block';
+}
+
+function selectBayanSuggestion(val) {
+  const ta = document.getElementById('f-bayan_mashrou');
+  if (ta) { ta.value = val; onBayanInput(val); }
+  const box = document.getElementById('bayan-suggestions');
+  if (box) box.style.display = 'none';
+}
+
+function hideBayanSuggestions() {
+  setTimeout(() => { const b = document.getElementById('bayan-suggestions'); if (b) b.style.display='none'; }, 200);
+}
+
+// ═══════════════════════════════════════════════
+//  Reset mot de passe par email
+// ═══════════════════════════════════════════════
+// authSwitchTab définie plus haut
+
+async function doPasswordResetRequest() {
+  const emailInput = document.getElementById('reset-email');
+  const btn        = document.getElementById('btn-reset');
+  const email      = (emailInput ? emailInput.value : '').trim().toLowerCase();
+  if (!email) { authMsg('reset-msg','error','يرجى إدخال بريدك الإلكتروني.'); return; }
+  if (!isValidEmail(email)) { authMsg('reset-msg','error','صيغة البريد الإلكتروني غير صحيحة.'); return; }
+  if (btn) { btn.disabled=true; btn.textContent='⏳ ...'; }
+  const users     = (typeof authGetUsers==='function') ? authGetUsers() : [];
+  const knownUser = users.find(u => (u.email||'').toLowerCase()===email);
+  const sub  = encodeURIComponent('طلب إعادة تعيين كلمة المرور — تطبيق إدارة المشاريع');
+  const body = encodeURIComponent('السلام عليكم،\n\nأطلب إعادة تعيين كلمة المرور.\n\nالبريد: '+email+'\n'+(knownUser?'الاسم: '+(knownUser.name||'—')+'\n':'')+'\nشكراً.');
+  window.open('mailto:'+getAdminNotifyEmail()+'?subject='+sub+'&body='+body);
+  if (btn) { btn.disabled=false; btn.textContent='📧 إرسال طلب إعادة التعيين'; }
+  authMsg('reset-msg','success','✅ تم فتح تطبيق البريد. أرسل الرسالة وسيتواصل معك المسؤول.');
+  setTimeout(() => {
+    const m = document.getElementById('reset-msg');
+    if (m && m.classList.contains('success'))
+      m.innerHTML += '<br><button onclick="authSwitchTab(\'login\')" style="margin-top:6px;background:none;border:none;color:var(--primary);text-decoration:underline;cursor:pointer;font-size:12px">← العودة</button>';
+  }, 3000);
+}
+
 </script>
 
 <!-- ═══════════════════════════════════════════════
@@ -10574,89 +10937,123 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 
-<script>
-// ── Autocomplete بيان المشروع ─────────────────────────────────────────────
-function onBayanInput(val) {
-  const q    = (val || '').trim();
-  const box  = document.getElementById('bayan-suggestions');
-  const warn = document.getElementById('bayan-duplicate-warning');
-  const info = document.getElementById('bayan-duplicate-info');
-  if (!q || q.length < 2) {
-    if (box)  box.style.display  = 'none';
-    if (warn) warn.style.display = 'none';
-    return;
-  }
-  const lower   = q.toLowerCase();
-  const all     = (typeof allProjects !== 'undefined') ? allProjects : [];
-  const matches = all.filter(p => p.bayan_mashrou && p.bayan_mashrou.toLowerCase().includes(lower));
-  const exact   = all.find(p  => p.bayan_mashrou && p.bayan_mashrou.trim().toLowerCase() === lower);
-  const curId   = (typeof currentProjectId !== 'undefined') ? currentProjectId : '';
-  const isDup   = exact && String(exact.id) !== String(curId);
-  if (warn) {
-    warn.style.display = isDup ? '' : 'none';
-    if (isDup && info) {
-      const meta = exact.qita ? ` — القطاع: ${exact.qita}` : '';
-      info.textContent = `المشروع الموجود رقم ${exact.id}${meta}`;
-    }
-  }
-  if (!box) return;
-  if (!matches.length) { box.style.display = 'none'; return; }
-  box.innerHTML = matches.slice(0, 10).map(p => {
-    const hl  = p.bayan_mashrou.replace(
-      new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi'),
-      '<mark style="background:#fef9c3;border-radius:2px">$1</mark>'
-    );
-    const meta = [p.qita, p.muta_madiyya].filter(Boolean).join(' · ');
-    return `<div onmousedown="selectBayanSuggestion(${JSON.stringify(p.bayan_mashrou)})"
-      style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #f3f4f6;font-size:13px;direction:rtl"
-      onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background=''">
-      <div>${hl}</div>
-      ${meta ? `<div style="font-size:11px;color:#6b7280;margin-top:2px">${meta}</div>` : ''}
-    </div>`;
-  }).join('');
-  box.style.display = 'block';
-}
 
-function selectBayanSuggestion(val) {
-  const ta = document.getElementById('f-bayan_mashrou');
-  if (ta) { ta.value = val; onBayanInput(val); }
-  const box = document.getElementById('bayan-suggestions');
-  if (box) box.style.display = 'none';
-}
+<!-- ═══════════════════════════════════════════════
+     ⚙️  MODAL ADMIN SETTINGS
+═══════════════════════════════════════════════ -->
+<div id="adminSettingsModal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.55);overflow-y:auto">
+  <div style="min-height:100%;display:flex;align-items:flex-start;justify-content:center;padding:20px 12px">
+    <div style="background:#fff;border-radius:16px;width:100%;max-width:520px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)">
 
-function hideBayanSuggestions() {
-  setTimeout(() => {
-    const box = document.getElementById('bayan-suggestions');
-    if (box) box.style.display = 'none';
-  }, 200);
-}
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg,#1a3a5c,#2563eb);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:18px;font-weight:700">⚙️ إعدادات المسؤول</div>
+          <div style="font-size:12px;opacity:.8;margin-top:2px">إدارة الحساب والمستخدمين</div>
+        </div>
+        <button onclick="closeAdminSettingsModal()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px">✕</button>
+      </div>
 
-// ── Réinitialisation mot de passe par e-mail ──────────────────────────────
-async function doPasswordResetRequest() {
-  const emailInput = document.getElementById('reset-email');
-  const btn        = document.getElementById('btn-reset');
-  const email      = (emailInput ? emailInput.value : '').trim().toLowerCase();
-  if (!email) { authMsg('reset-msg','error','يرجى إدخال بريدك الإلكتروني.'); return; }
-  if (!isValidEmail(email)) { authMsg('reset-msg','error','صيغة البريد الإلكتروني غير صحيحة.'); return; }
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ جارٍ الفتح...'; }
-  const users     = (typeof authGetUsers === 'function') ? authGetUsers() : [];
-  const knownUser = users.find(u => (u.email || '').toLowerCase() === email);
-  const subject   = encodeURIComponent('طلب إعادة تعيين كلمة المرور — تطبيق إدارة المشاريع');
-  const body      = encodeURIComponent(
-    'السلام عليكم،\n\nأطلب إعادة تعيين كلمة المرور الخاصة بحسابي.\n\n' +
-    'البريد الإلكتروني: ' + email + '\n' +
-    (knownUser ? 'الاسم: ' + (knownUser.name || '—') + '\n' : '') +
-    '\nيرجى التواصل معي لتحديد كلمة مرور جديدة.\n\nشكراً.'
-  );
-  window.open('mailto:' + ADMIN_NOTIFY_EMAIL + '?subject=' + subject + '&body=' + body);
-  if (btn) { btn.disabled = false; btn.textContent = '📧 إرسال طلب إعادة التعيين'; }
-  authMsg('reset-msg','success','✅ تم فتح تطبيق البريد. أرسل الرسالة وسيتواصل معك المسؤول.');
-  setTimeout(() => {
-    const m = document.getElementById('reset-msg');
-    if (m && m.classList.contains('success'))
-      m.innerHTML += '<br><button onclick="authSwitchTab(\'login\')" style="margin-top:6px;background:none;border:none;color:var(--primary);text-decoration:underline;cursor:pointer;font-size:12px">← العودة إلى تسجيل الدخول</button>';
-  }, 3000);
-}
-</script>
+      <!-- Tabs -->
+      <div style="display:flex;border-bottom:2px solid #e5e7eb;background:#f9fafb">
+        <button class="adm-tab active" onclick="admTab('account')" id="adm-tab-account" style="flex:1;padding:11px 6px;border:none;background:none;font-size:13px;font-weight:600;cursor:pointer;color:#2563eb;border-bottom:2px solid #2563eb;margin-bottom:-2px">🔐 الحساب</button>
+        <button class="adm-tab" onclick="admTab('users')"   id="adm-tab-users"   style="flex:1;padding:11px 6px;border:none;background:none;font-size:13px;font-weight:600;cursor:pointer;color:#6b7280;border-bottom:2px solid transparent;margin-bottom:-2px">👥 المستخدمون</button>
+        <button class="adm-tab" onclick="admTab('invite')"  id="adm-tab-invite"  style="flex:1;padding:11px 6px;border:none;background:none;font-size:13px;font-weight:600;cursor:pointer;color:#6b7280;border-bottom:2px solid transparent;margin-bottom:-2px">📧 دعوة</button>
+      </div>
+
+      <!-- ── Tab: Account ── -->
+      <div id="adm-panel-account" style="padding:20px;display:block">
+
+        <!-- Changer email notification -->
+        <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:14px;margin-bottom:16px">
+          <div style="font-weight:700;font-size:13px;color:#0369a1;margin-bottom:10px">📬 بريد الإشعارات</div>
+          <div style="font-size:12px;color:#64748b;margin-bottom:8px">البريد الذي يتلقى طلبات الصلاحية وإشعارات النظام</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="email" id="adm-notify-email" placeholder="example@email.com" dir="ltr"
+              style="flex:1;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;text-align:left">
+            <button onclick="admSaveNotifyEmail()" style="padding:9px 14px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer;white-space:nowrap">💾 حفظ</button>
+          </div>
+          <div id="adm-notify-msg" style="margin-top:6px;font-size:12px"></div>
+        </div>
+
+        <!-- Changer mot de passe admin -->
+        <div style="background:#fdf4ff;border:1px solid #e9d5ff;border-radius:10px;padding:14px">
+          <div style="font-weight:700;font-size:13px;color:#7e22ce;margin-bottom:10px">🔑 تغيير كلمة المرور</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div>
+              <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:3px">كلمة المرور الحالية</label>
+              <input type="password" id="adm-old-password" placeholder="••••••••" dir="ltr"
+                style="width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:3px">كلمة المرور الجديدة</label>
+              <input type="password" id="adm-new-password" placeholder="8 أحرف على الأقل" dir="ltr"
+                style="width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:3px">تأكيد كلمة المرور الجديدة</label>
+              <input type="password" id="adm-confirm-password" placeholder="أعد الكتابة" dir="ltr"
+                style="width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+            </div>
+            <button onclick="admChangePassword()" style="padding:10px;background:linear-gradient(135deg,#7e22ce,#a855f7);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-top:2px">🔑 تغيير كلمة المرور</button>
+          </div>
+          <div id="adm-pwd-msg" style="margin-top:8px;font-size:12px"></div>
+        </div>
+      </div>
+
+      <!-- ── Tab: Users ── -->
+      <div id="adm-panel-users" style="padding:20px;display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-weight:700;font-size:14px;color:#1e293b">👥 المستخدمون المعتمدون</div>
+          <button onclick="admRefreshUsers()" style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer">🔄 تحديث</button>
+        </div>
+        <div id="adm-users-list" style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto"></div>
+      </div>
+
+      <!-- ── Tab: Invite ── -->
+      <div id="adm-panel-invite" style="padding:20px;display:none">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:16px">
+          <div style="font-weight:700;font-size:13px;color:#15803d;margin-bottom:6px">📧 إرسال دعوة مع بيانات دخول</div>
+          <div style="font-size:12px;color:#64748b">سيتم توليد كلمة مرور تلقائية وإرسالها للمستخدم عبر البريد الإلكتروني.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div>
+            <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:3px">الاسم الكامل *</label>
+            <input type="text" id="inv-name" placeholder="أدخل الاسم الكامل" style="width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;direction:rtl">
+          </div>
+          <div>
+            <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:3px">البريد الإلكتروني (المعرّف) *</label>
+            <input type="email" id="inv-email" placeholder="example@email.com" dir="ltr" style="width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;text-align:left">
+          </div>
+          <div>
+            <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:3px">كلمة المرور</label>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="inv-password" placeholder="تلقائية" dir="ltr" style="flex:1;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;text-align:left">
+              <button onclick="admGenPassword()" style="padding:9px 12px;background:#f1f5f9;border:1px solid #d1d5db;border-radius:8px;font-size:12px;cursor:pointer;white-space:nowrap">🎲 توليد</button>
+            </div>
+          </div>
+          <div>
+            <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:6px">🔒 الصلاحيات</label>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px">
+              <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px">🏗️ القطاعات المسموح بها:</div>
+              <div id="inv-qita-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+              <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:6px">💰 مصادر التمويل:</div>
+              <div id="inv-tamwil-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+              <div style="margin-top:8px;font-size:11px;color:#9ca3af">تفريغ الكل = صلاحية كاملة</div>
+            </div>
+          </div>
+          <button onclick="admSendInvite()" style="padding:11px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">📧 إرسال الدعوة</button>
+          <div id="adm-invite-msg" style="font-size:12px"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+
+
 </body>
 </html>
+
