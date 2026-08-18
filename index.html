@@ -1264,7 +1264,6 @@ body.guest-mode .form-guest-lock::after {
     <div class="auth-body">
       <div class="auth-tabs" id="auth-tabs-row">
         <button class="auth-tab active" onclick="authSwitchTab('login')">🔑 دخول</button>
-        <button class="auth-tab" onclick="authSwitchTab('request')">📩 طلب</button>
         <button class="auth-tab" onclick="authSwitchTab('guest')" style="color:#6b7280">👁️ زائر</button>
       </div>
       <!-- PREMIÈRE INSTALLATION — création du mot de passe admin (aucun mot de passe par défaut dans le code) -->
@@ -1323,21 +1322,6 @@ body.guest-mode .form-guest-lock::after {
       </div>
       <!-- /panel-reset -->
 
-      <div class="auth-panel" id="panel-request">
-        <div class="auth-field"><label>الاسم الكامل</label><input type="text" id="req-name" placeholder="أدخل اسمك الكامل"></div>
-        <div class="auth-field"><label>البريد الإلكتروني</label><input type="email" id="req-email" placeholder="example@email.com" dir="ltr" style="text-align:left"></div>
-        <div class="auth-field"><label>سبب طلب الصلاحية</label><input type="text" id="req-reason" placeholder="متابعة مشاريع المعتمدية..."></div>
-        <div class="auth-field">
-          <label>🏗️ القطاعات المطلوبة</label>
-          <div id="req-qita-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;max-height:100px;overflow-y:auto"></div>
-        </div>
-        <div class="auth-field">
-          <label>💰 مصادر التمويل</label>
-          <div id="req-tamwil-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
-        </div>
-        <button class="auth-btn auth-btn-request" onclick="doRequestAccess()" id="btn-request">إرسال طلب الصلاحية 📧</button>
-        <div class="auth-msg" id="request-msg"></div>
-      </div>
       <div class="auth-panel" id="panel-guest">
         <div style="text-align:center;padding:6px 0 14px">
           <div style="font-size:44px;margin-bottom:8px">👁️</div>
@@ -1362,13 +1346,33 @@ body.guest-mode .form-guest-lock::after {
   <span>وضع القراءة فقط — الأسماء مخفية</span>
 </div>
 
-<!-- AUTH REQUESTS MODAL -->
+<!-- AUTH REQUESTS / USER MANAGEMENT MODAL — accès réservé à l'administrateur -->
 <div class="auth-requests-modal" id="authRequestsModal">
   <div class="auth-requests-box">
     <div class="auth-requests-header">
-      <h3 style="font-size:15px;font-weight:700">📋 طلبات الصلاحية</h3>
+      <h3 style="font-size:15px;font-weight:700">👥 إدارة المستخدمين</h3>
       <button onclick="closeRequestsModal()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px">✕</button>
     </div>
+
+    <!-- إضافة مستخدم مباشرة — الوسيلة الوحيدة لإنشاء حساب، متاحة للمسؤول فقط -->
+    <div style="padding:14px 16px 4px">
+      <button class="btn btn-success" style="width:100%" onclick="toggleAddUserForm()" id="btn-toggle-adduser">➕ إضافة مستخدم جديد</button>
+      <div id="add-user-form" style="display:none;margin-top:12px;background:rgba(37,99,235,0.05);border:1px solid rgba(37,99,235,0.15);border-radius:10px;padding:12px">
+        <div class="auth-field"><label>الاسم الكامل</label><input type="text" id="nu-name" placeholder="أدخل الاسم الكامل"></div>
+        <div class="auth-field"><label>المعرّف / البريد الإلكتروني</label><input type="email" id="nu-email" placeholder="example@email.com" dir="ltr" style="text-align:left"></div>
+        <div class="auth-field">
+          <label>🏗️ القطاعات المسموح بها (اتركها فارغة = الكل)</label>
+          <div id="newuser-qita-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;max-height:100px;overflow-y:auto"></div>
+        </div>
+        <div class="auth-field">
+          <label>💰 مصادر التمويل المسموح بها (اتركها فارغة = الكل)</label>
+          <div id="newuser-tamwil-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
+        </div>
+        <button class="auth-btn auth-btn-login" onclick="createUserDirect()" id="btn-create-user">✅ إنشاء الحساب وإرسال كلمة المرور</button>
+        <div class="auth-msg" id="nu-msg"></div>
+      </div>
+    </div>
+
     <div class="auth-requests-list" id="requests-list-body">
       <div style="text-align:center;padding:40px;color:var(--text-muted)">جارٍ التحميل...</div>
     </div>
@@ -1411,7 +1415,7 @@ body.guest-mode .form-guest-lock::after {
       <div id="admin-section" style="display:none">
         <div class="drawer-nav-label" style="margin-top:8px">الإدارة</div>
         <button class="drawer-nav-btn" onclick="openRequestsModal();closeDrawer()">
-          <span class="d-icon">📋</span> طلبات الصلاحية
+          <span class="d-icon">👥</span> إدارة المستخدمين
           <span id="pending-badge" style="background:#dc2626;color:#fff;border-radius:20px;font-size:11px;font-weight:700;padding:1px 7px;margin-right:auto;display:none"></span>
         </button>
         <button class="drawer-nav-btn" onclick="openAdminSettingsModal();closeDrawer()">
@@ -8593,7 +8597,6 @@ function authResetAdmin() {
   authClearAttempts(ADMIN_EMAIL);
 
   document.getElementById('panel-login').classList.remove('active');
-  document.getElementById('panel-request').classList.remove('active');
   const gp = document.getElementById('panel-guest');
   if (gp) gp.classList.remove('active');
   document.getElementById('panel-setup').classList.add('active');
@@ -8666,12 +8669,10 @@ function authApplyPermFilters() {
 function authSwitchTab(tab) {
   const tabs = document.querySelectorAll('.auth-tab');
   if (tabs[0]) tabs[0].classList.toggle('active', tab === 'login');
-  if (tabs[1]) tabs[1].classList.toggle('active', tab === 'request');
-  if (tabs[2]) tabs[2].classList.toggle('active', tab === 'guest');
+  if (tabs[1]) tabs[1].classList.toggle('active', tab === 'guest');
   const sp = document.getElementById('panel-setup');
   if (sp) sp.classList.remove('active');
   document.getElementById('panel-login').classList.toggle('active', tab === 'login');
-  document.getElementById('panel-request').classList.toggle('active', tab === 'request');
   const gp = document.getElementById('panel-guest');
   if (gp) gp.classList.toggle('active', tab === 'guest');
   const rp = document.getElementById('panel-reset');
@@ -8773,41 +8774,9 @@ async function doLogin() {
   setTimeout(() => authShowApp(session), 600);
 }
 
-async function doRequestAccess() {
-  const name   = (document.getElementById('req-name').value   || '').trim();
-  const email  = (document.getElementById('req-email').value  || '').trim().toLowerCase();
-  const reason = (document.getElementById('req-reason').value || '').trim();
-  if (!name || !email || !reason) { authMsg('request-msg','error','يرجى ملء جميع الحقول'); return; }
-  if (!isValidEmail(email)) { authMsg('request-msg','error','البريد الإلكتروني غير صالح'); return; }
-  const reqs = authGetRequests();
-  if (reqs.find(r => r.email === email && r.status === 'pending')) {
-    authMsg('request-msg','info','⏳ طلبك قيد المراجعة بالفعل. يرجى الانتظار.'); return;
-  }
-  // Lire les secteurs/financements demandés
-  const requestedQita   = Array.from(document.querySelectorAll('#req-qita-list   input:checked')).map(c => c.value);
-  const requestedTamwil = Array.from(document.querySelectorAll('#req-tamwil-list input:checked')).map(c => c.value);
-
-  const req = { id: Date.now(), name, email, reason,
-    requestedQita:   requestedQita.length   ? requestedQita   : [],
-    requestedTamwil: requestedTamwil.length ? requestedTamwil : [],
-    status: 'pending', createdAt: new Date().toISOString() };
-  reqs.push(req);
-  authSaveRequests(reqs);
-
-  const qitaStr   = requestedQita.length   ? requestedQita.join(', ')   : 'غير محدد';
-  const tamwilStr = requestedTamwil.length ? requestedTamwil.join(', ') : 'غير محدد';
-  const sub  = encodeURIComponent('طلب صلاحية — منظومة متابعة المشاريع العمومية صفاقس');
-  const body = encodeURIComponent(
-    'طلب جديد للوصول:\n\nالاسم: ' + name +
-    '\nالبريد: ' + email +
-    '\nالسبب: ' + reason +
-    '\nالقطاعات المطلوبة: ' + qitaStr +
-    '\nمصادر التمويل المطلوبة: ' + tamwilStr +
-    '\n\nللموافقة: افتح التطبيق > طلبات الصلاحية > حدد الصلاحيات > موافقة'
-  );
-  window.open('mailto:' + ADMIN_NOTIFY_EMAIL + '?subject=' + sub + '&body=' + body);
-  authMsg('request-msg','success','✅ تم تسجيل طلبك! سيُفتح تطبيق البريد لإشعار المسؤول. انتظر الموافقة وستصلك كلمة المرور.');
-}
+// doRequestAccess() supprimée : la demande d'accès en libre-service n'existe
+// plus. Seul l'administrateur peut désormais créer un compte utilisateur
+// (voir createUserDirect() dans la section admin).
 
 function doLogout() {
   if (!confirm('هل تريد تسجيل الخروج؟')) return;
@@ -9020,8 +8989,69 @@ function authRefreshPendingBadge() {
   if (b) { b.style.display = n > 0 ? 'inline' : 'none'; b.textContent = n; }
 }
 
-function openRequestsModal()  { document.getElementById('authRequestsModal').classList.add('open'); renderRequestsList(); }
+// L'ajout d'un utilisateur n'est possible que pour l'administrateur : ce
+// panneau n'est visible que dans #admin-section (voir authShowApp), qui
+// n'est affichée que pour user.role === 'admin' || user.email === ADMIN_EMAIL.
+function authIsCurrentUserAdmin() {
+  const s = authGetSession();
+  return !!s && (s.role === 'admin' || s.email === ADMIN_EMAIL);
+}
+
+function openRequestsModal() {
+  if (!authIsCurrentUserAdmin()) { showNotification('🔒 هذه الميزة مخصّصة للمسؤول فقط', 'error'); return; }
+  document.getElementById('authRequestsModal').classList.add('open');
+  document.getElementById('add-user-form').style.display = 'none';
+  authPopulateAddUserForm();
+  renderRequestsList();
+}
 function closeRequestsModal() { document.getElementById('authRequestsModal').classList.remove('open'); }
+
+function toggleAddUserForm() {
+  const f = document.getElementById('add-user-form');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+async function createUserDirect() {
+  if (!authIsCurrentUserAdmin()) { showNotification('🔒 هذه الميزة مخصّصة للمسؤول فقط', 'error'); return; }
+  const name  = (document.getElementById('nu-name').value  || '').trim();
+  const email = (document.getElementById('nu-email').value || '').trim().toLowerCase();
+  if (!name || !email) { authMsg('nu-msg','error','يرجى ملء الاسم والمعرّف'); return; }
+  if (!isValidEmail(email)) { authMsg('nu-msg','error','البريد الإلكتروني غير صالح'); return; }
+
+  const users = authGetUsers();
+  if (users.find(u => u.email === email) || email === ADMIN_EMAIL) {
+    authMsg('nu-msg','error','⚠️ يوجد مستخدم بهذا المعرّف بالفعل'); return;
+  }
+
+  const allowedQita   = Array.from(document.querySelectorAll('#newuser-qita-list   input:checked')).map(c => c.value);
+  const allowedTamwil = Array.from(document.querySelectorAll('#newuser-tamwil-list input:checked')).map(c => c.value);
+
+  const pwd     = generateSecurePassword();
+  const pwdHash = await hashPasswordStrong(pwd);
+  users.push({
+    email, name, passwordHash: pwdHash, role: 'user',
+    allowedQita:   allowedQita.length   ? allowedQita   : null,
+    allowedTamwil: allowedTamwil.length ? allowedTamwil : null,
+    createdAt: new Date().toISOString()
+  });
+  authSaveUsers(users);
+
+  const sub  = encodeURIComponent('منظومة متابعة المشاريع — بيانات الدخول');
+  const body = encodeURIComponent(
+    'السلام عليكم ' + name + ',\n\nتم إنشاء حساب لك على منظومة متابعة المشاريع العمومية.\n\n'
+    + 'الرابط: https://suiviprojetsfax.netlify.app/\n'
+    + 'المعرّف: ' + email + '\n'
+    + 'كلمة المرور: ' + pwd + '\n\n'
+    + 'خلية متابعة المشاريع العمومية — ولاية صفاقس'
+  );
+  window.open('mailto:' + email + '?subject=' + sub + '&body=' + body);
+
+  authMsg('nu-msg','success','✅ تم إنشاء الحساب! سيُفتح تطبيق البريد لإرسال كلمة المرور.');
+  document.getElementById('nu-name').value  = '';
+  document.getElementById('nu-email').value = '';
+  authPopulateAddUserForm();
+  showNotification('✅ تم إنشاء حساب المستخدم بنجاح');
+}
 
 function renderRequestsList() {
   const reqs = authGetRequests();
@@ -9809,12 +9839,10 @@ function closeBigProjectInfo() {
 
 async function initAuth() {
   const { needsSetup } = await authBootstrap();
-  authPopulateReqForm();
   if (needsSetup) {
-    // Aucun compte admin : forcer la création du mot de passe, masquer login/request/guest.
+    // Aucun compte admin : forcer la création du mot de passe, masquer login/guest.
     document.getElementById('auth-overlay').classList.remove('hidden');
     document.getElementById('panel-login').classList.remove('active');
-    document.getElementById('panel-request').classList.remove('active');
     const gp = document.getElementById('panel-guest');
     if (gp) gp.classList.remove('active');
     document.getElementById('panel-setup').classList.add('active');
@@ -9830,20 +9858,22 @@ async function initAuth() {
   }
 }
 
-function authPopulateReqForm() {
-  const ALL_QITA   = ['الأسرة والمرأة والطفولة وكبار السن','الإنارة العمومية','البرنامج الجهوي للتنمية','التنمية المندمجة','الثقافة','السجون والاصلاح','الشؤون الاجتماعية','الشؤون الثقافية','الشباب والرياضة','الصحة','الطرقات','العدل','الماء الصالح للشرب','تحسين المسكن'];
-  const ALL_TAMWIL = ['ميزانية الدولة-اعتمادات محالة','ميزانية الدولة-اعتمادات مفوضة','البرنامج الجهوي للتنمية'];
+// Listes de référence des secteurs / financements — utilisées par le
+// formulaire admin "إضافة مستخدم" (createUserDirect).
+const AUTH_ALL_QITA   = ['الأسرة والمرأة والطفولة وكبار السن','الإنارة العمومية','البرنامج الجهوي للتنمية','التنمية المندمجة','الثقافة','السجون والاصلاح','الشؤون الاجتماعية','الشؤون الثقافية','الشباب والرياضة','الصحة','الطرقات','العدل','الماء الصالح للشرب','تحسين المسكن'];
+const AUTH_ALL_TAMWIL = ['ميزانية الدولة-اعتمادات محالة','ميزانية الدولة-اعتمادات مفوضة','البرنامج الجهوي للتنمية'];
 
-  const qContainer = document.getElementById('req-qita-list');
-  const tContainer = document.getElementById('req-tamwil-list');
+function authPopulateAddUserForm() {
+  const qContainer = document.getElementById('newuser-qita-list');
+  const tContainer = document.getElementById('newuser-tamwil-list');
   if (qContainer) {
-    qContainer.innerHTML = ALL_QITA.map(q =>
+    qContainer.innerHTML = AUTH_ALL_QITA.map(q =>
       '<label style="display:inline-flex;align-items:center;gap:4px;background:rgba(37,99,235,0.07);border:1px solid rgba(37,99,235,0.2);border-radius:20px;padding:3px 10px;font-size:12px;cursor:pointer">'
       + '<input type="checkbox" value="'+q+'" style="accent-color:#2563EB"> '+q+'</label>'
     ).join('');
   }
   if (tContainer) {
-    tContainer.innerHTML = ALL_TAMWIL.map(t =>
+    tContainer.innerHTML = AUTH_ALL_TAMWIL.map(t =>
       '<label style="display:inline-flex;align-items:center;gap:4px;background:rgba(200,150,12,0.08);border:1px solid rgba(200,150,12,0.3);border-radius:20px;padding:3px 10px;font-size:12px;cursor:pointer">'
       + '<input type="checkbox" value="'+t+'" style="accent-color:#c8960c"> '+t+'</label>'
     ).join('');
