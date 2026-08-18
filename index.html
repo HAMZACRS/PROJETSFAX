@@ -2751,7 +2751,36 @@ async function dbGet(id) {
   return _idbGet(id);
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+// 🔐 GARDE-FOU CÔTÉ DONNÉES — bloque toute écriture (ajout/modif/suppr) qui
+// ne respecte pas le mode زائر (invité) ou les restrictions de secteur /
+// financement de l'utilisateur connecté. Contrairement aux verrous d'inter-
+// face (boutons désactivés), ce contrôle s'applique ICI, au point d'entrée
+// unique de toute écriture (dbPut/dbDelete) : il ne peut donc pas être
+// contourné en appelant ces fonctions directement depuis la console.
+// Reste une protection côté client (pas infaillible face à un attaquant qui
+// modifierait le script lui-même) — la protection définitive doit venir des
+// règles RLS (Row Level Security) côté serveur Supabase.
+// ─────────────────────────────────────────────────────────────────────────
+function authEnforceWriteAccess(proj) {
+  if (window._guestMode) {
+    showNotification('🔒 وضع الزائر — القراءة فقط، هذه العملية غير مسموحة', 'error');
+    throw new Error('Guest mode: write operation blocked');
+  }
+  const aq = window._authAllowedQita;
+  const at = window._authAllowedTamwil;
+  if (proj && (aq || at)) {
+    const qOk = !aq || aq.includes((proj.qita || '').trim());
+    const tOk = !at || at.includes((proj.tamwil_mashrou || '').trim());
+    if (!qOk || !tOk) {
+      showNotification('🔒 صلاحياتك لا تشمل هذا القطاع أو مصدر التمويل', 'error');
+      throw new Error('Insufficient sector/financing permissions for this project');
+    }
+  }
+}
+
 async function dbPut(proj) {
+  authEnforceWriteAccess(proj);
   proj.updated_at = new Date().toISOString();
   if (!proj.created_at) proj.created_at = proj.updated_at;
 
@@ -2782,6 +2811,11 @@ async function dbPut(proj) {
 }
 
 async function dbDelete(id) {
+  // On récupère le projet existant pour vérifier ses secteur/financement
+  // avant suppression (un utilisateur restreint ne doit pas pouvoir
+  // supprimer un projet hors de son périmètre autorisé).
+  const existing = await dbGet(id).catch(() => null);
+  authEnforceWriteAccess(existing || {});
   if (SUPABASE_ONLINE) {
     try { await _sb.delete('projets', id); }
     catch(e) { console.warn('[Supabase] dbDelete error', e); }
@@ -5923,17 +5957,23 @@ async function importDB(event) {
   try { payload = JSON.parse(await file.text()); } catch { showNotification('ملف غير صالح', 'error'); return; }
   if (!payload.data || !Array.isArray(payload.data)) { showNotification('هيكل الملف غير صحيح', 'error'); return; }
   const merge = confirm(`تم العثور على ${payload.data.length} مشروع.\n\nموافق = دمج مع البيانات الحالية\nإلغاء = استبدال كل البيانات`);
-  if (!merge) { const ex = await dbGetAll(); for (const p of ex) await dbDelete(p.id); }
-  let n = 0;
-  for (const proj of payload.data) {
-    const p = {...proj};
-    if (merge) delete p.id;
-    await dbPut(p);
-    n++;
+  try {
+    if (!merge) { const ex = await dbGetAll(); for (const p of ex) await dbDelete(p.id); }
+    let n = 0;
+    for (const proj of payload.data) {
+      const p = {...proj};
+      if (merge) delete p.id;
+      await dbPut(p);
+      n++;
+    }
+    allProjects = await dbGetAll();
+    showNotification(`تم استيراد ${n} مشروع بنجاح`); updateFawadilBadge(); updateUnallocatedBadge();
+    await loadDashboard(); showView('dashboard');
+  } catch (e) {
+    console.warn('[importDB] blocked or failed', e);
+    showNotification('🔒 تعذّر إتمام الاستيراد — العملية غير مسموحة لصلاحياتك الحالية', 'error');
+    allProjects = await dbGetAll();
   }
-  allProjects = await dbGetAll();
-  showNotification(`تم استيراد ${n} مشروع بنجاح`); updateFawadilBadge(); updateUnallocatedBadge();
-  await loadDashboard(); showView('dashboard');
 }
 
 // ===== REF PREVIEW =====
@@ -6664,6 +6704,14 @@ function _propIdbPut(p) {
     req.onerror = e => rej(e);
   });
 }
+function _propIdbGet(id) {
+  return new Promise((res, rej) => {
+    const tx = db.transaction('proposals', 'readonly');
+    const req = tx.objectStore('proposals').get(id);
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = e => rej(e);
+  });
+}
 function _propIdbDelete(id) {
   return new Promise((res, rej) => {
     const tx = db.transaction('proposals', 'readwrite');
@@ -6685,6 +6733,7 @@ async function propDbGetAll() {
   return _propIdbGetAll();
 }
 async function propDbPut(p) {
+  authEnforceWriteAccess(p);
   p.updated_at = new Date().toISOString();
   if (!p.created_at) p.created_at = p.updated_at;
   if (SUPABASE_ONLINE) {
@@ -6698,6 +6747,8 @@ async function propDbPut(p) {
   return _propIdbPut(p);
 }
 async function propDbDelete(id) {
+  const existing = await _propIdbGet(id).catch(() => null);
+  authEnforceWriteAccess(existing || {});
   if (SUPABASE_ONLINE) {
     try { await _sb.delete('proposals', id); } catch(e) { console.warn('[Supabase] propDbDelete error', e); }
   }
