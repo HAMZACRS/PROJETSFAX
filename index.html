@@ -8576,13 +8576,34 @@ async function authSyncUsersFromRemote() {
   }
 }
 
+// Schéma fixe pour la table app_users — PostgREST refuse un envoi groupé
+// (tableau) si les objets n'ont pas TOUS exactement le même jeu de clés
+// (erreur PGRST102 "All object keys must match"). Comme les comptes créés à
+// différentes époques n'ont pas forcément les mêmes champs (ex: l'admin n'a
+// pas de "phone"/"allowedQita"), on normalise systématiquement chaque
+// utilisateur sur ce schéma avant tout envoi.
+function authNormalizeUserForRemote(u) {
+  return {
+    email:         u.email || '',
+    name:          u.name  || '',
+    phone:         u.phone || null,
+    passwordHash:  u.passwordHash || null,
+    password:      u.password || null, // legacy, normalement absent après migration
+    role:          u.role  || 'user',
+    allowedQita:   u.allowedQita   || null,
+    allowedTamwil: u.allowedTamwil || null,
+    createdAt:     u.createdAt || new Date().toISOString()
+  };
+}
+
 async function authPushUsersRemote(users) {
   if (!Array.isArray(users) || !users.length) return true;
   try {
+    const normalized = users.map(authNormalizeUserForRemote);
     const r = await fetch(_sb.url('app_users'), {
       method: 'POST',
       headers: { ..._sb.headers, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-      body: JSON.stringify(users)
+      body: JSON.stringify(normalized)
     });
     if (!r.ok) {
       const t = await r.text().catch(() => '');
