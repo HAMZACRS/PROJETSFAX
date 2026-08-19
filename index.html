@@ -1411,6 +1411,7 @@ body.guest-mode .form-guest-lock::after {
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importDB(event)">
       <button class="drawer-nav-btn" style="background:rgba(16,185,129,0.12);color:#065f46;border:1px solid rgba(16,185,129,0.3)" onclick="syncLocalToSupabase();closeDrawer()"><span class="d-icon">☁️</span> مزامنة مع Supabase</button>
       <button class="drawer-nav-btn" style="background:rgba(37,99,235,0.08);color:#1e3a8a;border:1px solid rgba(37,99,235,0.2)" onclick="checkSupabaseConnection().then(v=>{updateSyncIndicator();showNotification(v?'✅ Supabase متصل':'❌ Supabase غير متصل — وضع محلي',v?'success':'error')});closeDrawer()"><span class="d-icon">🔌</span> حالة الاتصال بـ Supabase</button>
+      <button class="drawer-nav-btn" style="background:rgba(37,99,235,0.08);color:#1e3a8a;border:1px solid rgba(37,99,235,0.2)" onclick="checkAppUsersTable();closeDrawer()"><span class="d-icon">🔎</span> فحص جدول المستخدمين</button>
       <button class="drawer-nav-btn" onclick="openPrintModal();closeDrawer()"><span class="d-icon">🖨️</span> طباعة المشاريع</button>
       <button class="drawer-nav-btn" onclick="manualAutoLoad();closeDrawer()" style="background:rgba(46,125,50,0.2)"><span class="d-icon">⚡</span> تحميل تلقائي</button>
       <div id="admin-section" style="display:none">
@@ -2637,6 +2638,27 @@ async function checkSupabaseConnection() {
     if (r.status === 404) SUPABASE_ONLINE = false;
     return SUPABASE_ONLINE;
   } catch { SUPABASE_ONLINE = false; return false; }
+}
+
+// 🔎 Diagnostic dédié pour la table app_users (comptes utilisateurs) — permet
+// de vérifier rapidement pourquoi la synchro des comptes échoue, sans avoir
+// à ouvrir la console du navigateur.
+async function checkAppUsersTable() {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/app_users?limit=1`, { headers: _sb.headers });
+    if (r.status === 404) {
+      showNotification('❌ جدول app_users غير موجود في Supabase — يجب إنشاؤه أولاً (SQL Editor)', 'error');
+    } else if (r.ok || r.status === 406) {
+      showNotification('✅ جدول app_users موجود ويعمل بشكل صحيح', 'success');
+    } else {
+      const t = await r.text().catch(() => '');
+      showNotification('⚠️ خطأ HTTP ' + r.status + ' عند الوصول إلى app_users — تحقق من صلاحيات RLS', 'error');
+      console.warn('[checkAppUsersTable]', r.status, t);
+    }
+  } catch (e) {
+    showNotification('❌ تعذّر الوصول إلى Supabase — تحقق من الاتصال بالإنترنت', 'error');
+    console.warn('[checkAppUsersTable]', e);
+  }
 }
 
 // ── Indicateur visuel de connexion ──────────────────────────────────────────
@@ -8533,29 +8555,45 @@ function authSaveSession(s) { try { localStorage.setItem(AUTH_SESSION_KEY, JSON.
 // en cas d'échec (hors-ligne, table absente, etc.).
 // ⚠️ Nécessite la table 'app_users' côté Supabase — voir instructions.
 // ─────────────────────────────────────────────────────────────────────────
+// Dernier statut connu de la synchro des comptes (pour diagnostic dans l'UI)
+window._authSyncStatus = { ok: null, error: null };
+
 async function authSyncUsersFromRemote() {
   try {
     const r = await fetch(_sb.url('app_users'), { headers: _sb.headers });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+    if (!r.ok) {
+      const t = await r.text().catch(() => '');
+      throw new Error('HTTP ' + r.status + (t ? ' — ' + t.slice(0, 200) : ''));
+    }
     const rows = await r.json();
     localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(rows));
+    window._authSyncStatus = { ok: true, error: null };
     return rows;
   } catch (e) {
-    console.warn('[Supabase] authSyncUsersFromRemote → cache local', e);
+    console.warn('[Supabase] authSyncUsersFromRemote → cache local :', e.message);
+    window._authSyncStatus = { ok: false, error: e.message };
     return authGetUsers();
   }
 }
 
 async function authPushUsersRemote(users) {
-  if (!Array.isArray(users) || !users.length) return;
+  if (!Array.isArray(users) || !users.length) return true;
   try {
-    await fetch(_sb.url('app_users'), {
+    const r = await fetch(_sb.url('app_users'), {
       method: 'POST',
       headers: { ..._sb.headers, 'Prefer': 'resolution=merge-duplicates,return=minimal' },
       body: JSON.stringify(users)
     });
+    if (!r.ok) {
+      const t = await r.text().catch(() => '');
+      throw new Error('HTTP ' + r.status + (t ? ' — ' + t.slice(0, 200) : ''));
+    }
+    window._authSyncStatus = { ok: true, error: null };
+    return true;
   } catch (e) {
-    console.warn('[Supabase] authPushUsersRemote failed (compte gardé en local uniquement)', e);
+    console.warn('[Supabase] authPushUsersRemote failed (compte gardé en local uniquement) :', e.message);
+    window._authSyncStatus = { ok: false, error: e.message };
+    return false;
   }
 }
 
@@ -9123,7 +9161,8 @@ async function createUserDirect() {
     allowedTamwil: allowedTamwil.length ? allowedTamwil : null,
     createdAt: new Date().toISOString()
   });
-  authSaveUsers(users);
+  localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users));
+  const syncedOk = await authPushUsersRemote(users); // on attend le résultat pour prévenir l'admin
 
   const message =
     'السلام عليكم ' + name + ',\n\nتم إنشاء حساب لك على منظومة متابعة المشاريع العمومية.\n\n'
@@ -9133,12 +9172,16 @@ async function createUserDirect() {
     + 'خلية متابعة المشاريع العمومية — ولاية صفاقس';
   sendCredentialsViaWhatsApp(phone, message);
 
-  authMsg('nu-msg','success','✅ تم إنشاء الحساب! سيُفتح واتساب لإرسال كلمة المرور.');
+  if (syncedOk) {
+    authMsg('nu-msg','success','✅ تم إنشاء الحساب وحفظه على الخادم! سيُفتح واتساب لإرسال كلمة المرور.');
+  } else {
+    authMsg('nu-msg','error','⚠️ تم إنشاء الحساب محلياً فقط — تعذّر الحفظ على Supabase (تحقق من جدول app_users). المستخدم لن يتمكن من الدخول من جهاز آخر حتى تُحل المشكلة.');
+  }
   document.getElementById('nu-name').value  = '';
   document.getElementById('nu-email').value = '';
   document.getElementById('nu-phone').value = '';
   authPopulateAddUserForm();
-  showNotification('✅ تم إنشاء حساب المستخدم بنجاح');
+  showNotification(syncedOk ? '✅ تم إنشاء حساب المستخدم بنجاح' : '⚠️ تم الإنشاء محلياً فقط — راجع رسالة الخطأ', syncedOk ? 'success' : 'error');
 }
 
 function renderRequestsList() {
@@ -10688,7 +10731,8 @@ async function admSendInvite() {
       allowedTamwil: tamwilChecked.length ? tamwilChecked : null,
       createdAt: new Date().toISOString() });
   }
-  authSaveUsers(users);
+  localStorage.setItem(AUTH_USERS_KEY, JSON.stringify(users));
+  const syncedOk = await authPushUsersRemote(users);
 
   const qStr = qitaChecked.length   ? qitaChecked.join('، ')   : 'كاملة';
   const tStr = tamwilChecked.length ? tamwilChecked.join('، ') : 'كاملة';
@@ -10704,7 +10748,11 @@ async function admSendInvite() {
     + 'يُرجى تغيير كلمة المرور بعد أول تسجيل دخول.\n\n'
     + 'خلية متابعة المشاريع العمومية — ولاية صفاقس';
   sendCredentialsViaWhatsApp(phone, message);
-  admMsg('adm-invite-msg','success','✅ تم إنشاء الحساب وفتح واتساب للإرسال!');
+  if (syncedOk) {
+    admMsg('adm-invite-msg','success','✅ تم إنشاء الحساب وحفظه على الخادم، وفتح واتساب للإرسال!');
+  } else {
+    admMsg('adm-invite-msg','error','⚠️ تم الإنشاء محلياً فقط — تعذّر الحفظ على Supabase (تحقق من جدول app_users). لن يعمل الحساب من جهاز آخر.');
+  }
 
   // Reset le formulaire
   setTimeout(() => {
