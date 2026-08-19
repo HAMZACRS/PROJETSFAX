@@ -9175,7 +9175,8 @@ async function createUserDirect() {
   if (syncedOk) {
     authMsg('nu-msg','success','✅ تم إنشاء الحساب وحفظه على الخادم! سيُفتح واتساب لإرسال كلمة المرور.');
   } else {
-    authMsg('nu-msg','error','⚠️ تم إنشاء الحساب محلياً فقط — تعذّر الحفظ على Supabase (تحقق من جدول app_users). المستخدم لن يتمكن من الدخول من جهاز آخر حتى تُحل المشكلة.');
+    const detail = (window._authSyncStatus && window._authSyncStatus.error) ? '\n\nتفاصيل الخطأ: ' + window._authSyncStatus.error : '';
+    authMsg('nu-msg','error','⚠️ تم إنشاء الحساب محلياً فقط — تعذّر الحفظ على Supabase.' + detail);
   }
   document.getElementById('nu-name').value  = '';
   document.getElementById('nu-email').value = '';
@@ -10751,7 +10752,8 @@ async function admSendInvite() {
   if (syncedOk) {
     admMsg('adm-invite-msg','success','✅ تم إنشاء الحساب وحفظه على الخادم، وفتح واتساب للإرسال!');
   } else {
-    admMsg('adm-invite-msg','error','⚠️ تم الإنشاء محلياً فقط — تعذّر الحفظ على Supabase (تحقق من جدول app_users). لن يعمل الحساب من جهاز آخر.');
+    const detail = (window._authSyncStatus && window._authSyncStatus.error) ? '\n\nتفاصيل الخطأ: ' + window._authSyncStatus.error : '';
+    admMsg('adm-invite-msg','error','⚠️ تم الإنشاء محلياً فقط — تعذّر الحفظ على Supabase.' + detail);
   }
 
   // Reset le formulaire
