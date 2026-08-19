@@ -1284,6 +1284,24 @@ body.guest-mode .form-guest-lock::after {
         <button class="auth-btn auth-btn-login" onclick="doInitialSetup()" id="btn-setup">🛡️ إنشاء حساب المسؤول</button>
         <div class="auth-msg" id="setup-msg"></div>
       </div>
+      <!-- تغيير كلمة المرور الإجباري — يظهر بعد الدخول إذا كان الحساب يتطلب تحديث كلمة المرور -->
+      <div class="auth-panel" id="panel-forcepwd">
+        <div style="text-align:center;padding:6px 0 10px">
+          <div style="font-size:40px;margin-bottom:6px">🔑</div>
+          <h3 style="font-size:15px;font-weight:700;color:var(--primary);margin-bottom:4px">يجب تغيير كلمة المرور</h3>
+          <p style="font-size:12px;color:var(--text-muted);line-height:1.7">لأسباب أمنية، يُرجى تعيين كلمة مرور جديدة خاصة بك قبل متابعة استخدام التطبيق.</p>
+        </div>
+        <div class="auth-field">
+          <label>كلمة المرور الجديدة</label>
+          <input type="password" id="fp-password" placeholder="8 أحرف على الأقل" dir="ltr" style="text-align:left" onkeydown="if(event.key==='Enter')document.getElementById('fp-password2').focus()">
+        </div>
+        <div class="auth-field">
+          <label>تأكيد كلمة المرور</label>
+          <input type="password" id="fp-password2" placeholder="أعد كتابة كلمة المرور" dir="ltr" style="text-align:left" onkeydown="if(event.key==='Enter')doForceChangePassword()">
+        </div>
+        <button class="auth-btn auth-btn-login" onclick="doForceChangePassword()" id="btn-forcepwd">🔑 تعيين كلمة المرور والمتابعة</button>
+        <div class="auth-msg" id="forcepwd-msg"></div>
+      </div>
       <div class="auth-panel" id="panel-login">
         <div class="auth-field">
           <label>المعرّف</label>
@@ -8590,6 +8608,7 @@ function authNormalizeUserForRemote(u) {
     passwordHash:  u.passwordHash || null,
     password:      u.password || null, // legacy, normalement absent après migration
     role:          u.role  || 'user',
+    mustChangePassword: !!u.mustChangePassword,
     allowedQita:   u.allowedQita   || null,
     allowedTamwil: u.allowedTamwil || null,
     createdAt:     u.createdAt || new Date().toISOString()
@@ -8914,9 +8933,53 @@ async function doLogin() {
   document.getElementById('login-password').value = '';
 
   const session = { email: user.email, name: user.name, role: user.role, loginAt: new Date().toISOString() };
+
+  // 🔑 Compte marqué comme devant changer son mot de passe (nouveau compte ou
+  // mot de passe réinitialisé par l'admin) : on bloque l'accès à l'app tant
+  // que l'utilisateur n'a pas défini un mot de passe personnel.
+  if (user.mustChangePassword) {
+    window._authPendingSession = session;
+    authMsg('login-msg','success','✅ تم التحقق من الهوية — يرجى تعيين كلمة مرور جديدة');
+    document.querySelectorAll('.auth-tab').forEach(t => t.style.display = 'none');
+    document.getElementById('panel-login').classList.remove('active');
+    document.getElementById('panel-forcepwd').classList.add('active');
+    return;
+  }
+
   authSaveSession(session);
   authMsg('login-msg','success','✅ تم تسجيل الدخول بنجاح!');
   setTimeout(() => authShowApp(session), 600);
+}
+
+async function doForceChangePassword() {
+  const session = window._authPendingSession;
+  if (!session) { authMsg('forcepwd-msg','error','انتهت الجلسة، يرجى إعادة تسجيل الدخول'); return; }
+  const pwd  = (document.getElementById('fp-password').value  || '').trim();
+  const pwd2 = (document.getElementById('fp-password2').value || '').trim();
+  if (!pwd || !pwd2) { authMsg('forcepwd-msg','error','يرجى ملء جميع الحقول'); return; }
+  if (pwd.length < 8) { authMsg('forcepwd-msg','error','كلمة المرور يجب أن تكون 8 أحرف على الأقل'); return; }
+  if (pwd !== pwd2)   { authMsg('forcepwd-msg','error','كلمتا المرور غير متطابقتين'); return; }
+
+  const users = authGetUsers();
+  const user  = users.find(u => u.email === session.email);
+  if (!user) { authMsg('forcepwd-msg','error','تعذّر العثور على الحساب'); return; }
+
+  user.passwordHash = await hashPasswordStrong(pwd);
+  delete user.password;
+  user.mustChangePassword = false;
+  authSaveUsers(users);
+
+  document.getElementById('fp-password').value  = '';
+  document.getElementById('fp-password2').value = '';
+  window._authPendingSession = null;
+
+  authSaveSession(session);
+  authMsg('forcepwd-msg','success','✅ تم تعيين كلمة المرور بنجاح!');
+  setTimeout(() => {
+    document.getElementById('panel-forcepwd').classList.remove('active');
+    document.querySelectorAll('.auth-tab').forEach(t => t.style.display = '');
+    authShowApp(session);
+  }, 600);
 }
 
 // doRequestAccess() supprimée : la demande d'accès en libre-service n'existe
@@ -9177,7 +9240,7 @@ async function createUserDirect() {
   const pwd     = generateSecurePassword();
   const pwdHash = await hashPasswordStrong(pwd);
   users.push({
-    email, name, phone, passwordHash: pwdHash, role: 'user',
+    email, name, phone, passwordHash: pwdHash, role: 'user', mustChangePassword: true,
     allowedQita:   allowedQita.length   ? allowedQita   : null,
     allowedTamwil: allowedTamwil.length ? allowedTamwil : null,
     createdAt: new Date().toISOString()
@@ -9284,10 +9347,11 @@ async function approveRequest(id) {
     ex.passwordHash  = pwdHash;
     delete ex.password; // remove any legacy plain-text
     ex.phone         = req.phone || ex.phone;
+    ex.mustChangePassword = true;
     ex.allowedQita   = allowedQita.length   ? allowedQita   : null;
     ex.allowedTamwil = allowedTamwil.length ? allowedTamwil : null;
   } else {
-    users.push({ email: req.email, name: req.name, phone: req.phone || '', passwordHash: pwdHash, role: 'user',
+    users.push({ email: req.email, name: req.name, phone: req.phone || '', passwordHash: pwdHash, role: 'user', mustChangePassword: true,
       allowedQita:   allowedQita.length   ? allowedQita   : null,
       allowedTamwil: allowedTamwil.length ? allowedTamwil : null,
       createdAt: new Date().toISOString() });
@@ -9339,7 +9403,7 @@ function resendPassword(id) {
   hashPasswordStrong(pwd).then(pwdHash => {
     const users = authGetUsers();
     const user  = users.find(u => u.email === req.email);
-    if (user) { user.passwordHash = pwdHash; delete user.password; authSaveUsers(users); }
+    if (user) { user.passwordHash = pwdHash; delete user.password; user.mustChangePassword = true; authSaveUsers(users); }
     const message =
       'السلام عليكم ' + req.name + ',\n\n'
       + 'المعرّف: ' + req.email + '\n'
@@ -10642,6 +10706,7 @@ async function admResetUserPassword(email, name, idx) {
   const pwd = generateSecurePassword();
   user.passwordHash = await hashPasswordStrong(pwd);
   user.phone = phone;
+  user.mustChangePassword = true;
   delete user.password;
   authSaveUsers(users);
   const message =
@@ -10744,11 +10809,12 @@ async function admSendInvite() {
   const ex      = users.find(u => u.email === email);
   if (ex) {
     ex.name = name; ex.phone = phone; ex.passwordHash = await hashPasswordStrong(pwd); delete ex.password;
+    ex.mustChangePassword = true;
     ex.allowedQita   = qitaChecked.length   ? qitaChecked   : null;
     ex.allowedTamwil = tamwilChecked.length ? tamwilChecked : null;
   } else {
     const newHash = await hashPasswordStrong(pwd);
-    users.push({ email, name, phone, passwordHash: newHash, role: 'user',
+    users.push({ email, name, phone, passwordHash: newHash, role: 'user', mustChangePassword: true,
       allowedQita:   qitaChecked.length   ? qitaChecked   : null,
       allowedTamwil: tamwilChecked.length ? tamwilChecked : null,
       createdAt: new Date().toISOString() });
