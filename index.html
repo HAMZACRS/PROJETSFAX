@@ -8948,7 +8948,15 @@ async function doLogin() {
 
   authSaveSession(session);
   authMsg('login-msg','success','✅ تم تسجيل الدخول بنجاح!');
-  setTimeout(() => authShowApp(session), 600);
+  // Recharger la page plutôt qu'appeler authShowApp() directement : au
+  // premier chargement, l'application a déjà commencé à charger TOUS les
+  // projets en arrière-plan avant que la connexion ne soit terminée (les
+  // filtres de secteur/financement ne sont appliqués qu'après coup et
+  // n'affectent pas les données déjà chargées). Un rechargement complet fait
+  // repasser par authCheckSession(), qui applique les filtres AVANT tout
+  // chargement de données — garantissant qu'un utilisateur restreint ne
+  // voit jamais les projets hors de son périmètre.
+  setTimeout(() => location.reload(), 600);
 }
 
 async function doForceChangePassword() {
@@ -8975,11 +8983,9 @@ async function doForceChangePassword() {
 
   authSaveSession(session);
   authMsg('forcepwd-msg','success','✅ تم تعيين كلمة المرور بنجاح!');
-  setTimeout(() => {
-    document.getElementById('panel-forcepwd').classList.remove('active');
-    document.querySelectorAll('.auth-tab').forEach(t => t.style.display = '');
-    authShowApp(session);
-  }, 600);
+  // Même raisonnement que pour doLogin() : recharger pour garantir que les
+  // filtres de permission sont appliqués avant tout chargement de données.
+  setTimeout(() => location.reload(), 600);
 }
 
 // doRequestAccess() supprimée : la demande d'accès en libre-service n'existe
