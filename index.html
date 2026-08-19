@@ -1126,9 +1126,9 @@ body.guest-mode .form-guest-lock::after {
 .avenant-popup-footer { padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
 
 /* ===== AUTH REQUESTS MODAL ===== */
-.auth-requests-modal { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); display: none; align-items: flex-end; justify-content: center; }
+.auth-requests-modal { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box; }
 .auth-requests-modal.open { display: flex; }
-.auth-requests-box { background: var(--surface); border-radius: 16px 16px 0 0; box-shadow: 0 -8px 32px rgba(0,0,0,0.3); width: 100%; max-height: 85dvh; overflow: hidden; display: flex; flex-direction: column; direction: rtl; padding-bottom: env(safe-area-inset-bottom); }
+.auth-requests-box { background: var(--surface); border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); width: 100%; max-width: 480px; max-height: 85dvh; overflow: hidden; display: flex; flex-direction: column; direction: rtl; margin: auto; }
 .auth-requests-header { padding: 14px 18px; border-bottom: 1px solid var(--border); background: linear-gradient(135deg, var(--primary), #1e4d7a); color: #fff; display: flex; align-items: center; justify-content: space-between; border-radius: 16px 16px 0 0; }
 .auth-requests-list { overflow-y: auto; flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
 .req-card { background: #fff; border: 1.5px solid var(--border); border-radius: 10px; padding: 12px 14px; }
@@ -1360,6 +1360,7 @@ body.guest-mode .form-guest-lock::after {
       <div id="add-user-form" style="display:none;margin-top:12px;background:rgba(37,99,235,0.05);border:1px solid rgba(37,99,235,0.15);border-radius:10px;padding:12px">
         <div class="auth-field"><label>الاسم الكامل</label><input type="text" id="nu-name" placeholder="أدخل الاسم الكامل"></div>
         <div class="auth-field"><label>المعرّف / البريد الإلكتروني</label><input type="email" id="nu-email" placeholder="example@email.com" dir="ltr" style="text-align:left"></div>
+        <div class="auth-field"><label>📱 رقم الهاتف (واتساب — مع رمز البلد)</label><input type="tel" id="nu-phone" placeholder="21620123456" dir="ltr" style="text-align:left"></div>
         <div class="auth-field">
           <label>🏗️ القطاعات المسموح بها (اتركها فارغة = الكل)</label>
           <div id="newuser-qita-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;max-height:100px;overflow-y:auto"></div>
@@ -8406,10 +8407,15 @@ function closeAdminReqForm() {
 function submitAdminReqForm() {
   const name   = (document.getElementById('arf-name').value   || '').trim();
   const email  = (document.getElementById('arf-email').value  || '').trim().toLowerCase();
+  const phone  = (document.getElementById('arf-phone').value  || '').trim();
   const reason = (document.getElementById('arf-reason').value || '').trim();
-  if (!name || !email || !reason) {
+  if (!name || !email || !phone || !reason) {
     const m = document.getElementById('arf-msg');
     m.className = 'auth-msg error'; m.textContent = 'يرجى ملء جميع الحقول'; return;
+  }
+  if (!isValidPhone(phone)) {
+    const m = document.getElementById('arf-msg');
+    m.className = 'auth-msg error'; m.textContent = 'رقم الهاتف غير صالح'; return;
   }
 
   // Enregistrer comme demande normale avec flag admin
@@ -8418,17 +8424,17 @@ function submitAdminReqForm() {
     const m = document.getElementById('arf-msg');
     m.className = 'auth-msg info'; m.textContent = '⏳ طلبك قيد المراجعة بالفعل'; return;
   }
-  const req = { id: Date.now(), name, email, reason: '[طلب صلاحية مسؤول] ' + reason,
+  const req = { id: Date.now(), name, email, phone, reason: '[طلب صلاحية مسؤول] ' + reason,
     requestedRole: 'admin', status: 'pending', createdAt: new Date().toISOString() };
   reqs.push(req);
   authSaveRequests(reqs);
 
   const sub  = encodeURIComponent('طلب صلاحية مسؤول — منظومة متابعة المشاريع صفاقس');
-  const body = encodeURIComponent('طلب صلاحية مسؤول:\n\nالاسم: ' + name + '\nالبريد: ' + email + '\nالسبب: ' + reason + '\n\nللموافقة: افتح التطبيق > طلبات الصلاحية');
+  const body = encodeURIComponent('طلب صلاحية مسؤول:\n\nالاسم: ' + name + '\nالبريد: ' + email + '\nالهاتف: ' + phone + '\nالسبب: ' + reason + '\n\nللموافقة: افتح التطبيق > إدارة المستخدمين');
   window.open('mailto:' + ADMIN_NOTIFY_EMAIL + '?subject=' + sub + '&body=' + body);
 
   const m = document.getElementById('arf-msg');
-  m.className = 'auth-msg success'; m.textContent = '✅ تم إرسال طلبك! ستتلقى ردّاً على بريدك الإلكتروني.';
+  m.className = 'auth-msg success'; m.textContent = '✅ تم إرسال طلبك! ستتلقى ردّاً عبر واتساب.';
   setTimeout(() => closeAdminReqForm(), 2200);
 }
 
@@ -8743,6 +8749,24 @@ function authMsg(elId, type, text) {
 
 function isValidEmail(e) {
   return e.indexOf('@') > 0 && e.indexOf('.') > 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// 📱 Envoi des identifiants de connexion via WhatsApp (au lieu du courrier
+// électronique). On ouvre wa.me avec le message pré-rempli ; l'admin n'a
+// plus qu'à appuyer sur "envoyer" dans WhatsApp Web/App.
+// Le numéro doit inclure l'indicatif pays (ex: 21620123456 pour la Tunisie,
+// avec ou sans "+" — tout caractère non numérique est retiré automatiquement).
+// ─────────────────────────────────────────────────────────────────────────
+function isValidPhone(p) {
+  const digits = (p || '').replace(/[^\d]/g, '');
+  return digits.length >= 8; // tolérant : couvre différents formats/indicatifs
+}
+function sendCredentialsViaWhatsApp(phone, message) {
+  const digits = (phone || '').replace(/[^\d]/g, '');
+  if (!digits) { showNotification('⚠️ رقم الهاتف غير صالح — تعذّر فتح واتساب', 'error'); return false; }
+  window.open('https://wa.me/' + digits + '?text=' + encodeURIComponent(message), '_blank');
+  return true;
 }
 
 // ── Anti-bruteforce côté client (dissuasif, pas une vraie protection) ──
@@ -9078,8 +9102,10 @@ async function createUserDirect() {
   if (!authIsCurrentUserAdmin()) { showNotification('🔒 هذه الميزة مخصّصة للمسؤول فقط', 'error'); return; }
   const name  = (document.getElementById('nu-name').value  || '').trim();
   const email = (document.getElementById('nu-email').value || '').trim().toLowerCase();
-  if (!name || !email) { authMsg('nu-msg','error','يرجى ملء الاسم والمعرّف'); return; }
+  const phone = (document.getElementById('nu-phone').value || '').trim();
+  if (!name || !email || !phone) { authMsg('nu-msg','error','يرجى ملء الاسم والمعرّف ورقم الهاتف'); return; }
   if (!isValidEmail(email)) { authMsg('nu-msg','error','البريد الإلكتروني غير صالح'); return; }
+  if (!isValidPhone(phone)) { authMsg('nu-msg','error','رقم الهاتف غير صالح'); return; }
 
   const users = authGetUsers();
   if (users.find(u => u.email === email) || email === ADMIN_EMAIL) {
@@ -9092,26 +9118,25 @@ async function createUserDirect() {
   const pwd     = generateSecurePassword();
   const pwdHash = await hashPasswordStrong(pwd);
   users.push({
-    email, name, passwordHash: pwdHash, role: 'user',
+    email, name, phone, passwordHash: pwdHash, role: 'user',
     allowedQita:   allowedQita.length   ? allowedQita   : null,
     allowedTamwil: allowedTamwil.length ? allowedTamwil : null,
     createdAt: new Date().toISOString()
   });
   authSaveUsers(users);
 
-  const sub  = encodeURIComponent('منظومة متابعة المشاريع — بيانات الدخول');
-  const body = encodeURIComponent(
+  const message =
     'السلام عليكم ' + name + ',\n\nتم إنشاء حساب لك على منظومة متابعة المشاريع العمومية.\n\n'
     + 'الرابط: https://suiviprojetsfax.netlify.app/\n'
     + 'المعرّف: ' + email + '\n'
     + 'كلمة المرور: ' + pwd + '\n\n'
-    + 'خلية متابعة المشاريع العمومية — ولاية صفاقس'
-  );
-  window.open('mailto:' + email + '?subject=' + sub + '&body=' + body);
+    + 'خلية متابعة المشاريع العمومية — ولاية صفاقس';
+  sendCredentialsViaWhatsApp(phone, message);
 
-  authMsg('nu-msg','success','✅ تم إنشاء الحساب! سيُفتح تطبيق البريد لإرسال كلمة المرور.');
+  authMsg('nu-msg','success','✅ تم إنشاء الحساب! سيُفتح واتساب لإرسال كلمة المرور.');
   document.getElementById('nu-name').value  = '';
   document.getElementById('nu-email').value = '';
+  document.getElementById('nu-phone').value = '';
   authPopulateAddUserForm();
   showNotification('✅ تم إنشاء حساب المستخدم بنجاح');
 }
@@ -9193,10 +9218,11 @@ async function approveRequest(id) {
   if (ex) {
     ex.passwordHash  = pwdHash;
     delete ex.password; // remove any legacy plain-text
+    ex.phone         = req.phone || ex.phone;
     ex.allowedQita   = allowedQita.length   ? allowedQita   : null;
     ex.allowedTamwil = allowedTamwil.length ? allowedTamwil : null;
   } else {
-    users.push({ email: req.email, name: req.name, passwordHash: pwdHash, role: 'user',
+    users.push({ email: req.email, name: req.name, phone: req.phone || '', passwordHash: pwdHash, role: 'user',
       allowedQita:   allowedQita.length   ? allowedQita   : null,
       allowedTamwil: allowedTamwil.length ? allowedTamwil : null,
       createdAt: new Date().toISOString() });
@@ -9208,18 +9234,17 @@ async function approveRequest(id) {
   req.allowedQita   = allowedQita.length   ? allowedQita   : null;
   req.allowedTamwil = allowedTamwil.length ? allowedTamwil : null;
   authSaveRequests(reqs);
-  const sub  = encodeURIComponent('منظومة متابعة المشاريع — بيانات الدخول');
-  const body = encodeURIComponent(
+  const message =
     'السلام عليكم ' + req.name + ',\n\nتمت الموافقة على طلب الوصول.\n\n'
     + 'الرابط: https://suiviprojetsfax.netlify.app/\n'
     + 'المعرّف: ' + req.email + '\n'
     + 'كلمة المرور: ' + pwd + '\n\n'
-    + 'خلية متابعة المشاريع العمومية — ولاية صفاقس'
-  );
-  window.open('mailto:' + req.email + '?subject=' + sub + '&body=' + body);
+    + 'خلية متابعة المشاريع العمومية — ولاية صفاقس';
+  if (req.phone) { sendCredentialsViaWhatsApp(req.phone, message); }
+  else { showNotification('⚠️ لا يوجد رقم هاتف لهذا الطلب — لم يتم إرسال كلمة المرور تلقائياً', 'error'); }
   authRefreshPendingBadge();
   renderRequestsList();
-  showNotification('✅ تم قبول الطلب وفتح البريد لإرسال كلمة المرور');
+  showNotification('✅ تم قبول الطلب' + (req.phone ? ' وفتح واتساب لإرسال كلمة المرور' : ''));
 }
 
 function denyRequest(id) {
@@ -9242,21 +9267,21 @@ function resendPassword(id) {
   const reqs = authGetRequests();
   const req  = reqs.find(r => r.id === id);
   if (!req) return;
+  const phone = req.phone || (authGetUsers().find(u => u.email === req.email) || {}).phone;
+  if (!phone) { showNotification('⚠️ لا يوجد رقم هاتف مسجّل لهذا المستخدم', 'error'); return; }
   // Generate and hash a new password
   const pwd = generateSecurePassword();
   hashPasswordStrong(pwd).then(pwdHash => {
     const users = authGetUsers();
     const user  = users.find(u => u.email === req.email);
     if (user) { user.passwordHash = pwdHash; delete user.password; authSaveUsers(users); }
-    const sub  = encodeURIComponent('منظومة متابعة المشاريع — تذكير بيانات الدخول');
-    const body = encodeURIComponent(
+    const message =
       'السلام عليكم ' + req.name + ',\n\n'
       + 'المعرّف: ' + req.email + '\n'
       + 'كلمة المرور الجديدة: ' + pwd + '\n\n'
-      + 'الرابط: https://suiviprojetsfax.netlify.app/'
-    );
-    window.open('mailto:' + req.email + '?subject=' + sub + '&body=' + body);
-    showNotification('✅ تم توليد كلمة مرور جديدة وفتح البريد');
+      + 'الرابط: https://suiviprojetsfax.netlify.app/';
+    sendCredentialsViaWhatsApp(phone, message);
+    showNotification('✅ تم توليد كلمة مرور جديدة وفتح واتساب');
   });
 }
 
@@ -10541,24 +10566,28 @@ async function admRefreshUsers() {
 
 async function admResetUserPassword(email, name, idx) {
   if (!confirm('إعادة توليد كلمة مرور جديدة لـ ' + name + '؟')) return;
-  const pwd     = generateSecurePassword();
-  const users   = authGetUsers();
-  const user    = users.find(u => u.email === email);
+  const users = authGetUsers();
+  const user  = users.find(u => u.email === email);
   if (!user) return;
+  let phone = user.phone;
+  if (!phone) {
+    phone = (prompt('لا يوجد رقم هاتف مسجّل لهذا المستخدم.\nأدخل رقم الهاتف (مع رمز البلد) لإرسال كلمة المرور عبر واتساب:') || '').trim();
+    if (!isValidPhone(phone)) { showNotification('⚠️ رقم هاتف غير صالح — تم إلغاء العملية', 'error'); return; }
+  }
+  const pwd = generateSecurePassword();
   user.passwordHash = await hashPasswordStrong(pwd);
+  user.phone = phone;
   delete user.password;
   authSaveUsers(users);
-  const sub  = encodeURIComponent('منظومة متابعة المشاريع — كلمة مرور جديدة');
-  const body = encodeURIComponent(
+  const message =
     'السلام عليكم ' + name + ',\n\n'
     + 'تم إعادة تعيين كلمة المرور الخاصة بك.\n\n'
     + 'المعرّف: ' + email + '\n'
     + 'كلمة المرور الجديدة: ' + pwd + '\n\n'
     + 'الرابط: https://suiviprojetsfax.netlify.app/\n\n'
-    + 'خلية متابعة المشاريع العمومية — ولاية صفاقس'
-  );
-  window.open('mailto:' + email + '?subject=' + sub + '&body=' + body);
-  showNotification('✅ تم توليد كلمة مرور جديدة وفتح البريد');
+    + 'خلية متابعة المشاريع العمومية — ولاية صفاقس';
+  sendCredentialsViaWhatsApp(phone, message);
+  showNotification('✅ تم توليد كلمة مرور جديدة وفتح واتساب');
 }
 
 function admEditUserPerms(email, idx) {
@@ -10634,11 +10663,13 @@ function admGenPassword() {
 async function admSendInvite() {
   const name  = (document.getElementById('inv-name').value  || '').trim();
   const email = (document.getElementById('inv-email').value || '').trim().toLowerCase();
+  const phone = (document.getElementById('inv-phone').value || '').trim();
   let   pwd   = (document.getElementById('inv-password').value || '').trim();
   admMsg('adm-invite-msg','info','');
 
   if (!name)  { admMsg('adm-invite-msg','error','يرجى إدخال الاسم الكامل'); return; }
   if (!email || !isValidEmail(email)) { admMsg('adm-invite-msg','error','بريد إلكتروني غير صالح'); return; }
+  if (!phone || !isValidPhone(phone)) { admMsg('adm-invite-msg','error','رقم هاتف غير صالح'); return; }
   if (!pwd || pwd.length < 6) { pwd = generateSecurePassword(); document.getElementById('inv-password').value = pwd; }
 
   const qitaChecked   = [...document.querySelectorAll('#inv-qita-list input:checked')].map(c => c.value);
@@ -10647,12 +10678,12 @@ async function admSendInvite() {
   const users   = authGetUsers();
   const ex      = users.find(u => u.email === email);
   if (ex) {
-    ex.name = name; ex.passwordHash = await hashPasswordStrong(pwd); delete ex.password;
+    ex.name = name; ex.phone = phone; ex.passwordHash = await hashPasswordStrong(pwd); delete ex.password;
     ex.allowedQita   = qitaChecked.length   ? qitaChecked   : null;
     ex.allowedTamwil = tamwilChecked.length ? tamwilChecked : null;
   } else {
     const newHash = await hashPasswordStrong(pwd);
-    users.push({ email, name, passwordHash: newHash, role: 'user',
+    users.push({ email, name, phone, passwordHash: newHash, role: 'user',
       allowedQita:   qitaChecked.length   ? qitaChecked   : null,
       allowedTamwil: tamwilChecked.length ? tamwilChecked : null,
       createdAt: new Date().toISOString() });
@@ -10661,8 +10692,7 @@ async function admSendInvite() {
 
   const qStr = qitaChecked.length   ? qitaChecked.join('، ')   : 'كاملة';
   const tStr = tamwilChecked.length ? tamwilChecked.join('، ') : 'كاملة';
-  const sub  = encodeURIComponent('دعوة — منظومة متابعة المشاريع العمومية ولاية صفاقس');
-  const body = encodeURIComponent(
+  const message =
     'السلام عليكم ' + name + ',\n\n'
     + 'يسعدنا دعوتك للانضمام إلى منظومة متابعة المشاريع العمومية — ولاية صفاقس.\n\n'
     + '🔗 الرابط: https://suiviprojetsfax.netlify.app/\n'
@@ -10672,15 +10702,15 @@ async function admSendInvite() {
     + '   • القطاعات: ' + qStr + '\n'
     + '   • مصادر التمويل: ' + tStr + '\n\n'
     + 'يُرجى تغيير كلمة المرور بعد أول تسجيل دخول.\n\n'
-    + 'خلية متابعة المشاريع العمومية — ولاية صفاقس'
-  );
-  window.open('mailto:' + email + '?subject=' + sub + '&body=' + body);
-  admMsg('adm-invite-msg','success','✅ تم إنشاء الحساب وفتح البريد للإرسال!');
+    + 'خلية متابعة المشاريع العمومية — ولاية صفاقس';
+  sendCredentialsViaWhatsApp(phone, message);
+  admMsg('adm-invite-msg','success','✅ تم إنشاء الحساب وفتح واتساب للإرسال!');
 
   // Reset le formulaire
   setTimeout(() => {
     document.getElementById('inv-name').value  = '';
     document.getElementById('inv-email').value = '';
+    document.getElementById('inv-phone').value = '';
     document.getElementById('inv-password').value = generateSecurePassword();
     document.querySelectorAll('#inv-qita-list input, #inv-tamwil-list input').forEach(c => c.checked = false);
     admMsg('adm-invite-msg','info','');
@@ -11071,6 +11101,10 @@ async function doPasswordResetRequest() {
         <input type="email" id="arf-email" placeholder="example@email.com" dir="ltr" style="text-align:left">
       </div>
       <div class="lajnah-field">
+        <label>📱 رقم الهاتف (واتساب — مع رمز البلد)</label>
+        <input type="tel" id="arf-phone" placeholder="21620123456" dir="ltr" style="text-align:left">
+      </div>
+      <div class="lajnah-field">
         <label>سبب طلب صلاحية المسؤول</label>
         <textarea id="arf-reason" rows="3" placeholder="اشرح سبب حاجتك للصلاحيات الإدارية..."></textarea>
       </div>
@@ -11159,8 +11193,8 @@ async function doPasswordResetRequest() {
       <!-- ── Tab: Invite ── -->
       <div id="adm-panel-invite" style="padding:20px;display:none">
         <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:16px">
-          <div style="font-weight:700;font-size:13px;color:#15803d;margin-bottom:6px">📧 إرسال دعوة مع بيانات دخول</div>
-          <div style="font-size:12px;color:#64748b">سيتم توليد كلمة مرور تلقائية وإرسالها للمستخدم عبر البريد الإلكتروني.</div>
+          <div style="font-weight:700;font-size:13px;color:#15803d;margin-bottom:6px">📱 إرسال دعوة مع بيانات دخول</div>
+          <div style="font-size:12px;color:#64748b">سيتم توليد كلمة مرور تلقائية وإرسالها للمستخدم عبر واتساب.</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
           <div>
@@ -11170,6 +11204,10 @@ async function doPasswordResetRequest() {
           <div>
             <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:3px">البريد الإلكتروني (المعرّف) *</label>
             <input type="email" id="inv-email" placeholder="example@email.com" dir="ltr" style="width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;text-align:left">
+          </div>
+          <div>
+            <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:3px">📱 رقم الهاتف (واتساب — مع رمز البلد) *</label>
+            <input type="tel" id="inv-phone" placeholder="21620123456" dir="ltr" style="width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;text-align:left">
           </div>
           <div>
             <label style="font-size:12px;color:#6b7280;display:block;margin-bottom:3px">كلمة المرور</label>
