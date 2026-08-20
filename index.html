@@ -4355,6 +4355,11 @@ async function saveProject() {
   }
   // Mettre à jour les combos avec les nouvelles valeurs éventuellement saisies
   populateComboDatalists();
+  // Recharger la liste globale (allProjects) pour que la liste/la barre latérale/
+  // les statistiques reflètent immédiatement le changement — sans ça, revenir à
+  // la liste après une modification (ex: annulation de clôture) affichait encore
+  // l'ancienne version en cache tant qu'aucun rafraîchissement manuel n'était fait.
+  await loadProjects();
   await viewProject(currentProjectId);
 }
 
