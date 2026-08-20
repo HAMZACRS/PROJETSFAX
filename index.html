@@ -1562,9 +1562,10 @@ body.guest-mode .form-guest-lock::after {
         <select id="list-filter-qita" onchange="filterProjects()"><option value="">— كل القطاعات —</option></select>
         <select id="list-filter-tamwil" onchange="filterProjects()"><option value="">— كل مصادر التمويل —</option></select>
         <select id="list-filter-sana" onchange="filterProjects()"><option value="">— كل السنوات —</option></select>
-        <select id="list-filter-status" onchange="filterProjects()"><option value="">— كل الحالات —</option><option value="zero">⚠️ لم يبدأ (0%)</option><option value="progress">🔧 جاري (1–99%)</option><option value="done">✅ منجز (100%)</option></select>
+        <select id="list-filter-status" onchange="filterProjects()"><option value="">— كل الحالات —</option><option value="zero">⚠️ لم يبدأ (0%)</option><option value="progress">🔧 جاري (1–99%)</option><option value="done">✅ منجز (100%)</option><option value="cloture">🔒 مُغلق</option></select>
         <select id="list-sort-by" onchange="filterProjects()"><option value="in_progress" selected>🔧 جاري الإنجاز أولاً</option><option value="id_asc">🔢 رقم ↑</option><option value="id_desc">🔢 رقم ↓</option><option value="nisbat_desc">📊 نسبة ↓</option><option value="nisbat_asc">📊 نسبة ↑</option><option value="date_asc">📅 تاريخ ↑</option><option value="date_desc">📅 تاريخ ↓</option><option value="updated">🕐 آخر تحديث</option></select>
         <button class="filter-reset" onclick="resetListFilters()">✕</button>
+        <button class="btn btn-outline btn-sm" onclick="printTrackingTable()" style="white-space:nowrap">🖨️ طباعة جدول متابعة</button>
         <span class="filter-count" id="list-filter-count"></span>
       </div>
       <div class="card">
@@ -2836,20 +2837,27 @@ async function dbPut(proj) {
       let saved;
       if (p.id) {
         saved = await _sb.update('projets', p.id, p);
+        // ⚠️ PostgREST répond 200 avec un tableau VIDE (pas une erreur HTTP) si
+        // le filtre ?id=eq.X ne correspond à aucune ligne (ex: incohérence de
+        // type d'ID, ou ligne bloquée par une policy RLS). Sans cette
+        // vérification explicite, l'échec passait inaperçu : la modification
+        // n'était alors sauvegardée que localement, sans jamais prévenir
+        // l'utilisateur — exactement le symptôme "la valeur ne change pas
+        // dans la base, sans message d'erreur".
+        if (!saved) throw new Error('Supabase a répondu 200 mais aucune ligne mise à jour (id=' + p.id + ') — vérifiez la policy RLS UPDATE ou le type de la colonne id.');
       } else {
         delete p.id;
         saved = await _sb.insert('projets', p);
+        if (!saved) throw new Error('Supabase n\'a retourné aucune ligne après insertion.');
       }
-      if (saved) {
-        proj.id = saved.id;
-        await _idbPut(saved);
-        logActivity(isNew ? 'إضافة مشروع' : 'تعديل مشروع', '#' + saved.id + ' — ' + (saved.bayan_mashrou || ''));
-        return saved.id;
-      }
+      proj.id = saved.id;
+      await _idbPut(saved);
+      logActivity(isNew ? 'إضافة مشروع' : 'تعديل مشروع', '#' + saved.id + ' — ' + (saved.bayan_mashrou || ''));
+      return saved.id;
     } catch(e) {
       console.warn('[Supabase] dbPut error', e);
-      showNotification('⚠️ خطأ في الحفظ على Supabase — تم الحفظ محلياً', 'error');
-      SUPABASE_ONLINE = false; updateSyncIndicator();
+      showNotification('⚠️ تعذّر الحفظ على Supabase — تم الحفظ محلياً فقط. السبب: ' + e.message, 'error');
+      window._lastSaveError = e.message;
     }
   }
   const localId = await _idbPut(proj);
@@ -3616,6 +3624,7 @@ function filterProjects() {
     if (status === 'zero'     && nisbat !== 0) return false;
     if (status === 'progress' && (nisbat === 0 || nisbat >= 100)) return false;
     if (status === 'done'     && nisbat < 100) return false;
+    if (status === 'cloture'  && !p.cloture) return false;
     return true;
   });
 
@@ -3638,12 +3647,178 @@ function filterProjects() {
   };
   filtered.sort(sorters[sortBy] || sorters.in_progress);
 
+  // Exposer la liste filtrée courante pour l'impression du tableau de suivi
+  window._currentFilteredProjects = filtered;
+
   // ── counter badge ──
   const cnt = document.getElementById('list-filter-count');
   const isFiltered = !!(q || muta || qita || status || tamwil || sana);
   if (cnt) cnt.textContent = isFiltered ? `${filtered.length} من ${allProjects.length} مشروع` : `${allProjects.length} مشروع`;
 
   renderTable(filtered);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// 🖨️ طباعة جدول متابعة — exporte en PDF un tableau de suivi contenant tous
+// les projets actuellement affichés (donc filtrés selon les critères choisis
+// dans les comboboxes : معتمدية / قطاع / تمويل / سنة / حالة / recherche).
+// ─────────────────────────────────────────────────────────────────────────
+function printTrackingTable() {
+  const projects = window._currentFilteredProjects && window._currentFilteredProjects.length
+    ? window._currentFilteredProjects
+    : allProjects;
+
+  if (!projects.length) { showNotification('⚠️ لا توجد مشاريع مطابقة للمعايير المختارة', 'error'); return; }
+
+  // Résumé des critères actifs (affiché en en-tête du tableau imprimé)
+  const critLabels = [];
+  const muta   = document.getElementById('list-filter-muta')?.value;
+  const qita   = document.getElementById('list-filter-qita')?.value;
+  const tamwil = document.getElementById('list-filter-tamwil')?.value;
+  const sana   = document.getElementById('list-filter-sana')?.value;
+  const status = document.getElementById('list-filter-status')?.value;
+  const statusLabels = { zero:'لم يبدأ (0%)', progress:'جاري الإنجاز', done:'منجز (100%)', cloture:'مُغلق' };
+  if (muta)   critLabels.push('المعتمدية: ' + muta);
+  if (qita)   critLabels.push('القطاع: ' + qita);
+  if (tamwil) critLabels.push('مصدر التمويل: ' + tamwil);
+  if (sana)   critLabels.push('سنة البرمجة: ' + sana);
+  if (status) critLabels.push('الحالة: ' + (statusLabels[status] || status));
+  const critText = critLabels.length ? critLabels.join(' | ') : 'كل المشاريع (بدون معايير تصفية)';
+
+  const statusOf = p => {
+    if (p.cloture) return { txt: '🔒 مُغلق', color: '#6b7280' };
+    const n = parseInt(p.nisbat_injaz) || 0;
+    if (n >= 100) return { txt: '✅ منجز', color: '#059669' };
+    if (n === 0)  return { txt: '⚠️ لم يبدأ', color: '#dc2626' };
+    return { txt: '🔧 جاري', color: '#d97706' };
+  };
+
+  const rowsHTML = projects.map((p, i) => {
+    const st = statusOf(p);
+    return `<tr>
+      <td>${i + 1}</td>
+      <td style="text-align:right">${(p.bayan_mashrou || '—')}</td>
+      <td>${p.muta_madiyya || '—'}</td>
+      <td>${p.qita || '—'}</td>
+      <td>${p.tamwil_mashrou || '—'}</td>
+      <td>${p.sana_barmaja || '—'}</td>
+      <td>${p.mukallaf_binjaz || '—'}</td>
+      <td>${formatDate(p.tarikh_intilaq_ashghal) || '—'}</td>
+      <td>${formatDate(p.tarikh_intiha_ashghal) || '—'}</td>
+      <td style="font-weight:700">${parseInt(p.nisbat_injaz) || 0}%</td>
+      <td style="color:${st.color};font-weight:700;white-space:nowrap">${st.txt}</td>
+    </tr>`;
+  }).join('');
+
+  const printDate = new Date().toLocaleDateString('ar-TN', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const html = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>جدول متابعة المشاريع</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Amiri', serif; direction: rtl; background: #fff; color: #1a1209; }
+
+  .ctrl-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+    background: #1a3a5c; padding: 10px 20px;
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  }
+  .ctrl-bar button {
+    padding: 8px 22px; border: none; border-radius: 6px; cursor: pointer;
+    font-family: 'Amiri', serif; font-size: 15px; font-weight: 700;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-print { background: #2563EB; color: #fff; }
+  .btn-print:hover { background: #1d4ed8; }
+  .btn-save  { background: #059669; color: #fff; }
+  .btn-save:hover  { background: #047857; }
+  .btn-save:disabled { background: #6b7280; cursor: wait; }
+  .btn-back  { background: rgba(255,255,255,0.15); color: #fff; }
+  .ctrl-bar .info { color: rgba(255,255,255,0.6); font-size: 12px; margin-right: 6px; }
+
+  .content { margin-top: 60px; padding: 16px; }
+
+  .print-doc-header { text-align: center; padding: 14px 0 16px; border-bottom: 3px double #1a3a5c; margin-bottom: 14px; }
+  .print-doc-header .republic { font-size: 15px; font-weight: 700; color: #1a3a5c; }
+  .print-doc-header .title    { font-size: 20px; font-weight: 700; color: #1a3a5c; margin: 6px 0 4px; letter-spacing: 1.5px; }
+  .print-doc-header .sub      { font-size: 12px; color: #666; }
+  .print-doc-header .crit     { font-size: 11px; color: #444; margin-top: 6px; background:#f1f5f9; display:inline-block; padding:4px 12px; border-radius:20px; }
+
+  table.tt { width: 100%; border-collapse: collapse; font-size: 11px; }
+  table.tt th, table.tt td { border: 1px solid #ccc; padding: 5px 6px; text-align: center; }
+  table.tt th { background: #1a3a5c; color: #fff; font-size: 10.5px; }
+  table.tt tbody tr:nth-child(even) { background: #f8fafc; }
+
+  @media print {
+    .ctrl-bar { display: none !important; }
+    .content  { margin-top: 0 !important; padding: 8px !important; }
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    table.tt { font-size: 9.5px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ctrl-bar">
+  <button class="btn-print" onclick="window.print()">🖨️ طباعة</button>
+  <button class="btn-save" id="btnSavePDF" onclick="savePDF()">💾 حفظ PDF</button>
+  <button class="btn-back" onclick="window.close()">✕ إغلاق</button>
+  <span class="info">جدول متابعة — ${projects.length} مشروع — ${printDate}</span>
+</div>
+
+<div class="content" id="printContent">
+  <div class="print-doc-header">
+    <div class="republic">الجمهورية التونسية — المجلس الجهوي بصفاقس</div>
+    <div class="title">📋 جدول متابعة المشاريع العمومية</div>
+    <div class="sub">تاريخ التصدير: ${printDate} — عدد المشاريع: ${projects.length}</div>
+    <div class="crit">🔎 ${critText}</div>
+  </div>
+  <table class="tt">
+    <thead>
+      <tr>
+        <th>#</th><th>بيان المشروع</th><th>المعتمدية</th><th>القطاع</th><th>مصدر التمويل</th>
+        <th>سنة البرمجة</th><th>المكلف بالإنجاز</th><th>تاريخ الانطلاق</th><th>تاريخ الانتهاء</th>
+        <th>نسبة الإنجاز</th><th>الحالة</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rowsHTML}
+    </tbody>
+  </table>
+</div>
+
+<script>
+function savePDF() {
+  const btn = document.getElementById('btnSavePDF');
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري التحضير...';
+  const element = document.getElementById('printContent');
+  const opt = {
+    margin:       [8, 8, 8, 8],
+    filename:     'جدول_متابعة_المشاريع_${printDate.replace(/\s/g,'_')}.pdf',
+    image:        { type: 'jpeg', quality: 0.97 },
+    html2canvas:  { scale: 2, useCORS: true, logging: false },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' },
+    pagebreak:    { mode: ['css','legacy'] }
+  };
+  html2pdf().set(opt).from(element).save()
+    .then(() => { btn.disabled = false; btn.innerHTML = '💾 حفظ PDF'; })
+    .catch(() => { btn.disabled = false; btn.innerHTML = '💾 حفظ PDF'; });
+}
+<\/script>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank', 'width=1100,height=780,scrollbars=yes');
+  if (!win) { showNotification('⚠️ يرجى السماح بالنوافذ المنبثقة لهذا الموقع', 'error'); return; }
+  win.document.write(html);
+  win.document.close();
+  logActivity('طباعة جدول متابعة', projects.length + ' مشروع — ' + critText);
 }
 
 function updateSidebar(projects) {
