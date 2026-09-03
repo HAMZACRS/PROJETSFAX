@@ -1594,10 +1594,6 @@ body.guest-mode .form-guest-lock::after {
         <div class="topbar-title" id="formTitle">➕ إضافة مشروع جديد</div>
         <div class="topbar-actions">
           <button class="btn btn-outline" onclick="showView('list')">← العودة</button>
-          <button id="btn-cloture" class="btn" onclick="toggleCloture()"
-            style="background:#e8f5e9;color:#2e7d32;border:1.5px solid #a5d6a7;font-weight:700;display:none">
-            ✅ تحديد كمُغلق
-          </button>
           <button class="btn btn-success" onclick="saveProject()">💾 حفظ</button>
         </div>
       </div>
@@ -1784,245 +1780,199 @@ body.guest-mode .form-guest-lock::after {
         </div>
       </div>
 
-      <!-- Réunions de suivi Section -->
-      <div class="card" style="border-radius:0;border-top:none;border-bottom:none">
+      <!-- Réunions de suivi Section — bouton qui ouvre la modale جلسات المتابعة -->
+      <div class="card" id="form-jalasat-section" style="border-radius:0;border-top:none;border-bottom:none">
         <div class="card-header" style="background:#ffd54f;color:#333">
           <h3>📅 جلسات المتابعة</h3>
           <span class="card-icon">👥</span>
         </div>
-        <div class="card-body">
-          <p style="font-size:12px;color:#666;margin-bottom:12px">تسجيل جلسات المتابعة والاجتماعات</p>
-          
-          <div id="jalasat-container"></div>
-          
-          <button class="btn btn-outline btn-sm" onclick="addJalasaRow()" style="margin-top:8px">
-            ➕ إضافة جلسة متابعة
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+          <div id="jalasat-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;background:rgba(255,213,79,0.12);border:1px solid rgba(255,193,7,0.35);border-radius:8px;font-size:12px;color:#7a5c00"></div>
+          <button type="button" onclick="openJalasatModal()" style="display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,#ffca28,#ffb300);color:#333;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(255,179,0,0.25);width:100%;justify-content:center;">
+            <span style="font-size:20px">📅</span>
+            جلسات المتابعة
+            <span style="font-size:11px;opacity:0.8;margin-right:auto;font-weight:400" id="jalasat-btn-badge"></span>
           </button>
         </div>
       </div>
 
-      <!-- Works Section -->
-      <div class="card" style="border-radius:0;border-top:none">
+      <!-- ═══════════════════════════════
+           MODALE جلسات المتابعة (full-screen)
+      ═══════════════════════════════ -->
+      <div id="jalasatModalOverlay" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.55);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeJalasatModal()">
+        <div style="background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-height:92dvh;overflow-y:auto;direction:rtl;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);">
+          <div style="background:linear-gradient(135deg,#ffca28,#ffb300);color:#333;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;border-radius:18px 18px 0 0;flex-shrink:0;">
+            <h3 style="font-size:16px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px">📅 جلسات المتابعة</h3>
+            <button onclick="closeJalasatModal()" style="background:rgba(0,0,0,0.12);border:none;color:#333;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+          </div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:0;flex:1;">
+            <p style="font-size:12px;color:#666;margin-bottom:12px">تسجيل جلسات المتابعة والاجتماعات</p>
+            <div id="jalasat-container"></div>
+            <button class="btn btn-outline btn-sm" onclick="addJalasaRow()" style="margin-top:8px">
+              ➕ إضافة جلسة متابعة
+            </button>
+          </div>
+          <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0;flex-shrink:0;">
+            <button class="btn btn-outline" onclick="closeJalasatModal()">إغلاق</button>
+            <button class="btn btn-primary" onclick="closeJalasatModal()">✅ تأكيد وإغلاق</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Works Section — bouton qui ouvre la modale الأشغال -->
+      <div class="card" id="form-ashghal-section" style="border-radius:0;border-top:none">
         <div class="card-header green">
           <h3>🏗️ الأشغال</h3>
           <span class="card-icon">⚙️</span>
         </div>
-        <div class="card-body">
-          <div class="form-grid" style="margin-bottom:14px">
-            <div class="form-group">
-              <label>الباب</label>
-              <input type="text" id="f-ashghal_bab" placeholder="رقم الباب">
-            </div>
-            <div class="form-group">
-              <label>الفصل</label>
-              <input type="text" id="f-ashghal_fasl" placeholder="رقم الفصل">
-            </div>
-            <div class="form-group">
-              <label>الفقرة</label>
-              <input type="text" id="f-ashghal_fiqra" placeholder="رقم الفقرة">
-            </div>
-            <div class="form-group">
-              <label>تاريخ انطلاق الأشغال</label>
-              <input type="date" id="f-tarikh_intilaq_ashghal">
-            </div>
-            <div class="form-group">
-              <label>تاريخ انتهاء الأشغال (حسب عقد الصفقة)</label>
-              <input type="date" id="f-tarikh_intiha_ashghal">
-            </div>
-          </div>
-
-          <div class="section-divider">
-            <div class="divider-line"></div>
-            <div class="divider-label">بيانات المقاول والإنجاز</div>
-            <div class="divider-line"></div>
-          </div>
-
-          <div class="form-grid">
-            <div class="form-group">
-              <label>المكلف بالإنجاز</label>
-              <input type="text" id="f-mukallaf_binjaz" placeholder="اسم المقاول أو الشركة">
-            </div>
-            <div class="form-group">
-              <label>الكلفة</label>
-              <input type="text" id="f-kulfa" placeholder="مثال: 150,000 دت">
-            </div>
-            <div class="form-group">
-              <label>دفوعات</label>
-              <input type="text" id="f-dufuat" placeholder="">
-            </div>
-            <div class="form-group">
-              <label>تاريخ المصادقة</label>
-              <input type="date" id="f-tarikh_musadaqa">
-            </div>
-            <div class="form-group">
-              <label>مدة الإنجاز</label>
-              <input type="text" id="f-muddat_injaz" placeholder="مثال: 12 شهراً">
-            </div>
-            <div class="form-group">
-              <label>نسبة الإنجاز (%)</label>
-              <input type="number" id="f-nisbat_injaz" placeholder="0-100" min="0" max="100">
-            </div>
-            <div class="form-group">
-              <label>التعطيلات (إن وجدت)</label>
-              <input type="text" id="f-tatilat" placeholder="">
-            </div>
-            <div class="form-group full">
-              <label>الملاحظات</label>
-              <textarea id="f-mulahazat_ashghal" placeholder="أي ملاحظات إضافية حول الأشغال..." rows="3"></textarea>
-            </div>
-          </div>
-
-          <div style="margin-top:12px;margin-bottom:4px">
-            <button class="btn btn-avenant btn-sm" onclick="openAvenantAshghal()">
-              📎 إضافة ملحق للأشغال
-            </button>
-          </div>
-
-          <div class="section-divider" style="margin-top:18px">
-            <div class="divider-line"></div>
-            <div class="divider-label">محاضر جلسات الحضيرة</div>
-            <div class="divider-line"></div>
-          </div>
-          <button class="hadhira-btn" onclick="openHadhiraPopup()">
-            🏗️ إضافة محضر جلسة الحضيرة
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+          <div id="ashghal-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;background:rgba(46,125,50,0.06);border:1px solid rgba(46,125,50,0.2);border-radius:8px;font-size:12px;color:#2e7d32"></div>
+          <button type="button" onclick="openAshghalModal()" style="display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(46,125,50,0.25);width:100%;justify-content:center;">
+            <span style="font-size:20px">🏗️</span>
+            أشغال
+            <span style="font-size:11px;opacity:0.8;margin-right:auto;font-weight:400" id="ashghal-btn-badge"></span>
           </button>
-          <div class="hadhira-list" id="hadhiraList"></div>
         </div>
       </div>
 
-      <!-- Itimadat Muhala Section (تعهد / دفع) -->
+      <!-- ═══════════════════════════════
+           MODALE الأشغال (full-screen)
+      ═══════════════════════════════ -->
+      <div id="ashghalModalOverlay" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.55);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeAshghalModal()">
+        <div style="background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-height:92dvh;overflow-y:auto;direction:rtl;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);">
+          <div style="background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;border-radius:18px 18px 0 0;flex-shrink:0;">
+            <h3 style="font-size:16px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px">🏗️ الأشغال ومحاضر الحضيرة</h3>
+            <button onclick="closeAshghalModal()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+          </div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:0;flex:1;">
+            <div class="form-grid" style="margin-bottom:14px">
+              <div class="form-group">
+                <label>الباب</label>
+                <input type="text" id="f-ashghal_bab" placeholder="رقم الباب">
+              </div>
+              <div class="form-group">
+                <label>الفصل</label>
+                <input type="text" id="f-ashghal_fasl" placeholder="رقم الفصل">
+              </div>
+              <div class="form-group">
+                <label>الفقرة</label>
+                <input type="text" id="f-ashghal_fiqra" placeholder="رقم الفقرة">
+              </div>
+              <div class="form-group">
+                <label>تاريخ انطلاق الأشغال</label>
+                <input type="date" id="f-tarikh_intilaq_ashghal">
+              </div>
+              <div class="form-group">
+                <label>تاريخ انتهاء الأشغال (حسب عقد الصفقة)</label>
+                <input type="date" id="f-tarikh_intiha_ashghal">
+              </div>
+            </div>
+
+            <div class="section-divider">
+              <div class="divider-line"></div>
+              <div class="divider-label">بيانات المقاول والإنجاز</div>
+              <div class="divider-line"></div>
+            </div>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label>المكلف بالإنجاز</label>
+                <input type="text" id="f-mukallaf_binjaz" placeholder="اسم المقاول أو الشركة">
+              </div>
+              <div class="form-group">
+                <label>الكلفة</label>
+                <input type="text" id="f-kulfa" placeholder="مثال: 150,000 دت">
+              </div>
+              <div class="form-group">
+                <label>دفوعات</label>
+                <input type="text" id="f-dufuat" placeholder="">
+              </div>
+              <div class="form-group">
+                <label>تاريخ المصادقة</label>
+                <input type="date" id="f-tarikh_musadaqa">
+              </div>
+              <div class="form-group">
+                <label>مدة الإنجاز</label>
+                <input type="text" id="f-muddat_injaz" placeholder="مثال: 12 شهراً">
+              </div>
+              <div class="form-group">
+                <label>نسبة الإنجاز (%)</label>
+                <input type="number" id="f-nisbat_injaz" placeholder="0-100" min="0" max="100">
+              </div>
+              <div class="form-group">
+                <label>التعطيلات (إن وجدت)</label>
+                <input type="text" id="f-tatilat" placeholder="">
+              </div>
+              <div class="form-group full">
+                <label>الملاحظات</label>
+                <textarea id="f-mulahazat_ashghal" placeholder="أي ملاحظات إضافية حول الأشغال..." rows="3"></textarea>
+              </div>
+            </div>
+
+            <div style="margin-top:12px;margin-bottom:4px">
+              <button class="btn btn-avenant btn-sm" onclick="openAvenantAshghal()">
+                📎 إضافة ملحق للأشغال
+              </button>
+            </div>
+
+            <div class="section-divider" style="margin-top:18px">
+              <div class="divider-line"></div>
+              <div class="divider-label">محاضر جلسات الحضيرة</div>
+              <div class="divider-line"></div>
+            </div>
+            <button class="hadhira-btn" onclick="openHadhiraPopup()">
+              🏗️ إضافة محضر جلسة الحضيرة
+            </button>
+            <div class="hadhira-list" id="hadhiraList"></div>
+          </div>
+          <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0;flex-shrink:0;">
+            <button class="btn btn-outline" onclick="closeAshghalModal()">إغلاق</button>
+            <button class="btn btn-primary" onclick="closeAshghalModal()">✅ تأكيد وإغلاق</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Itimadat Muhala Section (تعهد / دفع) — bouton qui ouvre la modale الاعتمادات المحالة -->
       <div class="card" style="margin-top:16px" id="itimadatMuhalaCard">
         <div class="card-header" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">
           <h3>💳 الاعتمادات المحالة</h3>
           <span class="card-icon">📋</span>
         </div>
-        <div class="card-body">
-          <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">
-            يمكن لاعتماد التعهد الواحد أن يحال له عدة اعتمادات دفع. أضف اعتماد تعهد محال أولاً، ثم أضف تحته اعتماد(ات) الدفع المرتبطة به.
-          </p>
-          <div id="itimadatMuhalaList"></div>
-          <button class="btn btn-primary btn-sm" style="margin-top:6px" onclick="addItimadTahhudRow()">
-            ➕ إضافة اعتماد تعهد محال
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+          <div id="itimadat-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:12px;color:#6d28d9"></div>
+          <button type="button" onclick="openItimadatModal()" style="display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(124,58,237,0.25);width:100%;justify-content:center;">
+            <span style="font-size:20px">💳</span>
+            اعتمادات محالة
+            <span style="font-size:11px;opacity:0.8;margin-right:auto;font-weight:400" id="itimadat-btn-badge"></span>
           </button>
         </div>
       </div>
 
-      <!-- ═══════════════════════════════════════════════
-           📂 SECTION DOCUMENTS DU PROJET (NOUVEAU)
-      ═══════════════════════════════════════════════ -->
-      <div class="card" style="margin-top:16px" id="documentsCard">
-        <div class="card-header gold">
-          <h3>📂 وثائق المشروع</h3>
-          <span class="card-icon">📁</span>
-        </div>
-        <div class="card-body">
-          <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">
-            قم بتحميل الوثائق الممسوحة ضوئياً لكل فئة. يمكن تحميل صور JPG، PNG، WEBP وملفات PDF.
-          </p>
-
-          <!-- ── فئة: المراسلات ── -->
-          <div class="doc-section" id="docSec-morasalat">
-            <div class="doc-section-header" onclick="toggleDocSection('morasalat')">
-              <div class="doc-section-title">
-                <span>📑</span>
-                <span>المراسلات</span>
-                <span class="doc-count-badge empty" id="docBadge-morasalat">0</span>
-              </div>
-              <span id="docArrow-morasalat" style="font-size:16px;transition:transform .2s">▾</span>
-            </div>
-            <div class="doc-section-body" id="docBody-morasalat">
-              <div class="doc-drop-zone" id="docDrop-morasalat"
-                ondragover="handleDocDragOver(event,'morasalat')"
-                ondragleave="handleDocDragLeave(event,'morasalat')"
-                ondrop="handleDocDrop(event,'morasalat')">
-                <input type="file" id="docInput-morasalat" multiple accept="image/jpeg,image/png,image/webp,application/pdf"
-                  onchange="handleDocFiles(event,'morasalat')">
-                <div class="drop-icon">📑</div>
-                <div class="drop-text">اسحب الملفات هنا أو انقر للاختيار</div>
-                <div class="drop-hint">JPG · PNG · WEBP · PDF — متعدد الملفات</div>
-              </div>
-              <div class="doc-thumbs-grid" id="docGrid-morasalat"></div>
-            </div>
+      <!-- ═══════════════════════════════
+           MODALE الاعتمادات المحالة (full-screen)
+      ═══════════════════════════════ -->
+      <div id="itimadatModalOverlay" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.55);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeItimadatModal()">
+        <div style="background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-height:92dvh;overflow-y:auto;direction:rtl;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);">
+          <div style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;border-radius:18px 18px 0 0;flex-shrink:0;">
+            <h3 style="font-size:16px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px">💳 الاعتمادات المحالة</h3>
+            <button onclick="closeItimadatModal()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
           </div>
-
-          <!-- ── فئة: الدراسات ── -->
-          <div class="doc-section" id="docSec-dirassat">
-            <div class="doc-section-header" onclick="toggleDocSection('dirassat')">
-              <div class="doc-section-title">
-                <span>📘</span>
-                <span>الدراسات</span>
-                <span class="doc-count-badge empty" id="docBadge-dirassat">0</span>
-              </div>
-              <span id="docArrow-dirassat" style="font-size:16px;transition:transform .2s">▾</span>
-            </div>
-            <div class="doc-section-body" id="docBody-dirassat">
-              <div class="doc-drop-zone" id="docDrop-dirassat"
-                ondragover="handleDocDragOver(event,'dirassat')"
-                ondragleave="handleDocDragLeave(event,'dirassat')"
-                ondrop="handleDocDrop(event,'dirassat')">
-                <input type="file" id="docInput-dirassat" multiple accept="image/jpeg,image/png,image/webp,application/pdf"
-                  onchange="handleDocFiles(event,'dirassat')">
-                <div class="drop-icon">📘</div>
-                <div class="drop-text">اسحب الملفات هنا أو انقر للاختيار</div>
-                <div class="drop-hint">JPG · PNG · WEBP · PDF — متعدد الملفات</div>
-              </div>
-              <div class="doc-thumbs-grid" id="docGrid-dirassat"></div>
-            </div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:0;flex:1;">
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">
+              يمكن لاعتماد التعهد الواحد أن يحال له عدة اعتمادات دفع. أضف اعتماد تعهد محال أولاً، ثم أضف تحته اعتماد(ات) الدفع المرتبطة به.
+            </p>
+            <div id="itimadatMuhalaList"></div>
+            <button class="btn btn-primary btn-sm" style="margin-top:6px" onclick="addItimadTahhudRow()">
+              ➕ إضافة اعتماد تعهد محال
+            </button>
           </div>
-
-          <!-- ── فئة: الأشغال ── -->
-          <div class="doc-section" id="docSec-achghal">
-            <div class="doc-section-header" onclick="toggleDocSection('achghal')">
-              <div class="doc-section-title">
-                <span>🏗️</span>
-                <span>الأشغال</span>
-                <span class="doc-count-badge empty" id="docBadge-achghal">0</span>
-              </div>
-              <span id="docArrow-achghal" style="font-size:16px;transition:transform .2s">▾</span>
-            </div>
-            <div class="doc-section-body" id="docBody-achghal">
-              <div class="doc-drop-zone" id="docDrop-achghal"
-                ondragover="handleDocDragOver(event,'achghal')"
-                ondragleave="handleDocDragLeave(event,'achghal')"
-                ondrop="handleDocDrop(event,'achghal')">
-                <input type="file" id="docInput-achghal" multiple accept="image/jpeg,image/png,image/webp,application/pdf"
-                  onchange="handleDocFiles(event,'achghal')">
-                <div class="drop-icon">🏗️</div>
-                <div class="drop-text">اسحب الملفات هنا أو انقر للاختيار</div>
-                <div class="drop-hint">JPG · PNG · WEBP · PDF — متعدد الملفات</div>
-              </div>
-              <div class="doc-thumbs-grid" id="docGrid-achghal"></div>
-            </div>
+          <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0;flex-shrink:0;">
+            <button class="btn btn-outline" onclick="closeItimadatModal()">إغلاق</button>
+            <button class="btn btn-primary" onclick="closeItimadatModal()">✅ تأكيد وإغلاق</button>
           </div>
-
-          <!-- ── فئة: الربط بالشبكات ── -->
-          <div class="doc-section" id="docSec-rabt">
-            <div class="doc-section-header" onclick="toggleDocSection('rabt')">
-              <div class="doc-section-title">
-                <span>🌐</span>
-                <span>الربط بالشبكات</span>
-                <span class="doc-count-badge empty" id="docBadge-rabt">0</span>
-              </div>
-              <span id="docArrow-rabt" style="font-size:16px;transition:transform .2s">▾</span>
-            </div>
-            <div class="doc-section-body" id="docBody-rabt">
-              <div class="doc-drop-zone" id="docDrop-rabt"
-                ondragover="handleDocDragOver(event,'rabt')"
-                ondragleave="handleDocDragLeave(event,'rabt')"
-                ondrop="handleDocDrop(event,'rabt')">
-                <input type="file" id="docInput-rabt" multiple accept="image/jpeg,image/png,image/webp,application/pdf"
-                  onchange="handleDocFiles(event,'rabt')">
-                <div class="drop-icon">🌐</div>
-                <div class="drop-text">اسحب الملفات هنا أو انقر للاختيار</div>
-                <div class="drop-hint">JPG · PNG · WEBP · PDF — متعدد الملفات</div>
-              </div>
-              <div class="doc-thumbs-grid" id="docGrid-rabt"></div>
-            </div>
-          </div>
-
         </div>
       </div>
-      <!-- ═══ FIN SECTION DOCUMENTS ═══ -->
+
 
       <!-- ═══ SECTION صور المشروع (مرتبة حسب التاريخ) ═══ -->
       <div class="card" style="margin-top:16px" id="photosCard">
@@ -2081,10 +2031,6 @@ body.guest-mode .form-guest-lock::after {
         </button>
         <div style="display:flex;gap:12px;align-items:center">
           <button class="btn btn-outline" onclick="showView('list')">← إلغاء</button>
-          <button id="btn-cloture-bottom" class="btn" onclick="toggleCloture()"
-            style="background:#e8f5e9;color:#2e7d32;border:1.5px solid #a5d6a7;font-weight:700;display:none">
-            ✅ تحديد كمُغلق
-          </button>
           <button class="btn btn-success" onclick="saveProject()">💾 حفظ المشروع</button>
         </div>
       </div>
@@ -2932,6 +2878,100 @@ function updateDirassatBtnBadge() {
     if (parts.length > 0) {
       summaryBar.style.display = 'flex';
       summaryBar.innerHTML = parts.map(p => '<span style="background:rgba(37,99,235,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(37,99,235,0.2)">📌 ' + p + '</span>').join('');
+    } else {
+      summaryBar.style.display = 'none';
+    }
+  }
+}
+
+// ===== MODALE جلسات المتابعة =====
+function openJalasatModal() {
+  const overlay = document.getElementById('jalasatModalOverlay');
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeJalasatModal() {
+  const overlay = document.getElementById('jalasatModalOverlay');
+  overlay.style.display = 'none';
+  document.body.style.overflow = '';
+  updateJalasatBtnBadge();
+}
+function updateJalasatBtnBadge() {
+  const badge = document.getElementById('jalasat-btn-badge');
+  const summaryBar = document.getElementById('jalasat-summary-bar');
+  if (!badge) return;
+  const rowCount = (typeof jalasatMutabaRows !== 'undefined' ? jalasatMutabaRows : []).length;
+  const parts = [];
+  if (rowCount > 0) parts.push(rowCount + ' جلسة');
+  badge.textContent = parts.length > 0 ? '(' + parts.join(' · ') + ')' : '';
+  if (summaryBar) {
+    if (parts.length > 0) {
+      summaryBar.style.display = 'flex';
+      summaryBar.innerHTML = parts.map(p => '<span style="background:rgba(255,193,7,0.15);border-radius:20px;padding:2px 10px;border:1px solid rgba(255,193,7,0.35)">📌 ' + p + '</span>').join('');
+    } else {
+      summaryBar.style.display = 'none';
+    }
+  }
+}
+
+// ===== MODALE الأشغال =====
+function openAshghalModal() {
+  const overlay = document.getElementById('ashghalModalOverlay');
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeAshghalModal() {
+  const overlay = document.getElementById('ashghalModalOverlay');
+  overlay.style.display = 'none';
+  document.body.style.overflow = '';
+  updateAshghalBtnBadge();
+}
+function updateAshghalBtnBadge() {
+  const badge = document.getElementById('ashghal-btn-badge');
+  const summaryBar = document.getElementById('ashghal-summary-bar');
+  if (!badge) return;
+  const mukallaf = (document.getElementById('f-mukallaf_binjaz')?.value || '').trim();
+  const nisba = (document.getElementById('f-nisbat_injaz')?.value || '').trim();
+  const hadhiraCount = (typeof hadhiraRecords !== 'undefined' ? hadhiraRecords.filter(r=>r!==null) : []).length;
+  const parts = [];
+  if (mukallaf) parts.push(mukallaf);
+  if (nisba)    parts.push(nisba + '%');
+  if (hadhiraCount > 0) parts.push(hadhiraCount + ' محضر حضيرة');
+  badge.textContent = parts.length > 0 ? '(' + parts.join(' · ') + ')' : '';
+  if (summaryBar) {
+    if (parts.length > 0) {
+      summaryBar.style.display = 'flex';
+      summaryBar.innerHTML = parts.map(p => '<span style="background:rgba(46,125,50,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(46,125,50,0.2)">📌 ' + p + '</span>').join('');
+    } else {
+      summaryBar.style.display = 'none';
+    }
+  }
+}
+
+// ===== MODALE الاعتمادات المحالة =====
+function openItimadatModal() {
+  const overlay = document.getElementById('itimadatModalOverlay');
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeItimadatModal() {
+  const overlay = document.getElementById('itimadatModalOverlay');
+  overlay.style.display = 'none';
+  document.body.style.overflow = '';
+  updateItimadatBtnBadge();
+}
+function updateItimadatBtnBadge() {
+  const badge = document.getElementById('itimadat-btn-badge');
+  const summaryBar = document.getElementById('itimadat-summary-bar');
+  if (!badge) return;
+  const rowCount = (typeof itimadatMuhalaRows !== 'undefined' ? itimadatMuhalaRows.filter(r=>r!==null) : []).length;
+  const parts = [];
+  if (rowCount > 0) parts.push(rowCount + ' اعتماد');
+  badge.textContent = parts.length > 0 ? '(' + parts.join(' · ') + ')' : '';
+  if (summaryBar) {
+    if (parts.length > 0) {
+      summaryBar.style.display = 'flex';
+      summaryBar.innerHTML = parts.map(p => '<span style="background:rgba(124,58,237,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(124,58,237,0.2)">📌 ' + p + '</span>').join('');
     } else {
       summaryBar.style.display = 'none';
     }
@@ -4214,13 +4254,6 @@ function clearForm() {
     'mukallaf_binjaz','kulfa','dufuat','tarikh_musadaqa',
     'muddat_injaz','nisbat_injaz','tatilat','mulahazat_ashghal','lat','lng'];
   fields.forEach(f => { const el = document.getElementById('f-'+f); if (el) el.value = ''; });
-  // Réinitialiser l'état clôture
-  window._currentCloture = false;
-  _updateClotureButtons(false);
-  // Cacher les boutons clôture (formulaire nouveau projet)
-  ['btn-cloture','btn-cloture-bottom'].forEach(id => {
-    const b = document.getElementById(id); if (b) b.style.display = 'none';
-  });
   dirassatRows = [];
   document.getElementById('dirassatRows').innerHTML = '';
   window._avenants_ashghal = [];
@@ -4233,6 +4266,8 @@ function clearForm() {
   jalasatMutabaRows = [];
   const jc = document.getElementById('jalasat-container');
   if (jc) jc.innerHTML = '';
+  if (typeof updateJalasatBtnBadge  === 'function') updateJalasatBtnBadge();
+  if (typeof updateItimadatBtnBadge === 'function') updateItimadatBtnBadge();
 }
 
 function fillForm(p) {
@@ -4257,12 +4292,6 @@ function fillForm(p) {
   renderLajnahList();
   hadhiraRecords = Array.isArray(p.hadhira_records) ? [...p.hadhira_records] : [];
   renderHadhiraList();
-  // Afficher les boutons clôture et mettre à jour leur état
-  window._currentCloture = !!(p.cloture);
-  _updateClotureButtons(window._currentCloture);
-  ['btn-cloture','btn-cloture-bottom'].forEach(id => {
-    const b = document.getElementById(id); if (b) b.style.display = '';
-  });
   // Restaurer les avenants الأشغال
   window._avenants_ashghal = Array.isArray(p.avenants_ashghal) ? [...p.avenants_ashghal] : [];
   
@@ -4273,6 +4302,12 @@ function fillForm(p) {
   if (p.jalasat_mutaba && Array.isArray(p.jalasat_mutaba)) {
     p.jalasat_mutaba.forEach(row => addJalasaRow(row));
   }
+
+  // Rafraîchir les badges des 4 boutons popup (دراسات، جلسات المتابعة، أشغال، اعتمادات)
+  if (typeof updateDirassatBtnBadge === 'function') updateDirassatBtnBadge();
+  if (typeof updateJalasatBtnBadge  === 'function') updateJalasatBtnBadge();
+  if (typeof updateAshghalBtnBadge  === 'function') updateAshghalBtnBadge();
+  if (typeof updateItimadatBtnBadge === 'function') updateItimadatBtnBadge();
 
   // Refresh map picker with saved location
   setTimeout(() => {
@@ -4297,44 +4332,9 @@ function getFormData() {
   data.itimadat_muhala  = getItimadatMuhalaData();
   data.lajnah_records   = lajnahRecords.filter(r => r !== null);
   data.hadhira_records  = hadhiraRecords.filter(r => r !== null);
-  data.cloture = !!(window._currentCloture);
   data.avenants_ashghal = window._avenants_ashghal ? [...window._avenants_ashghal] : [];
   data.jalasat_mutaba   = getJalasatData();
   return data;
-}
-
-// ===== CLÔTURE PROJET =====
-window._currentCloture = false;
-
-function _updateClotureButtons(isCloture) {
-  const label = isCloture ? '🔓 إلغاء الإغلاق' : '✅ تحديد كمُغلق';
-  const bg    = isCloture ? '#fff3e0' : '#e8f5e9';
-  const color = isCloture ? '#e65100' : '#2e7d32';
-  const border= isCloture ? '#ffcc80' : '#a5d6a7';
-  ['btn-cloture','btn-cloture-bottom'].forEach(id => {
-    const b = document.getElementById(id);
-    if (!b) return;
-    b.textContent = label;
-    b.style.background = bg;
-    b.style.color = color;
-    b.style.border = `1.5px solid ${border}`;
-  });
-  // Appliquer / retirer la classe clôture sur tout le formulaire
-  const formView = document.getElementById('view-form');
-  if (formView) {
-    if (isCloture) {
-      formView.classList.add('form-cloture');
-      formView.style.background = '';  // laisser le CSS gérer
-    } else {
-      formView.classList.remove('form-cloture');
-      formView.style.background = '';
-    }
-  }
-}
-
-function toggleCloture() {
-  window._currentCloture = !window._currentCloture;
-  _updateClotureButtons(window._currentCloture);
 }
 
 async function saveProject() {
@@ -8510,6 +8510,7 @@ function deleteHadhiraRecord(idx) {
 }
 
 function renderHadhiraList() {
+  if (typeof updateAshghalBtnBadge === 'function') updateAshghalBtnBadge();
   const container = document.getElementById('hadhiraList');
   if (!container) return;
   if (!hadhiraRecords.length) {
