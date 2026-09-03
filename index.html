@@ -456,6 +456,23 @@ html, body {
 /* ===== FORM ===== */
 .form-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
 .form-group label { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+
+/* ── Boutons 3D (ouverture des popups دراسات/جلسات/أشغال/اعتمادات) ──
+   Effet de relief net pour les distinguer visuellement des labels de champs
+   plats : bord inférieur épais simulant une épaisseur, qui "s'enfonce" au clic. */
+.popup-3d-btn {
+  border-bottom: none !important;
+  transition: transform .09s ease, box-shadow .09s ease;
+  box-shadow: 0 4px 0 var(--edge-color, rgba(0,0,0,0.28)), 0 7px 16px rgba(0,0,0,0.18) !important;
+}
+.popup-3d-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 var(--edge-color, rgba(0,0,0,0.28)), 0 10px 20px rgba(0,0,0,0.22) !important;
+}
+.popup-3d-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--edge-color, rgba(0,0,0,0.28)), 0 2px 6px rgba(0,0,0,0.15) !important;
+}
 .form-group input, .form-group textarea, .form-group select {
   padding: 10px 12px;
   border: 1.5px solid var(--border);
@@ -735,7 +752,7 @@ tr.row-zero td:first-child { border-right: 3px solid #dc2626; }
 .tab-btn.active { color: var(--primary-light); border-bottom-color: var(--primary-light); }
 
 /* ===== MAP ===== */
-#projectsMap, #bigProjectsMap { 
+#projectsMap { 
   width: 100%; 
   height: calc(100dvh - var(--header-h) - var(--nav-h) - 60px);
   min-height: 300px;
@@ -1421,7 +1438,6 @@ body.guest-mode .form-guest-lock::after {
       <button class="drawer-nav-btn" data-guest-ok onclick="showView('unallocated');closeDrawer()" id="nav-unallocated"><span class="d-icon">⚠️</span> اعتمادات غير محالة</button>
       <button class="drawer-nav-btn" data-guest-ok onclick="showView('fawadil');closeDrawer()" id="nav-fawadil"><span class="d-icon">📉</span> فواضل الاعتمادات</button>
       <button class="drawer-nav-btn" data-guest-ok onclick="showView('overview');closeDrawer()" id="nav-overview"><span class="d-icon">🔭</span> نظرة عامة</button>
-      <button class="drawer-nav-btn" data-guest-ok onclick="showView('map');closeDrawer()" id="nav-map"><span class="d-icon">🗺️</span> خريطة المشاريع</button>
       <button class="drawer-nav-btn" data-guest-ok onclick="showView('proposals');closeDrawer()" id="nav-proposals"><span class="d-icon">💡</span> المشاريع المقترحة</button>
       <div class="drawer-nav-label" style="margin-top:8px">النسخ الاحتياطي</div>
       <button class="drawer-nav-btn" onclick="exportDB();closeDrawer()"><span class="d-icon">💾</span> تصدير قاعدة البيانات</button>
@@ -1430,6 +1446,7 @@ body.guest-mode .form-guest-lock::after {
       <button class="drawer-nav-btn" style="background:rgba(16,185,129,0.12);color:#065f46;border:1px solid rgba(16,185,129,0.3)" onclick="syncLocalToSupabase();closeDrawer()"><span class="d-icon">☁️</span> مزامنة مع Supabase</button>
       <button class="drawer-nav-btn" style="background:rgba(37,99,235,0.08);color:#1e3a8a;border:1px solid rgba(37,99,235,0.2)" onclick="checkSupabaseConnection().then(v=>{updateSyncIndicator();showNotification(v?'✅ Supabase متصل':'❌ Supabase غير متصل — وضع محلي',v?'success':'error')});closeDrawer()"><span class="d-icon">🔌</span> حالة الاتصال بـ Supabase</button>
       <button class="drawer-nav-btn" style="background:rgba(37,99,235,0.08);color:#1e3a8a;border:1px solid rgba(37,99,235,0.2)" onclick="checkAppUsersTable();closeDrawer()"><span class="d-icon">🔎</span> فحص جدول المستخدمين</button>
+      <button class="drawer-nav-btn" style="background:rgba(220,38,38,0.08);color:#991b1b;border:1px solid rgba(220,38,38,0.25)" onclick="resetAllCloture();closeDrawer()"><span class="d-icon">🔓</span> إلغاء إغلاق كل المشاريع</button>
       <button class="drawer-nav-btn" onclick="openPrintModal();closeDrawer()"><span class="d-icon">🖨️</span> طباعة المشاريع</button>
       <button class="drawer-nav-btn" onclick="manualAutoLoad();closeDrawer()" style="background:rgba(46,125,50,0.2)"><span class="d-icon">⚡</span> تحميل تلقائي</button>
       <div id="admin-section" style="display:none">
@@ -1689,7 +1706,7 @@ body.guest-mode .form-guest-lock::after {
         <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
           <!-- Résumé rapide des données déjà saisies -->
           <div id="dirassat-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;background:rgba(37,99,235,0.05);border:1px solid rgba(37,99,235,0.18);border-radius:8px;font-size:12px;color:var(--primary)"></div>
-          <button type="button" onclick="openDirassatModal()" style="display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,var(--primary),#2563EB);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(26,58,92,0.25);width:100%;justify-content:center;">
+          <button type="button" onclick="openDirassatModal()" class="popup-3d-btn" style="--edge-color:#0d2438;display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,var(--primary),#2563EB);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;width:100%;justify-content:center;">
             <span style="font-size:20px">📐</span>
             دراسات
             <span style="font-size:11px;opacity:0.8;margin-right:auto;font-weight:400" id="dirassat-btn-badge"></span>
@@ -1775,7 +1792,7 @@ body.guest-mode .form-guest-lock::after {
           <!-- Footer de la modale -->
           <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0;flex-shrink:0;">
             <button class="btn btn-outline" onclick="closeDirassatModal()">إغلاق</button>
-            <button class="btn btn-primary" onclick="closeDirassatModal()">✅ تأكيد وإغلاق</button>
+            <button class="btn btn-primary" onclick="saveAndCloseModal(closeDirassatModal)">✅ حفظ وإغلاق</button>
           </div>
         </div>
       </div>
@@ -1788,7 +1805,7 @@ body.guest-mode .form-guest-lock::after {
         </div>
         <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
           <div id="jalasat-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;background:rgba(255,213,79,0.12);border:1px solid rgba(255,193,7,0.35);border-radius:8px;font-size:12px;color:#7a5c00"></div>
-          <button type="button" onclick="openJalasatModal()" style="display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,#ffca28,#ffb300);color:#333;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(255,179,0,0.25);width:100%;justify-content:center;">
+          <button type="button" onclick="openJalasatModal()" class="popup-3d-btn" style="--edge-color:#a36f00;display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,#ffca28,#ffb300);color:#333;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;width:100%;justify-content:center;">
             <span style="font-size:20px">📅</span>
             جلسات المتابعة
             <span style="font-size:11px;opacity:0.8;margin-right:auto;font-weight:400" id="jalasat-btn-badge"></span>
@@ -1814,7 +1831,7 @@ body.guest-mode .form-guest-lock::after {
           </div>
           <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0;flex-shrink:0;">
             <button class="btn btn-outline" onclick="closeJalasatModal()">إغلاق</button>
-            <button class="btn btn-primary" onclick="closeJalasatModal()">✅ تأكيد وإغلاق</button>
+            <button class="btn btn-primary" onclick="saveAndCloseModal(closeJalasatModal)">✅ حفظ وإغلاق</button>
           </div>
         </div>
       </div>
@@ -1827,7 +1844,7 @@ body.guest-mode .form-guest-lock::after {
         </div>
         <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
           <div id="ashghal-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;background:rgba(46,125,50,0.06);border:1px solid rgba(46,125,50,0.2);border-radius:8px;font-size:12px;color:#2e7d32"></div>
-          <button type="button" onclick="openAshghalModal()" style="display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(46,125,50,0.25);width:100%;justify-content:center;">
+          <button type="button" onclick="openAshghalModal()" class="popup-3d-btn" style="--edge-color:#1b5e20;display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;width:100%;justify-content:center;">
             <span style="font-size:20px">🏗️</span>
             أشغال
             <span style="font-size:11px;opacity:0.8;margin-right:auto;font-weight:400" id="ashghal-btn-badge"></span>
@@ -1927,7 +1944,7 @@ body.guest-mode .form-guest-lock::after {
           </div>
           <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0;flex-shrink:0;">
             <button class="btn btn-outline" onclick="closeAshghalModal()">إغلاق</button>
-            <button class="btn btn-primary" onclick="closeAshghalModal()">✅ تأكيد وإغلاق</button>
+            <button class="btn btn-primary" onclick="saveAndCloseModal(closeAshghalModal)">✅ حفظ وإغلاق</button>
           </div>
         </div>
       </div>
@@ -1940,7 +1957,7 @@ body.guest-mode .form-guest-lock::after {
         </div>
         <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
           <div id="itimadat-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:12px;color:#6d28d9"></div>
-          <button type="button" onclick="openItimadatModal()" style="display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(124,58,237,0.25);width:100%;justify-content:center;">
+          <button type="button" onclick="openItimadatModal()" class="popup-3d-btn" style="--edge-color:#4c1d95;display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;width:100%;justify-content:center;">
             <span style="font-size:20px">💳</span>
             اعتمادات محالة
             <span style="font-size:11px;opacity:0.8;margin-right:auto;font-weight:400" id="itimadat-btn-badge"></span>
@@ -1968,7 +1985,7 @@ body.guest-mode .form-guest-lock::after {
           </div>
           <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0;flex-shrink:0;">
             <button class="btn btn-outline" onclick="closeItimadatModal()">إغلاق</button>
-            <button class="btn btn-primary" onclick="closeItimadatModal()">✅ تأكيد وإغلاق</button>
+            <button class="btn btn-primary" onclick="saveAndCloseModal(closeItimadatModal)">✅ حفظ وإغلاق</button>
           </div>
         </div>
       </div>
@@ -1995,33 +2012,6 @@ body.guest-mode .form-guest-lock::after {
             <div class="drop-hint">JPG · PNG · WEBP — يمكن اختيار عدة صور دفعة واحدة</div>
           </div>
           <div class="photo-thumbs-grid" id="photosGrid"></div>
-        </div>
-      </div>
-
-      <!-- ── بطاقة الموقع الجغرافي ── -->
-      <div class="card" style="margin-top:16px">
-        <div class="card-header" style="cursor:pointer;user-select:none" onclick="toggleLocationCard()">
-          <h3>📍 موقع المشروع على الخريطة <small style="font-weight:400;font-size:13px;color:var(--text-muted)">(اختياري)</small></h3>
-          <span id="location-card-toggle" style="font-size:20px;transition:transform .2s">▾</span>
-        </div>
-        <div id="location-card-body" class="card-body">
-          <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">
-            انقر على الخريطة لتثبيت الموقع الجغرافي للمشروع — ستظهر نقطة مضيئة في خريطة المشاريع.
-          </p>
-          <div class="map-picker-wrap">
-            <div class="map-picker-hint">🖱️ انقر على الخريطة لتحديد الموقع</div>
-            <div id="formPickerMap" style="height:300px"></div>
-            <div class="map-coords-bar">
-              <span style="font-weight:700;color:var(--text-muted)">خط العرض:</span>
-              <input type="number" id="f-lat" placeholder="34.7400" step="0.000001" min="-90" max="90"
-                oninput="updateFormPickerFromInputs()">
-              <span style="font-weight:700;color:var(--text-muted)">خط الطول:</span>
-              <input type="number" id="f-lng" placeholder="10.7600" step="0.000001" min="-180" max="180"
-                oninput="updateFormPickerFromInputs()">
-              <button onclick="geolocateMe('f-lat','f-lng','formPickerMap')" title="تحديد موقعي الحالي">📡 موقعي</button>
-              <button onclick="clearFormLocation()" style="background:#dc2626;border-color:#dc2626" title="مسح الموقع">✕ مسح</button>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -2455,53 +2445,6 @@ body.guest-mode .form-guest-lock::after {
       </div>
     </div>
 
-    <!-- MAP VIEW — خريطة المشاريع -->
-    <div class="view" id="view-map" style="position:relative">
-      <div class="topbar">
-        <div class="topbar-title">🗺️ خريطة المشاريع — ولاية صفاقس</div>
-        <div class="topbar-actions" style="gap:8px">
-          <select id="map-filter-type" onchange="refreshProjectsMap()"
-            style="padding:7px 12px;border:1.5px solid var(--border);border-radius:6px;font-family:var(--font);font-size:13px;background:var(--surface);direction:rtl;cursor:pointer">
-            <option value="all">📍 كل المشاريع</option>
-            <option value="projects">🔵 المشاريع العمومية</option>
-            <option value="proposals">💡 المشاريع المقترحة</option>
-          </select>
-          <button class="btn btn-outline btn-sm" onclick="centerMap()">🎯 توسيط الخريطة</button>
-        </div>
-      </div>
-      <div style="position:relative">
-        <div id="projectsMap"></div>
-        <div class="map-legend">
-          <h4>دليل الخريطة</h4>
-          <div class="legend-item"><div class="legend-dot" style="background:#2563EB"></div> مشاريع جارية</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#059669"></div> مشاريع منجزة</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#d97706"></div> مشاريع لم تبدأ</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div> مشاريع مقترحة</div>
-          <div id="map-count-badge" style="margin-top:8px;font-size:11px;color:var(--text-muted);border-top:1px solid var(--border);padding-top:6px"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- MAP VIEW — خريطة المشاريع الكبرى -->
-    <div class="view" id="view-big-projects-map" style="position:relative">
-      <div class="topbar">
-        <div class="topbar-title">🗺️💼 خريطة المشاريع الكبرى — ولاية صفاقس</div>
-        <div class="topbar-actions" style="gap:8px">
-          <button class="btn btn-outline btn-sm" onclick="centerBigProjectsMap()">🎯 توسيط الخريطة</button>
-        </div>
-      </div>
-      <div style="position:relative">
-        <div id="bigProjectsMap"></div>
-        <div class="map-legend">
-          <h4>دليل الخريطة</h4>
-          <div class="legend-item"><div class="legend-dot" style="background:#2563EB"></div> مشاريع جارية</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#059669"></div> مشاريع منجزة</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#d97706"></div> مشاريع لم تبدأ</div>
-          <div id="big-map-count-badge" style="margin-top:8px;font-size:11px;color:var(--text-muted);border-top:1px solid var(--border);padding-top:6px"></div>
-        </div>
-      </div>
-    </div>
-
     <!-- DETAIL VIEW -->
     <div class="view" id="view-detail">
       <div class="topbar">
@@ -2532,10 +2475,6 @@ body.guest-mode .form-guest-lock::after {
     <button class="nav-item-add" onclick="newProject()">
       <div class="add-circle">➕</div>
       <span class="nav-label">جديد</span>
-    </button>
-    <button class="nav-item" id="bn-map" onclick="showView('map')">
-      <span class="nav-icon">🗺️</span>
-      <span class="nav-label">الخريطة</span>
     </button>
     <button class="nav-item" id="bn-more" onclick="toggleDrawer()">
       <span class="nav-icon">⋮⋮⋮</span>
@@ -2624,6 +2563,44 @@ async function checkAppUsersTable() {
     showNotification('❌ تعذّر الوصول إلى Supabase — تحقق من الاتصال بالإنترنت', 'error');
     console.warn('[checkAppUsersTable]', e);
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// 🔓 إلغاء إغلاق كل المشاريع دفعة واحدة — نظراً لحذف خاصية "تحديد كمُغلق" من
+// الواجهة، هذا الإجراء يعيد كل المشاريع المُعلّمة سابقاً "مُغلق" إلى وضع
+// "جارٍ" في قاعدة بيانات Supabase وفي النسخة المحلية (IndexedDB) دفعة واحدة.
+// ─────────────────────────────────────────────────────────────────────────
+async function resetAllCloture() {
+  if (!confirm('سيتم إلغاء وضع "مُغلق" عن جميع المشاريع وإعادتها إلى "جارٍ". متابعة؟')) return;
+  showNotification('⏳ جارٍ إلغاء إغلاق المشاريع...', 'info');
+  let remoteOk = false;
+  if (SUPABASE_ONLINE) {
+    try {
+      const r = await fetch(_sb.url('projets', '?cloture=eq.true'), {
+        method: 'PATCH',
+        headers: { ..._sb.headers, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ cloture: false })
+      });
+      if (!r.ok) {
+        const t = await r.text().catch(() => '');
+        throw new Error('HTTP ' + r.status + (t ? ' — ' + t.slice(0, 200) : ''));
+      }
+      remoteOk = true;
+    } catch (e) {
+      console.warn('[resetAllCloture] Supabase error', e);
+      showNotification('⚠️ تعذّر التحديث على Supabase: ' + e.message, 'error');
+    }
+  }
+  // Toujours mettre à jour le cache local (IndexedDB) pour rester cohérent,
+  // que Supabase ait répondu ou non.
+  const all = await dbGetAll();
+  let n = 0;
+  for (const p of all) {
+    if (p.cloture) { p.cloture = false; await _idbPut(p); n++; }
+  }
+  await loadProjects();
+  logActivity('إلغاء إغلاق جميع المشاريع', n + ' مشروع');
+  showNotification((remoteOk ? '✅' : '⚠️') + ' تم إلغاء الإغلاق عن ' + n + ' مشروع' + (remoteOk ? '' : ' (محلياً فقط — راجع الخطأ أعلاه)'));
 }
 
 // ── Indicateur visuel de connexion ──────────────────────────────────────────
@@ -3520,14 +3497,7 @@ function showView(name) {
   if (name === 'proposals') loadProposals();
   if (name === 'programmed') loadProgrammed();
   if (name === 'unallocated') loadUnallocated();
-  if (name === 'map') initProjectsMap();
-  if (name === 'big-projects-map') initBigProjectsMap();
   if (name === 'overview') renderOverview();
-  if (name === 'form') setTimeout(() => {
-    const lat = document.getElementById('f-lat') ? document.getElementById('f-lat').value : '';
-    const lng = document.getElementById('f-lng') ? document.getElementById('f-lng').value : '';
-    initFormPicker(lat ? parseFloat(lat) : null, lng ? parseFloat(lng) : null);
-  }, 300);
 }
 
 // ===== LOAD PROJECTS =====
@@ -4252,7 +4222,7 @@ function clearForm() {
     'dirassat_bab','dirassat_fasl','dirassat_fiqra','tarikh_intilaq_dirassat',
     'ashghal_bab','ashghal_fasl','ashghal_fiqra','tarikh_intilaq_ashghal','tarikh_intiha_ashghal',
     'mukallaf_binjaz','kulfa','dufuat','tarikh_musadaqa',
-    'muddat_injaz','nisbat_injaz','tatilat','mulahazat_ashghal','lat','lng'];
+    'muddat_injaz','nisbat_injaz','tatilat','mulahazat_ashghal'];
   fields.forEach(f => { const el = document.getElementById('f-'+f); if (el) el.value = ''; });
   dirassatRows = [];
   document.getElementById('dirassatRows').innerHTML = '';
@@ -4276,7 +4246,7 @@ function fillForm(p) {
     'dirassat_bab','dirassat_fasl','dirassat_fiqra','tarikh_intilaq_dirassat',
     'ashghal_bab','ashghal_fasl','ashghal_fiqra','tarikh_intilaq_ashghal','tarikh_intiha_ashghal',
     'mukallaf_binjaz','kulfa','dufuat','tarikh_musadaqa',
-    'muddat_injaz','nisbat_injaz','tatilat','mulahazat_ashghal','lat','lng'];
+    'muddat_injaz','nisbat_injaz','tatilat','mulahazat_ashghal'];
   fields.forEach(f => {
     const el = document.getElementById('f-'+f);
     if (el && p[f] !== undefined) el.value = p[f] || '';
@@ -4308,13 +4278,6 @@ function fillForm(p) {
   if (typeof updateJalasatBtnBadge  === 'function') updateJalasatBtnBadge();
   if (typeof updateAshghalBtnBadge  === 'function') updateAshghalBtnBadge();
   if (typeof updateItimadatBtnBadge === 'function') updateItimadatBtnBadge();
-
-  // Refresh map picker with saved location
-  setTimeout(() => {
-    const lat = p.lat ? parseFloat(p.lat) : null;
-    const lng = p.lng ? parseFloat(p.lng) : null;
-    initFormPicker(lat, lng);
-  }, 350);
 }
 
 function getFormData() {
@@ -4322,7 +4285,7 @@ function getFormData() {
     'dirassat_bab','dirassat_fasl','dirassat_fiqra','tarikh_intilaq_dirassat',
     'ashghal_bab','ashghal_fasl','ashghal_fiqra','tarikh_intilaq_ashghal','tarikh_intiha_ashghal',
     'mukallaf_binjaz','kulfa','dufuat','tarikh_musadaqa',
-    'muddat_injaz','nisbat_injaz','tatilat','mulahazat_ashghal','lat','lng'];
+    'muddat_injaz','nisbat_injaz','tatilat','mulahazat_ashghal'];
   const data = {};
   fields.forEach(f => {
     const el = document.getElementById('f-'+f);
@@ -4342,7 +4305,7 @@ async function saveProject() {
   if (!data.bayan_mashrou.trim()) {
     showNotification('⚠️ يرجى إدخال بيان المشروع', 'error');
     document.getElementById('f-bayan_mashrou').focus();
-    return;
+    return false;
   }
   if (currentProjectId) {
     data.id = currentProjectId;
@@ -4361,7 +4324,20 @@ async function saveProject() {
   // l'ancienne version en cache tant qu'aucun rafraîchissement manuel n'était fait.
   await loadProjects();
   await viewProject(currentProjectId);
+  return true;
 }
+
+// Utilisé par les boutons "✅ تأكيد وإغلاق" des popups (دراسات/جلسات/أشغال/اعتمادات) :
+// avant, ces boutons se contentaient de fermer la fenêtre SANS jamais enregistrer
+// le projet — les données saisies semblaient donc "ne pas s'enregistrer" puisque
+// seul le bouton "💾 حفظ" du formulaire principal écrivait réellement en base.
+// Désormais, confirmer une popup déclenche un enregistrement réel ; la popup ne
+// se ferme que si l'enregistrement a réussi.
+async function saveAndCloseModal(closeFn) {
+  const ok = await saveProject();
+  if (ok) closeFn();
+}
+
 
 // ===== VIEW PROJECT =====
 async function viewProject(id) {
@@ -6738,66 +6714,6 @@ function centerMap() {
   if (_projectsMap) _projectsMap.setView(SFAX_CENTER, 10);
 }
 
-// ── BIG PROJECTS MAP — خريطة المشاريع الكبرى ────────────────────────────────
-let _bigProjectsMap = null;
-let _bigProjectsMapMarkers = [];
-
-async function initBigProjectsMap() {
-  if (!_bigProjectsMap) {
-    _bigProjectsMap = L.map('bigProjectsMap').setView(SFAX_CENTER, 10);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors', maxZoom: 19
-    }).addTo(_bigProjectsMap);
-  }
-  await refreshBigProjectsMap();
-}
-
-async function refreshBigProjectsMap() {
-  if (!_bigProjectsMap) return;
-  _bigProjectsMapMarkers.forEach(m => m.remove());
-  _bigProjectsMapMarkers = [];
-
-  const BIG_THRESHOLD = 3000000; // نفس عتبة المشاريع الكبرى (3 ملايين دينار)
-  const projects = (await dbGetAll()).filter(p => getTotalProjectCost(p) > BIG_THRESHOLD);
-
-  let placed = 0;
-  projects.forEach(p => {
-    const lat = parseFloat(p.lat), lng = parseFloat(p.lng);
-    if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
-    const nisbat = parseInt(p.nisbat_injaz) || 0;
-    const color  = nisbat >= 100 ? '#059669' : nisbat > 0 ? '#2563EB' : '#d97706';
-    const icon   = makePulseIcon(color);
-    const cost   = formatDinars(getTotalProjectCost(p));
-    const pop    = L.popup({ maxWidth: 280, className: 'map-popup' }).setContent(`
-      <div style="font-family:'Amiri',serif;direction:rtl;padding:4px 0">
-        <div style="font-size:11px;color:#7c3aed;font-weight:700;margin-bottom:2px">💼 مشروع كبير</div>
-        <div style="font-weight:800;font-size:15px;color:#1a3a5c;margin-bottom:4px">${p.bayan_mashrou||'مشروع'}</div>
-        ${p.muta_madiyya?`<div style="font-size:12px;color:#5c4a2a">🏙️ ${p.muta_madiyya}</div>`:''}
-        ${p.qita?`<div style="font-size:12px;color:#5c4a2a">🏗️ ${p.qita}</div>`:''}
-        <div style="font-weight:700;color:#c8960c;font-size:13px;margin-top:4px">💰 ${cost}</div>
-        <div style="margin-top:6px">
-          <span style="background:${color};color:#fff;border-radius:12px;padding:2px 10px;font-size:12px;font-weight:700">${nisbat}% إنجاز</span>
-        </div>
-        <button onclick="showBigProjectInfo(${p.id})" style="margin-top:8px;width:100%;padding:5px;background:#1a3a5c;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:'Amiri',serif;font-size:13px">📄 عرض البطاقة</button>
-      </div>`);
-    const m = L.marker([lat, lng], { icon }).addTo(_bigProjectsMap).bindPopup(pop);
-    _bigProjectsMapMarkers.push(m); placed++;
-  });
-
-  const badge = document.getElementById('big-map-count-badge');
-  if (badge) badge.textContent = `${placed} مشروع كبير على الخريطة`;
-
-  if (_bigProjectsMapMarkers.length) {
-    const group = L.featureGroup(_bigProjectsMapMarkers);
-    _bigProjectsMap.fitBounds(group.getBounds().pad(0.15));
-  }
-
-  setTimeout(() => _bigProjectsMap && _bigProjectsMap.invalidateSize(), 200);
-}
-
-function centerBigProjectsMap() {
-  if (_bigProjectsMap) _bigProjectsMap.setView(SFAX_CENTER, 10);
-}
 
 // ── Location card toggle ──────────────────────────────────────────────────────
 function toggleLocationCard() {
@@ -10715,8 +10631,6 @@ function updateMobileNav(view) {
     'list': '📋 قائمة المشاريع',
     'form': '✏️ بطاقة المشروع',
     'fawadil': '📉 فواضل الاعتمادات',
-    'map': '🗺️ خريطة المشاريع',
-    'big-projects-map': '🗺️💼 خريطة المشاريع الكبرى',
     'overview': '🔭 نظرة عامة',
     'proposals':   '💡 المشاريع المقترحة',
     'programmed':  '🗓️ المشاريع المبرمجة',
@@ -10731,7 +10645,7 @@ function updateMobileNav(view) {
     actionBtn.style.display = ['dashboard','list','big-projects'].includes(view) ? 'flex' : 'none';
   }
 
-  const bnMap = { 'dashboard': 'bn-dashboard', 'list': 'bn-list', 'map': 'bn-map' };
+  const bnMap = { 'dashboard': 'bn-dashboard', 'list': 'bn-list' };
   document.querySelectorAll('.bottom-nav .nav-item').forEach(b => b.classList.remove('active'));
   if (bnMap[view]) {
     const btn = document.getElementById(bnMap[view]);
