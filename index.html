@@ -1492,7 +1492,6 @@ body.guest-mode .form-guest-lock::after {
         <div class="stat-card"><div class="stat-num" id="stat-studies">0</div><div class="stat-label">في طور الدراسة</div></div>
         <div class="stat-card"><div class="stat-num" id="stat-works">0</div><div class="stat-label">في طور الأشغال</div></div>
         <div class="stat-card"><div class="stat-num" id="stat-completed">0</div><div class="stat-label">منجزة</div></div>
-        <div class="stat-card" style="border-top:3px solid #2e7d32"><div class="stat-num" id="stat-cloture" style="color:#2e7d32">0</div><div class="stat-label">🔒 مُغلقة</div></div>
       </div>
 
       <!-- Filters -->
@@ -1511,7 +1510,6 @@ body.guest-mode .form-guest-lock::after {
               <option value="not_started">⏳ لم يبدأ (0%)</option>
               <option value="in_progress">🔧 جاري الإنجاز</option>
               <option value="completed">✅ منجز (100%)</option>
-              <option value="cloture">🔒 مُغلق</option>
             </select>
             <select id="dash-filter-mouassassa" onchange="applyDashboardFilters()"><option value="">— كل المؤسسات —</option></select>
             <button class="filter-reset" onclick="resetDashboardFilters()">✕ إعادة ضبط</button>
@@ -1550,7 +1548,7 @@ body.guest-mode .form-guest-lock::after {
           <div class="filter-scroll">
             <input type="text" id="bp-search" placeholder="بحث..." oninput="loadBigProjects()"
               style="padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-family:var(--font);font-size:13px;direction:rtl;flex-shrink:0;min-width:140px">
-            <select id="bp-filter-status" onchange="loadBigProjects()"><option value="">— كل الحالات —</option><option value="not_started">⏳ لم يبدأ</option><option value="in_progress">🔧 جاري</option><option value="completed">✅ منجز</option><option value="cloture">🔒 مُغلق</option></select>
+            <select id="bp-filter-status" onchange="loadBigProjects()"><option value="">— كل الحالات —</option><option value="not_started">⏳ لم يبدأ</option><option value="in_progress">🔧 جاري</option><option value="completed">✅ منجز</option></select>
             <select id="bp-filter-qita" onchange="loadBigProjects()"><option value="">— كل القطاعات —</option></select>
             <select id="bp-filter-muta" onchange="loadBigProjects()"><option value="">— كل المعتمديات —</option></select>
             <select id="bp-sort-cost" onchange="loadBigProjects()"><option value="">↕️ بدون ترتيب</option><option value="asc">⬆️ الكلفة تصاعدي</option><option value="desc">⬇️ الكلفة تنازلي</option></select>
@@ -3976,7 +3974,7 @@ function renderDashboardCards(projects) {
   container.innerHTML = sorted.map((p, rank) => {
     const nisbat      = parseInt(p.nisbat_injaz) || 0;
     const isZero      = nisbat === 0;
-    const isCloture   = !!(p.cloture);
+    const isCloture   = false; // fonctionnalité de clôture supprimée — ne plus jamais afficher le badge/couleur
     const statusColor = nisbat >= 100 ? '#059669' : nisbat >= 50 ? '#2563EB' : isZero ? '#dc2626' : '#d97706';
     const statusLabel = nisbat >= 100 ? 'منجز ✅' : nisbat > 0 ? 'جاري الإنجاز 🔧' : 'لم يبدأ ⏳';
 
@@ -5747,7 +5745,7 @@ function buildItimadatMuhalaPrintHTML(p) {
 
 function buildPrintableCard(p, numero) {
   const nisbat = parseInt(p.nisbat_injaz) || 0;
-  const isCloture = !!(p.cloture);
+  const isCloture = false; // fonctionnalité de clôture supprimée — ne plus jamais afficher le badge/couleur
   const statusColor = isCloture ? '#2e7d32' : (nisbat >= 100 ? '#059669' : nisbat >= 50 ? '#2563EB' : '#d97706');
   const conclusion = computeConclusion(p);
   const ref = buildRef(p, numero || String(p.id).padStart(3,'0'));
@@ -9681,7 +9679,7 @@ async function loadBigProjects() {
   if (statusFilter) {
     bigProjects = bigProjects.filter(proj => {
       const status = proj.nisbat_injaz === '100' || proj.nisbat_injaz === 100 ? 'completed'
-        : proj.cloture ? 'cloture'
+        : false ? 'cloture'
         : proj.nisbat_injaz && (proj.nisbat_injaz > 0 && proj.nisbat_injaz < 100) ? 'in_progress'
         : 'not_started';
       return status === statusFilter;
@@ -9713,7 +9711,7 @@ async function loadBigProjects() {
     totalCost += cost;
     
     const status = proj.nisbat_injaz === '100' || proj.nisbat_injaz === 100 ? 'completed'
-      : proj.cloture ? 'cloture'
+      : false ? 'cloture'
       : proj.nisbat_injaz && (proj.nisbat_injaz > 0 && proj.nisbat_injaz < 100) ? 'in_progress'
       : 'not_started';
     
@@ -9750,7 +9748,7 @@ async function loadBigProjects() {
     const qita = proj.qita || '—';
     const progress = parseInt(proj.nisbat_injaz) || 0;
     const status = proj.nisbat_injaz === '100' || proj.nisbat_injaz === 100 ? 'منجز'
-      : proj.cloture ? '🔒 مُغلق'
+      : false ? '🔒 مُغلق'
       : proj.nisbat_injaz && (proj.nisbat_injaz > 0 && proj.nisbat_injaz < 100) ? 'جاري'
       : 'لم يبدأ';
     const statusColor = progress === 100 ? '#2e7d32'
@@ -9853,7 +9851,7 @@ async function exportBigProjects() {
 function buildBigProjectCardHTML(proj, idx) {
   const cleanNum = s => parseFloat(String(s).replace(/[^0-9.]/g, '')) || 0;
   const getStatusKey = p => p.nisbat_injaz === '100' || p.nisbat_injaz === 100 ? 'completed'
-    : p.cloture ? 'cloture'
+    : false ? 'cloture'
     : p.nisbat_injaz && (p.nisbat_injaz > 0 && p.nisbat_injaz < 100) ? 'in_progress'
     : 'not_started';
 
@@ -10012,7 +10010,7 @@ async function printBigProjectsPDF() {
   }
 
   const getStatusKey = proj => proj.nisbat_injaz === '100' || proj.nisbat_injaz === 100 ? 'completed'
-    : proj.cloture ? 'cloture'
+    : false ? 'cloture'
     : proj.nisbat_injaz && (proj.nisbat_injaz > 0 && proj.nisbat_injaz < 100) ? 'in_progress'
     : 'not_started';
 
