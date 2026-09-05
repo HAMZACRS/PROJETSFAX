@@ -340,13 +340,85 @@ html, body {
 .stat-card .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 
 /* ===== PROJECT CARDS ===== */
+#dashboardCards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  perspective: 1200px;
+}
+@media (min-width: 480px) {
+  #dashboardCards { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 760px) {
+  #dashboardCards { grid-template-columns: repeat(4, 1fr); }
+}
 .proj-card {
   background: var(--surface);
   border-radius: var(--radius);
   border: 1px solid var(--border);
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 0;
   box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: box-shadow .25s ease;
+  animation: card-pop-in .45s cubic-bezier(.22,1,.36,1) backwards;
+}
+@keyframes card-pop-in {
+  from { opacity: 0; transform: translateY(14px) scale(.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.proj-card:hover, .proj-card:active {
+  box-shadow: 0 8px 20px rgba(0,0,0,0.14);
+}
+.proj-card-body { flex: 1; min-height: 0; overflow-y: auto; }
+
+/* ── نسبة الإنجاز تظهر فقط عند مرور المؤشر فوق البطاقة (بدون فتح أي نافذة) ── */
+.card-gauge-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.96);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+}
+body.dark .card-gauge-overlay { background: rgba(20,20,25,0.94); }
+.proj-card:hover .card-gauge-overlay,
+.proj-card:focus-visible .card-gauge-overlay {
+  opacity: 1;
+}
+.card-gauge-svg {
+  width: 62%;
+  max-width: 120px;
+  transform: rotate(-90deg);
+}
+.gauge-track {
+  fill: none;
+  stroke: rgba(0,0,0,0.08);
+  stroke-width: 9;
+}
+.gauge-fill {
+  fill: none;
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+.gauge-label {
+  font-size: 22px;
+  font-weight: 800;
+  margin-top: -8px;
+}
+.gauge-sub {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
 }
 .proj-card.card-cloture {
   background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
@@ -4004,7 +4076,7 @@ function renderDashboardCards(projects) {
     }
 
     const photoHTML = firstPhoto
-      ? `<div style="position:relative;height:140px;overflow:hidden;border-radius:0;background:#e8edf5;flex-shrink:0">
+      ? `<div style="position:relative;height:34%;overflow:hidden;border-radius:0;background:#e8edf5;flex-shrink:0">
            <img src="${firstPhoto.data || firstPhoto.url || firstPhoto}" alt="صورة المشروع"
              style="width:100%;height:100%;object-fit:cover;display:block"
              onerror="this.parentElement.style.display='none'">
@@ -4016,10 +4088,23 @@ function renderDashboardCards(projects) {
       ? `<span style="background:#2e7d32;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px">🔒 مُغلق</span>`
       : '';
 
+    const gaugeCirc = 263.9; // 2 * π * 42
+    const gaugeOffset = gaugeCirc - (gaugeCirc * Math.min(nisbat, 100) / 100);
+
     return `
       <div class="proj-card${isZero && !isCloture ? ' zero-progress' : ''}${isCloture ? ' card-cloture' : ''}"
            onclick="viewProject(${p.id})"
-           style="display:flex;flex-direction:column;overflow:hidden;cursor:pointer">
+           style="display:flex;flex-direction:column;overflow:hidden;cursor:pointer;position:relative">
+
+        <!-- نسبة الإنجاز — تظهر فقط عند مرور المؤشر فوق البطاقة -->
+        <div class="card-gauge-overlay">
+          <svg viewBox="0 0 100 100" class="card-gauge-svg">
+            <circle cx="50" cy="50" r="42" class="gauge-track"/>
+            <circle cx="50" cy="50" r="42" class="gauge-fill" style="stroke:${statusColor};stroke-dasharray:${gaugeCirc};stroke-dashoffset:${gaugeOffset}"/>
+          </svg>
+          <div class="gauge-label" style="color:${statusColor}">${nisbat}%</div>
+          <div class="gauge-sub">نسبة الإنجاز</div>
+        </div>
 
         <!-- صورة المشروع -->
         ${photoHTML}
