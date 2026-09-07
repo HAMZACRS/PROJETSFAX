@@ -1734,6 +1734,14 @@ body.guest-mode .form-guest-lock::after {
               <datalist id="dl-qita"></datalist>
             </div>
             <div class="form-group">
+              <label>📄 نوع المشروع</label>
+              <select id="f-nawa_mashrou">
+                <option value="">— اختر نوع المشروع —</option>
+                <option value="طلب عروض">طلب عروض</option>
+                <option value="استشارة">استشارة</option>
+              </select>
+            </div>
+            <div class="form-group">
               <label>📅 سنة البرمجة</label>
               <input type="number" id="f-sana_barmaja" placeholder="مثال: 2025" min="2000" max="2100">
             </div>
@@ -4301,7 +4309,7 @@ async function printProjectById(id) {
 }
 
 function clearForm() {
-  const fields = ['bayan_mashrou','ref_annee','ref_bab','ref_fasl','muta_madiyya','tamwil_mashrou','qita','sana_barmaja','aitimed_mubarmaj','mouassassa',
+  const fields = ['bayan_mashrou','ref_annee','ref_bab','ref_fasl','muta_madiyya','tamwil_mashrou','qita','nawa_mashrou','sana_barmaja','aitimed_mubarmaj','mouassassa',
     'dirassat_bab','dirassat_fasl','dirassat_fiqra','tarikh_intilaq_dirassat',
     'ashghal_bab','ashghal_fasl','ashghal_fiqra','tarikh_intilaq_ashghal','tarikh_intiha_ashghal',
     'mukallaf_binjaz','kulfa','dufuat','tarikh_musadaqa',
@@ -4325,7 +4333,7 @@ function clearForm() {
 
 function fillForm(p) {
   clearForm();
-  const fields = ['bayan_mashrou','ref_annee','ref_bab','ref_fasl','muta_madiyya','tamwil_mashrou','qita','sana_barmaja','aitimed_mubarmaj','mouassassa',
+  const fields = ['bayan_mashrou','ref_annee','ref_bab','ref_fasl','muta_madiyya','tamwil_mashrou','qita','nawa_mashrou','sana_barmaja','aitimed_mubarmaj','mouassassa',
     'dirassat_bab','dirassat_fasl','dirassat_fiqra','tarikh_intilaq_dirassat',
     'ashghal_bab','ashghal_fasl','ashghal_fiqra','tarikh_intilaq_ashghal','tarikh_intiha_ashghal',
     'mukallaf_binjaz','kulfa','dufuat','tarikh_musadaqa',
@@ -4364,7 +4372,7 @@ function fillForm(p) {
 }
 
 function getFormData() {
-  const fields = ['bayan_mashrou','ref_annee','ref_bab','ref_fasl','muta_madiyya','tamwil_mashrou','qita','sana_barmaja','aitimed_mubarmaj','mouassassa',
+  const fields = ['bayan_mashrou','ref_annee','ref_bab','ref_fasl','muta_madiyya','tamwil_mashrou','qita','nawa_mashrou','sana_barmaja','aitimed_mubarmaj','mouassassa',
     'dirassat_bab','dirassat_fasl','dirassat_fiqra','tarikh_intilaq_dirassat',
     'ashghal_bab','ashghal_fasl','ashghal_fiqra','tarikh_intilaq_ashghal','tarikh_intiha_ashghal',
     'mukallaf_binjaz','kulfa','dufuat','tarikh_musadaqa',
