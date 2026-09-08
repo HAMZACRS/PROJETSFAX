@@ -545,6 +545,26 @@ body.dark .card-gauge-overlay { background: rgba(20,20,25,0.94); }
   transform: translateY(3px);
   box-shadow: 0 1px 0 var(--edge-color, rgba(0,0,0,0.28)), 0 2px 6px rgba(0,0,0,0.15) !important;
 }
+
+/* ── Tuiles carrées (دراسات/جلسات/أشغال/اعتمادات/متابعة إدارية) ── */
+.popup-square-btn {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  font-family: var(--font);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px;
+  text-align: center;
+}
+.popup-square-icon { font-size: 26px; line-height: 1; }
+.popup-square-label { font-size: 12.5px; font-weight: 700; line-height: 1.25; }
+.popup-square-badge { font-size: 10px; font-weight: 400; opacity: 0.85; }
 .form-group input, .form-group textarea, .form-group select {
   padding: 10px 12px;
   border: 1.5px solid var(--border);
@@ -953,7 +973,7 @@ body.guest-mode .nav-btn.guest-disabled { opacity: 0.38; cursor: not-allowed !im
 body.guest-mode button:not(.btn-guest-allowed):not(.nav-btn):not(.nav-item):not([data-guest-ok]) { opacity: 0.38; cursor: not-allowed !important; pointer-events: none; }
 body.guest-mode .form-guest-lock { position: relative; }
 body.guest-mode #view-fawadil { display: none !important; }
-body.guest-mode #form-studies-section { display: none !important; }
+body.guest-mode #form-popup-buttons-section { display: none !important; }
 body.guest-mode #docSec-dirassat { display: none !important; }
 body.guest-mode .form-guest-lock::after {
   content: '🔒 وضع القراءة فقط — سجّل دخولك للتعديل';
@@ -1775,20 +1795,183 @@ body.guest-mode .form-guest-lock::after {
         </div>
       </div>
 
-      <!-- Studies Section — bouton qui ouvre la modale دراسات -->
-      <div class="card" id="form-studies-section" style="border-radius:0;border-top:none;border-bottom:none">
-        <div class="card-header">
-          <h3>📐 الدراسات</h3>
-          <span class="card-icon">📚</span>
+      <!-- ═══════════════════════════════
+           شبكة أزرار مربّعة: دراسات / جلسات المتابعة / أشغال / اعتمادات محالة / متابعة إدارية
+      ═══════════════════════════════ -->
+      <div class="card" id="form-popup-buttons-section" style="border-radius:0;border-top:none;border-bottom:none">
+        <div class="card-body">
+          <div id="dirassat-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;margin-bottom:10px;background:rgba(37,99,235,0.05);border:1px solid rgba(37,99,235,0.18);border-radius:8px;font-size:12px;color:var(--primary)"></div>
+          <div id="jalasat-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;margin-bottom:10px;background:rgba(255,213,79,0.12);border:1px solid rgba(255,193,7,0.35);border-radius:8px;font-size:12px;color:#7a5c00"></div>
+          <div id="ashghal-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;margin-bottom:10px;background:rgba(46,125,50,0.06);border:1px solid rgba(46,125,50,0.2);border-radius:8px;font-size:12px;color:#2e7d32"></div>
+          <div id="itimadat-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;margin-bottom:10px;background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:12px;color:#6d28d9"></div>
+          <div id="idariya-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;margin-bottom:10px;background:rgba(8,145,178,0.06);border:1px solid rgba(8,145,178,0.2);border-radius:8px;font-size:12px;color:#0e7490"></div>
+          <div id="wathaiq-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;margin-bottom:10px;background:rgba(180,83,9,0.06);border:1px solid rgba(180,83,9,0.2);border-radius:8px;font-size:12px;color:#92400e"></div>
+          <div id="faryq-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;margin-bottom:10px;background:rgba(15,118,110,0.06);border:1px solid rgba(15,118,110,0.2);border-radius:8px;font-size:12px;color:#0f766e"></div>
+
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+            <button type="button" onclick="openDirassatModal()" class="popup-3d-btn popup-square-btn" style="--edge-color:#0d2438;background:linear-gradient(135deg,var(--primary),#2563EB);color:#fff;">
+              <span class="popup-square-icon">📐</span>
+              <span class="popup-square-label">دراسات</span>
+              <span class="popup-square-badge" id="dirassat-btn-badge"></span>
+            </button>
+            <button type="button" onclick="openJalasatModal()" class="popup-3d-btn popup-square-btn" style="--edge-color:#a36f00;background:linear-gradient(135deg,#ffca28,#ffb300);color:#333;">
+              <span class="popup-square-icon">📅</span>
+              <span class="popup-square-label">جلسات المتابعة</span>
+              <span class="popup-square-badge" id="jalasat-btn-badge"></span>
+            </button>
+            <button type="button" onclick="openAshghalModal()" class="popup-3d-btn popup-square-btn" style="--edge-color:#1b5e20;background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;">
+              <span class="popup-square-icon">🏗️</span>
+              <span class="popup-square-label">أشغال</span>
+              <span class="popup-square-badge" id="ashghal-btn-badge"></span>
+            </button>
+            <button type="button" onclick="openItimadatModal()" class="popup-3d-btn popup-square-btn" style="--edge-color:#4c1d95;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;">
+              <span class="popup-square-icon">💳</span>
+              <span class="popup-square-label">اعتمادات محالة</span>
+              <span class="popup-square-badge" id="itimadat-btn-badge"></span>
+            </button>
+            <button type="button" onclick="openIdariyaModal()" class="popup-3d-btn popup-square-btn" style="--edge-color:#075985;background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;">
+              <span class="popup-square-icon">📋</span>
+              <span class="popup-square-label">المتابعة الإدارية</span>
+              <span class="popup-square-badge" id="idariya-btn-badge"></span>
+            </button>
+            <button type="button" onclick="openWathaiqModal()" class="popup-3d-btn popup-square-btn" style="--edge-color:#7c2d12;background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff;">
+              <span class="popup-square-icon">📁</span>
+              <span class="popup-square-label">وثائق المشروع</span>
+              <span class="popup-square-badge" id="wathaiq-btn-badge"></span>
+            </button>
+            <button type="button" onclick="openFaryqModal()" class="popup-3d-btn popup-square-btn" style="--edge-color:#134e4a;background:linear-gradient(135deg,#0f766e,#115e59);color:#fff;">
+              <span class="popup-square-icon">👥</span>
+              <span class="popup-square-label">فريق المشروع</span>
+              <span class="popup-square-badge" id="faryq-btn-badge"></span>
+            </button>
+          </div>
         </div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-          <!-- Résumé rapide des données déjà saisies -->
-          <div id="dirassat-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;background:rgba(37,99,235,0.05);border:1px solid rgba(37,99,235,0.18);border-radius:8px;font-size:12px;color:var(--primary)"></div>
-          <button type="button" onclick="openDirassatModal()" class="popup-3d-btn" style="--edge-color:#0d2438;display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,var(--primary),#2563EB);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;width:100%;justify-content:center;">
-            <span style="font-size:20px">📐</span>
-            دراسات
-            <span style="font-size:11px;opacity:0.8;margin-right:auto;font-weight:400" id="dirassat-btn-badge"></span>
-          </button>
+      </div>
+
+      <!-- ═══════════════════════════════
+           MODALE المتابعة الإدارية — آخر وثيقة إدارية للمشروع
+      ═══════════════════════════════ -->
+      <div id="idariyaModalOverlay" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.55);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeIdariyaModal()">
+        <div style="background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-height:92dvh;overflow-y:auto;direction:rtl;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);">
+          <div style="background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;border-radius:18px 18px 0 0;flex-shrink:0;">
+            <h3 style="font-size:16px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px">📋 المتابعة الإدارية</h3>
+            <button onclick="closeIdariyaModal()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+          </div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:0;flex:1;">
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">بيانات آخر وثيقة إدارية متعلقة بالمشروع (مراسلة صادرة أو واردة).</p>
+            <div class="form-grid">
+              <div class="form-group full">
+                <label>📄 آخر وثيقة إدارية</label>
+                <input type="text" id="f-akhir_wathiqa_idariya" placeholder="عنوان أو موضوع الوثيقة">
+              </div>
+              <div class="form-group">
+                <label>📅 تاريخ الوثيقة</label>
+                <input type="date" id="f-tarikh_wathiqa_idariya">
+              </div>
+              <div class="form-group">
+                <label>🏢 المصدر</label>
+                <input type="text" id="f-masdar_wathiqa_idariya" placeholder="الجهة المصدرة">
+              </div>
+              <div class="form-group">
+                <label>🔢 عدد الوثيقة</label>
+                <input type="text" id="f-adad_wathiqa_idariya" placeholder="رقم الوثيقة">
+              </div>
+              <div class="form-group">
+                <label>🔗 رابط الوثيقة</label>
+                <input type="url" id="f-rabit_wathiqa_idariya" placeholder="https://" dir="ltr" style="text-align:left">
+              </div>
+              <div class="form-group">
+                <label>↔️ نوع الوثيقة</label>
+                <select id="f-nawa_wathiqa_idariya">
+                  <option value="">— اختر —</option>
+                  <option value="صادر">صادر</option>
+                  <option value="وارد">وارد</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0;flex-shrink:0;">
+            <button class="btn btn-outline" onclick="closeIdariyaModal()">إغلاق</button>
+            <button class="btn btn-primary" onclick="saveAndCloseModal(closeIdariyaModal)">💾 حفظ وإغلاق</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════
+           MODALE وثائق المشروع — روابط Drive
+      ═══════════════════════════════ -->
+      <div id="wathaiqModalOverlay" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.55);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeWathaiqModal()">
+        <div style="background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-height:92dvh;overflow-y:auto;direction:rtl;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);">
+          <div style="background:linear-gradient(135deg,#ea580c,#c2410c);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;border-radius:18px 18px 0 0;flex-shrink:0;">
+            <h3 style="font-size:16px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px">📁 وثائق المشروع</h3>
+            <button onclick="closeWathaiqModal()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+          </div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:0;flex:1;">
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">أضف روابط Google Drive (أو أي رابط ملف آخر) المتعلقة بالمشروع — يمكن فتحها مباشرة من هنا.</p>
+            <div class="form-grid" style="margin-bottom:8px">
+              <div class="form-group">
+                <label>📝 اسم الوثيقة</label>
+                <input type="text" id="wathiqa-name-input" placeholder="مثال: محضر جلسة، تقرير...">
+              </div>
+              <div class="form-group">
+                <label>🔗 رابط Drive</label>
+                <input type="url" id="wathiqa-link-input" placeholder="https://drive.google.com/..." dir="ltr" style="text-align:left">
+              </div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="addWathiqaRow()" style="margin-bottom:14px">➕ إضافة وثيقة</button>
+            <div id="wathaiqList"></div>
+          </div>
+          <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0;flex-shrink:0;">
+            <button class="btn btn-outline" onclick="closeWathaiqModal()">إغلاق</button>
+            <button class="btn btn-primary" onclick="saveAndCloseModal(closeWathaiqModal)">💾 حفظ وإغلاق</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════
+           MODALE فريق المشروع
+      ═══════════════════════════════ -->
+      <div id="faryqModalOverlay" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.55);align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeFaryqModal()">
+        <div style="background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-height:92dvh;overflow-y:auto;direction:rtl;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);">
+          <div style="background:linear-gradient(135deg,#0f766e,#115e59);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;border-radius:18px 18px 0 0;flex-shrink:0;">
+            <h3 style="font-size:16px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px">👥 فريق المشروع</h3>
+            <button onclick="closeFaryqModal()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+          </div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:0;flex:1;">
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">أضف جميع المتدخلين في المشروع (مهندسين، مقاولين، مسؤولين إداريين...) — يمكن مراسلتهم مباشرة عبر واتساب أو البريد الإلكتروني.</p>
+            <div class="form-grid" style="margin-bottom:8px">
+              <div class="form-group">
+                <label>👤 الاسم واللقب</label>
+                <input type="text" id="faryq-name-input" placeholder="الاسم الكامل">
+              </div>
+              <div class="form-group">
+                <label>🏷️ الصفة</label>
+                <input type="text" id="faryq-sifa-input" placeholder="مثال: مهندس، مقاول...">
+              </div>
+              <div class="form-group full">
+                <label>📝 المهمة</label>
+                <input type="text" id="faryq-mahamma-input" placeholder="المهمة الموكولة له في المشروع">
+              </div>
+              <div class="form-group">
+                <label>📱 رقم الهاتف</label>
+                <input type="tel" id="faryq-phone-input" placeholder="21620123456" dir="ltr" style="text-align:left">
+              </div>
+              <div class="form-group">
+                <label>📠 رقم الفاكس</label>
+                <input type="tel" id="faryq-fax-input" placeholder="اختياري" dir="ltr" style="text-align:left">
+              </div>
+              <div class="form-group">
+                <label>✉️ البريد الإلكتروني</label>
+                <input type="email" id="faryq-email-input" placeholder="example@email.com" dir="ltr" style="text-align:left">
+              </div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="addFaryqRow()" style="margin-bottom:14px">➕ إضافة عضو للفريق</button>
+            <div id="faryqList"></div>
+          </div>
+          <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0;flex-shrink:0;">
+            <button class="btn btn-outline" onclick="closeFaryqModal()">إغلاق</button>
+            <button class="btn btn-primary" onclick="saveAndCloseModal(closeFaryqModal)">💾 حفظ وإغلاق</button>
+          </div>
         </div>
       </div>
 
@@ -1875,22 +2058,6 @@ body.guest-mode .form-guest-lock::after {
         </div>
       </div>
 
-      <!-- Réunions de suivi Section — bouton qui ouvre la modale جلسات المتابعة -->
-      <div class="card" id="form-jalasat-section" style="border-radius:0;border-top:none;border-bottom:none">
-        <div class="card-header" style="background:#ffd54f;color:#333">
-          <h3>📅 جلسات المتابعة</h3>
-          <span class="card-icon">👥</span>
-        </div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-          <div id="jalasat-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;background:rgba(255,213,79,0.12);border:1px solid rgba(255,193,7,0.35);border-radius:8px;font-size:12px;color:#7a5c00"></div>
-          <button type="button" onclick="openJalasatModal()" class="popup-3d-btn" style="--edge-color:#a36f00;display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,#ffca28,#ffb300);color:#333;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;width:100%;justify-content:center;">
-            <span style="font-size:20px">📅</span>
-            جلسات المتابعة
-            <span style="font-size:11px;opacity:0.8;margin-right:auto;font-weight:400" id="jalasat-btn-badge"></span>
-          </button>
-        </div>
-      </div>
-
       <!-- ═══════════════════════════════
            MODALE جلسات المتابعة (full-screen)
       ═══════════════════════════════ -->
@@ -1911,22 +2078,6 @@ body.guest-mode .form-guest-lock::after {
             <button class="btn btn-outline" onclick="closeJalasatModal()">إغلاق</button>
             <button class="btn btn-primary" onclick="saveAndCloseModal(closeJalasatModal)">✅ حفظ وإغلاق</button>
           </div>
-        </div>
-      </div>
-
-      <!-- Works Section — bouton qui ouvre la modale الأشغال -->
-      <div class="card" id="form-ashghal-section" style="border-radius:0;border-top:none">
-        <div class="card-header green">
-          <h3>🏗️ الأشغال</h3>
-          <span class="card-icon">⚙️</span>
-        </div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-          <div id="ashghal-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;background:rgba(46,125,50,0.06);border:1px solid rgba(46,125,50,0.2);border-radius:8px;font-size:12px;color:#2e7d32"></div>
-          <button type="button" onclick="openAshghalModal()" class="popup-3d-btn" style="--edge-color:#1b5e20;display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,#2e7d32,#43a047);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;width:100%;justify-content:center;">
-            <span style="font-size:20px">🏗️</span>
-            أشغال
-            <span style="font-size:11px;opacity:0.8;margin-right:auto;font-weight:400" id="ashghal-btn-badge"></span>
-          </button>
         </div>
       </div>
 
@@ -2024,22 +2175,6 @@ body.guest-mode .form-guest-lock::after {
             <button class="btn btn-outline" onclick="closeAshghalModal()">إغلاق</button>
             <button class="btn btn-primary" onclick="saveAndCloseModal(closeAshghalModal)">✅ حفظ وإغلاق</button>
           </div>
-        </div>
-      </div>
-
-      <!-- Itimadat Muhala Section (تعهد / دفع) — bouton qui ouvre la modale الاعتمادات المحالة -->
-      <div class="card" style="margin-top:16px" id="itimadatMuhalaCard">
-        <div class="card-header" style="background:linear-gradient(135deg,#7c3aed,#6d28d9)">
-          <h3>💳 الاعتمادات المحالة</h3>
-          <span class="card-icon">📋</span>
-        </div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-          <div id="itimadat-summary-bar" style="display:none;flex-wrap:wrap;gap:6px;padding:8px 10px;background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);border-radius:8px;font-size:12px;color:#6d28d9"></div>
-          <button type="button" onclick="openItimadatModal()" class="popup-3d-btn" style="--edge-color:#4c1d95;display:inline-flex;align-items:center;gap:10px;padding:13px 18px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;width:100%;justify-content:center;">
-            <span style="font-size:20px">💳</span>
-            اعتمادات محالة
-            <span style="font-size:11px;opacity:0.8;margin-right:auto;font-weight:400" id="itimadat-btn-badge"></span>
-          </button>
         </div>
       </div>
 
@@ -3027,6 +3162,229 @@ function updateItimadatBtnBadge() {
     if (parts.length > 0) {
       summaryBar.style.display = 'flex';
       summaryBar.innerHTML = parts.map(p => '<span style="background:rgba(124,58,237,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(124,58,237,0.2)">📌 ' + p + '</span>').join('');
+    } else {
+      summaryBar.style.display = 'none';
+    }
+  }
+}
+
+// ===== MODALE المتابعة الإدارية =====
+function openIdariyaModal() {
+  const overlay = document.getElementById('idariyaModalOverlay');
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeIdariyaModal() {
+  const overlay = document.getElementById('idariyaModalOverlay');
+  overlay.style.display = 'none';
+  document.body.style.overflow = '';
+  updateIdariyaBtnBadge();
+}
+function updateIdariyaBtnBadge() {
+  const badge = document.getElementById('idariya-btn-badge');
+  const summaryBar = document.getElementById('idariya-summary-bar');
+  if (!badge) return;
+  const titre = (document.getElementById('f-akhir_wathiqa_idariya')?.value || '').trim();
+  const nawa  = (document.getElementById('f-nawa_wathiqa_idariya')?.value || '').trim();
+  const parts = [];
+  if (nawa)  parts.push(nawa);
+  if (titre) parts.push(titre.length > 18 ? titre.slice(0, 18) + '…' : titre);
+  badge.textContent = parts.length > 0 ? '(' + parts.join(' · ') + ')' : '';
+  if (summaryBar) {
+    if (parts.length > 0) {
+      summaryBar.style.display = 'flex';
+      summaryBar.innerHTML = parts.map(p => '<span style="background:rgba(8,145,178,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(8,145,178,0.2)">📌 ' + p + '</span>').join('');
+    } else {
+      summaryBar.style.display = 'none';
+    }
+  }
+}
+
+// ===== MODALE وثائق المشروع (روابط Drive) =====
+let wathaiqMashrouRows = [];
+
+function openWathaiqModal() {
+  const overlay = document.getElementById('wathaiqModalOverlay');
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeWathaiqModal() {
+  const overlay = document.getElementById('wathaiqModalOverlay');
+  overlay.style.display = 'none';
+  document.body.style.overflow = '';
+  updateWathaiqBtnBadge();
+}
+
+function addWathiqaRow(existing) {
+  const nameInput = document.getElementById('wathiqa-name-input');
+  const linkInput = document.getElementById('wathiqa-link-input');
+  let name, link;
+  if (existing) {
+    name = existing.name || ''; link = existing.link || '';
+  } else {
+    name = (nameInput.value || '').trim();
+    link = (linkInput.value || '').trim();
+    if (!link) { showNotification('⚠️ يرجى إدخال رابط الوثيقة', 'error'); return; }
+    if (!/^https?:\/\//i.test(link)) { showNotification('⚠️ الرابط غير صالح (يجب أن يبدأ بـ https://)', 'error'); return; }
+    if (!name) name = 'وثيقة بدون اسم';
+    nameInput.value = ''; linkInput.value = '';
+  }
+  wathaiqMashrouRows.push({ name, link });
+  renderWathaiqList();
+}
+
+function deleteWathiqaRow(idx) {
+  if (!confirm('حذف هذه الوثيقة من القائمة؟')) return;
+  wathaiqMashrouRows.splice(idx, 1);
+  renderWathaiqList();
+}
+
+function renderWathaiqList() {
+  if (typeof updateWathaiqBtnBadge === 'function') updateWathaiqBtnBadge();
+  const container = document.getElementById('wathaiqList');
+  if (!container) return;
+  if (!wathaiqMashrouRows.length) {
+    container.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:8px 4px;font-style:italic">لا توجد وثائق مضافة بعد</div>';
+    return;
+  }
+  container.innerHTML = wathaiqMashrouRows.map((w, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:rgba(234,88,12,0.04)">
+      <span style="font-size:18px;flex-shrink:0">📄</span>
+      <a href="${w.link}" target="_blank" rel="noopener noreferrer"
+         style="flex:1;min-width:0;font-size:13px;font-weight:600;color:var(--primary);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+         title="${w.link}">${w.name}</a>
+      <a href="${w.link}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="flex-shrink:0">🔗 فتح</a>
+      <button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="deleteWathiqaRow(${i})">🗑️</button>
+    </div>
+  `).join('');
+}
+
+function updateWathaiqBtnBadge() {
+  const badge = document.getElementById('wathaiq-btn-badge');
+  const summaryBar = document.getElementById('wathaiq-summary-bar');
+  if (!badge) return;
+  const n = wathaiqMashrouRows.length;
+  badge.textContent = n > 0 ? '(' + n + ' وثيقة)' : '';
+  if (summaryBar) {
+    if (n > 0) {
+      summaryBar.style.display = 'flex';
+      summaryBar.innerHTML = wathaiqMashrouRows.map(w =>
+        '<a href="' + w.link + '" target="_blank" rel="noopener noreferrer" style="background:rgba(234,88,12,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(234,88,12,0.25);text-decoration:none;color:#92400e">📎 ' + w.name + '</a>'
+      ).join('');
+    } else {
+      summaryBar.style.display = 'none';
+    }
+  }
+}
+
+// ===== MODALE فريق المشروع =====
+let faryqMashrouRows = [];
+
+function openFaryqModal() {
+  const overlay = document.getElementById('faryqModalOverlay');
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeFaryqModal() {
+  const overlay = document.getElementById('faryqModalOverlay');
+  overlay.style.display = 'none';
+  document.body.style.overflow = '';
+  updateFaryqBtnBadge();
+}
+
+function addFaryqRow(existing) {
+  let name, sifa, mahamma, phone, fax, email;
+  if (existing) {
+    name = existing.name || ''; sifa = existing.sifa || ''; mahamma = existing.mahamma || '';
+    phone = existing.phone || ''; fax = existing.fax || ''; email = existing.email || '';
+  } else {
+    name    = (document.getElementById('faryq-name-input').value    || '').trim();
+    sifa    = (document.getElementById('faryq-sifa-input').value    || '').trim();
+    mahamma = (document.getElementById('faryq-mahamma-input').value || '').trim();
+    phone   = (document.getElementById('faryq-phone-input').value   || '').trim();
+    fax     = (document.getElementById('faryq-fax-input').value     || '').trim();
+    email   = (document.getElementById('faryq-email-input').value   || '').trim();
+    if (!name) { showNotification('⚠️ يرجى إدخال الاسم واللقب على الأقل', 'error'); return; }
+    if (phone && !isValidPhone(phone)) { showNotification('⚠️ رقم الهاتف غير صالح', 'error'); return; }
+    if (email && !isValidEmail(email)) { showNotification('⚠️ البريد الإلكتروني غير صالح', 'error'); return; }
+    ['faryq-name-input','faryq-sifa-input','faryq-mahamma-input','faryq-phone-input','faryq-fax-input','faryq-email-input']
+      .forEach(id => { document.getElementById(id).value = ''; });
+  }
+  faryqMashrouRows.push({ name, sifa, mahamma, phone, fax, email });
+  renderFaryqList();
+}
+
+function deleteFaryqRow(idx) {
+  if (!confirm('حذف هذا العضو من فريق المشروع؟')) return;
+  faryqMashrouRows.splice(idx, 1);
+  renderFaryqList();
+}
+
+function contactFaryqWhatsApp(idx) {
+  const m = faryqMashrouRows[idx];
+  if (!m || !m.phone) { showNotification('⚠️ لا يوجد رقم هاتف مسجّل لهذا العضو', 'error'); return; }
+  const projTitle = (document.getElementById('f-bayan_mashrou')?.value || 'المشروع').trim();
+  const message = 'السلام عليكم ' + m.name + ',\n\n'
+    + 'نرجو منكم موافاتنا بمستجدات ومعلومات حول تقدم مشروع: ' + projTitle + '.\n\n'
+    + 'مع الشكر،\nخلية متابعة المشاريع العمومية — ولاية صفاقس';
+  sendCredentialsViaWhatsApp(m.phone, message);
+}
+
+function contactFaryqEmail(idx) {
+  const m = faryqMashrouRows[idx];
+  if (!m || !m.email) { showNotification('⚠️ لا يوجد بريد إلكتروني مسجّل لهذا العضو', 'error'); return; }
+  const projTitle = (document.getElementById('f-bayan_mashrou')?.value || 'المشروع').trim();
+  const sub  = encodeURIComponent('طلب معلومات — ' + projTitle);
+  const body = encodeURIComponent(
+    'السلام عليكم ' + m.name + ',\n\n'
+    + 'نرجو منكم موافاتنا بمستجدات ومعلومات حول تقدم مشروع: ' + projTitle + '.\n\n'
+    + 'مع الشكر،\nخلية متابعة المشاريع العمومية — ولاية صفاقس'
+  );
+  window.open('mailto:' + m.email + '?subject=' + sub + '&body=' + body);
+}
+
+function renderFaryqList() {
+  if (typeof updateFaryqBtnBadge === 'function') updateFaryqBtnBadge();
+  const container = document.getElementById('faryqList');
+  if (!container) return;
+  if (!faryqMashrouRows.length) {
+    container.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:8px 4px;font-style:italic">لا يوجد أعضاء مضافون بعد</div>';
+    return;
+  }
+  container.innerHTML = faryqMashrouRows.map((m, i) => `
+    <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:rgba(15,118,110,0.04)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
+        <div style="min-width:0">
+          <div style="font-size:13px;font-weight:700;color:#111827">👤 ${m.name}</div>
+          <div style="font-size:11.5px;color:var(--text-muted)">${[m.sifa, m.mahamma].filter(Boolean).join(' — ') || '—'}</div>
+        </div>
+        <button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="deleteFaryqRow(${i})">🗑️</button>
+      </div>
+      <div style="font-size:11.5px;color:var(--text-muted);display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px">
+        ${m.phone ? '<span dir="ltr">📱 ' + m.phone + '</span>' : ''}
+        ${m.fax   ? '<span dir="ltr">📠 ' + m.fax   + '</span>' : ''}
+        ${m.email ? '<span dir="ltr">✉️ ' + m.email + '</span>' : ''}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" style="background:#25D366;color:#fff;flex:1" onclick="contactFaryqWhatsApp(${i})" ${m.phone ? '' : 'disabled style="opacity:.5"'}>📱 واتساب</button>
+        <button class="btn btn-sm btn-primary" style="flex:1" onclick="contactFaryqEmail(${i})" ${m.email ? '' : 'disabled style="opacity:.5"'}>✉️ بريد إلكتروني</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateFaryqBtnBadge() {
+  const badge = document.getElementById('faryq-btn-badge');
+  const summaryBar = document.getElementById('faryq-summary-bar');
+  if (!badge) return;
+  const n = faryqMashrouRows.length;
+  badge.textContent = n > 0 ? '(' + n + ' عضو)' : '';
+  if (summaryBar) {
+    if (n > 0) {
+      summaryBar.style.display = 'flex';
+      summaryBar.innerHTML = faryqMashrouRows.map(m =>
+        '<span style="background:rgba(15,118,110,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(15,118,110,0.25);color:#0f766e">👤 ' + m.name + '</span>'
+      ).join('');
     } else {
       summaryBar.style.display = 'none';
     }
@@ -4313,7 +4671,8 @@ function clearForm() {
     'dirassat_bab','dirassat_fasl','dirassat_fiqra','tarikh_intilaq_dirassat',
     'ashghal_bab','ashghal_fasl','ashghal_fiqra','tarikh_intilaq_ashghal','tarikh_intiha_ashghal',
     'mukallaf_binjaz','kulfa','dufuat','tarikh_musadaqa',
-    'muddat_injaz','nisbat_injaz','tatilat','mulahazat_ashghal'];
+    'muddat_injaz','nisbat_injaz','tatilat','mulahazat_ashghal',
+    'akhir_wathiqa_idariya','tarikh_wathiqa_idariya','masdar_wathiqa_idariya','adad_wathiqa_idariya','rabit_wathiqa_idariya','nawa_wathiqa_idariya'];
   fields.forEach(f => { const el = document.getElementById('f-'+f); if (el) el.value = ''; });
   dirassatRows = [];
   document.getElementById('dirassatRows').innerHTML = '';
@@ -4327,8 +4686,17 @@ function clearForm() {
   jalasatMutabaRows = [];
   const jc = document.getElementById('jalasat-container');
   if (jc) jc.innerHTML = '';
+  wathaiqMashrouRows = [];
+  const wl = document.getElementById('wathaiqList');
+  if (wl) wl.innerHTML = '';
+  faryqMashrouRows = [];
+  const fl = document.getElementById('faryqList');
+  if (fl) fl.innerHTML = '';
   if (typeof updateJalasatBtnBadge  === 'function') updateJalasatBtnBadge();
   if (typeof updateItimadatBtnBadge === 'function') updateItimadatBtnBadge();
+  if (typeof updateIdariyaBtnBadge  === 'function') updateIdariyaBtnBadge();
+  if (typeof updateWathaiqBtnBadge  === 'function') updateWathaiqBtnBadge();
+  if (typeof updateFaryqBtnBadge    === 'function') updateFaryqBtnBadge();
 }
 
 function fillForm(p) {
@@ -4337,7 +4705,8 @@ function fillForm(p) {
     'dirassat_bab','dirassat_fasl','dirassat_fiqra','tarikh_intilaq_dirassat',
     'ashghal_bab','ashghal_fasl','ashghal_fiqra','tarikh_intilaq_ashghal','tarikh_intiha_ashghal',
     'mukallaf_binjaz','kulfa','dufuat','tarikh_musadaqa',
-    'muddat_injaz','nisbat_injaz','tatilat','mulahazat_ashghal'];
+    'muddat_injaz','nisbat_injaz','tatilat','mulahazat_ashghal',
+    'akhir_wathiqa_idariya','tarikh_wathiqa_idariya','masdar_wathiqa_idariya','adad_wathiqa_idariya','rabit_wathiqa_idariya','nawa_wathiqa_idariya'];
   fields.forEach(f => {
     const el = document.getElementById('f-'+f);
     if (el && p[f] !== undefined) el.value = p[f] || '';
@@ -4364,11 +4733,21 @@ function fillForm(p) {
     p.jalasat_mutaba.forEach(row => addJalasaRow(row));
   }
 
-  // Rafraîchir les badges des 4 boutons popup (دراسات، جلسات المتابعة، أشغال، اعتمادات)
+  // Charger وثائق المشروع (روابط Drive)
+  wathaiqMashrouRows = Array.isArray(p.wathaiq_mashrou) ? [...p.wathaiq_mashrou] : [];
+  renderWathaiqList();
+
+  // Charger فريق المشروع
+  faryqMashrouRows = Array.isArray(p.faryq_mashrou) ? [...p.faryq_mashrou] : [];
+  renderFaryqList();
+
+  // Rafraîchir les badges des 7 boutons popup (دراسات، جلسات المتابعة، أشغال، اعتمادات، متابعة إدارية، وثائق، فريق)
   if (typeof updateDirassatBtnBadge === 'function') updateDirassatBtnBadge();
   if (typeof updateJalasatBtnBadge  === 'function') updateJalasatBtnBadge();
   if (typeof updateAshghalBtnBadge  === 'function') updateAshghalBtnBadge();
   if (typeof updateItimadatBtnBadge === 'function') updateItimadatBtnBadge();
+  if (typeof updateIdariyaBtnBadge  === 'function') updateIdariyaBtnBadge();
+  // updateWathaiqBtnBadge() et updateFaryqBtnBadge() sont déjà appelées dans leurs render() respectifs
 }
 
 function getFormData() {
@@ -4376,7 +4755,8 @@ function getFormData() {
     'dirassat_bab','dirassat_fasl','dirassat_fiqra','tarikh_intilaq_dirassat',
     'ashghal_bab','ashghal_fasl','ashghal_fiqra','tarikh_intilaq_ashghal','tarikh_intiha_ashghal',
     'mukallaf_binjaz','kulfa','dufuat','tarikh_musadaqa',
-    'muddat_injaz','nisbat_injaz','tatilat','mulahazat_ashghal'];
+    'muddat_injaz','nisbat_injaz','tatilat','mulahazat_ashghal',
+    'akhir_wathiqa_idariya','tarikh_wathiqa_idariya','masdar_wathiqa_idariya','adad_wathiqa_idariya','rabit_wathiqa_idariya','nawa_wathiqa_idariya'];
   const data = {};
   fields.forEach(f => {
     const el = document.getElementById('f-'+f);
@@ -4388,6 +4768,8 @@ function getFormData() {
   data.hadhira_records  = hadhiraRecords.filter(r => r !== null);
   data.avenants_ashghal = window._avenants_ashghal ? [...window._avenants_ashghal] : [];
   data.jalasat_mutaba   = getJalasatData();
+  data.wathaiq_mashrou  = wathaiqMashrouRows.filter(w => w !== null);
+  data.faryq_mashrou    = faryqMashrouRows.filter(m => m !== null);
   return data;
 }
 
