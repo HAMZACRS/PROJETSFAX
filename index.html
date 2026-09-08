@@ -4770,6 +4770,18 @@ function getFormData() {
   data.jalasat_mutaba   = getJalasatData();
   data.wathaiq_mashrou  = wathaiqMashrouRows.filter(w => w !== null);
   data.faryq_mashrou    = faryqMashrouRows.filter(m => m !== null);
+
+  // ⚠️ Les colonnes Supabase de type "date" refusent une chaîne vide ("") —
+  // elles n'acceptent qu'une vraie date ou NULL. Un champ <input type="date">
+  // laissé vide renvoie toujours "" en JS, ce qui provoquait une erreur
+  // Postgres (22007) bloquant l'enregistrement de TOUT le projet, pas
+  // seulement du champ concerné. On neutralise ça systématiquement pour
+  // n'importe quel champ date du formulaire, actuel ou futur.
+  document.querySelectorAll('input[type="date"][id^="f-"]').forEach(el => {
+    const key = el.id.slice(2);
+    if (data[key] === '') data[key] = null;
+  });
+
   return data;
 }
 
