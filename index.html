@@ -3318,6 +3318,55 @@ function deleteFaryqRow(idx) {
   if (!confirm('حذف هذا العضو من فريق المشروع؟')) return;
   faryqMashrouRows.splice(idx, 1);
   renderFaryqList();
+  autoSaveFaryqSilently();
+}
+
+// Enregistre l'envoi d'un message dans l'historique du membre + le سجل العام
+// للنشاط، puis sauvegarde immédiatement le projet (pour que ce suivi ne soit
+// jamais perdu, même si l'utilisateur ferme la popup sans passer par "حفظ وإغلاق").
+function logFaryqContact(idx, channel) {
+  const m = faryqMashrouRows[idx];
+  if (!m) return;
+  if (!Array.isArray(m.communications)) m.communications = [];
+  m.communications.push({
+    id: Date.now(),
+    date: new Date().toISOString(),
+    channel,          // 'whatsapp' أو 'email'
+    responded: false,
+    responseDate: null
+  });
+  const projTitle = (document.getElementById('f-bayan_mashrou')?.value || '').trim();
+  logActivity('مراسلة عضو فريق المشروع',
+    m.name + ' عبر ' + (channel === 'whatsapp' ? 'واتساب' : 'البريد الإلكتروني') + (projTitle ? ' — مشروع: ' + projTitle : ''));
+  renderFaryqList();
+  autoSaveFaryqSilently();
+}
+
+// Sauvegarde silencieuse en arrière-plan (sans notification ni fermeture de
+// popup) — uniquement si le projet existe déjà (a un id). Pour un projet en
+// cours de création jamais encore enregistré, l'historique reste en mémoire
+// et sera inclus au premier enregistrement normal du formulaire.
+async function autoSaveFaryqSilently() {
+  if (!currentProjectId) return;
+  try {
+    const data = getFormData();
+    data.id = currentProjectId;
+    await dbPut(data);
+  } catch (e) {
+    console.warn('[autoSaveFaryqSilently] échec', e);
+  }
+}
+
+function markFaryqResponded(memberIdx, commId) {
+  const m = faryqMashrouRows[memberIdx];
+  if (!m || !Array.isArray(m.communications)) return;
+  const comm = m.communications.find(c => c.id === commId);
+  if (!comm) return;
+  comm.responded = true;
+  comm.responseDate = new Date().toISOString();
+  logActivity('تسجيل رد متدخل', m.name + ' — تم تأكيد الرد');
+  renderFaryqList();
+  autoSaveFaryqSilently();
 }
 
 function contactFaryqWhatsApp(idx) {
@@ -3327,7 +3376,8 @@ function contactFaryqWhatsApp(idx) {
   const message = 'السلام عليكم ' + m.name + ',\n\n'
     + 'نرجو منكم موافاتنا بمستجدات ومعلومات حول تقدم مشروع: ' + projTitle + '.\n\n'
     + 'مع الشكر،\nخلية متابعة المشاريع العمومية — ولاية صفاقس';
-  sendCredentialsViaWhatsApp(m.phone, message);
+  const opened = sendCredentialsViaWhatsApp(m.phone, message);
+  if (opened !== false) logFaryqContact(idx, 'whatsapp');
 }
 
 function contactFaryqEmail(idx) {
@@ -3341,6 +3391,7 @@ function contactFaryqEmail(idx) {
     + 'مع الشكر،\nخلية متابعة المشاريع العمومية — ولاية صفاقس'
   );
   window.open('mailto:' + m.email + '?subject=' + sub + '&body=' + body);
+  logFaryqContact(idx, 'email');
 }
 
 function renderFaryqList() {
@@ -3351,7 +3402,29 @@ function renderFaryqList() {
     container.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:8px 4px;font-style:italic">لا يوجد أعضاء مضافون بعد</div>';
     return;
   }
-  container.innerHTML = faryqMashrouRows.map((m, i) => `
+  const fmtDate = iso => { try { return new Date(iso).toLocaleString('ar-TN', { dateStyle:'short', timeStyle:'short' }); } catch(e){ return iso || ''; } };
+  const channelIcon = c => c === 'whatsapp' ? '📱' : '✉️';
+  const channelLabel = c => c === 'whatsapp' ? 'واتساب' : 'بريد إلكتروني';
+
+  container.innerHTML = faryqMashrouRows.map((m, i) => {
+    const comms = Array.isArray(m.communications) ? m.communications : [];
+    const commsHTML = comms.length ? `
+      <div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">
+        <div style="font-size:10.5px;font-weight:700;color:var(--text-muted);margin-bottom:5px">📨 سجل المراسلات ومتابعة الرد</div>
+        ${comms.slice().reverse().map(c => `
+          <div style="display:flex;align-items:center;gap:6px;font-size:11px;padding:4px 0">
+            <span>${channelIcon(c.channel)}</span>
+            <span style="color:var(--text-muted)">${channelLabel(c.channel)} — ${fmtDate(c.date)}</span>
+            ${c.responded
+              ? `<span style="margin-right:auto;color:#059669;font-weight:700">✅ تم الرد (${fmtDate(c.responseDate)})</span>`
+              : `<button class="btn btn-sm" style="margin-right:auto;background:#f59e0b;color:#fff;padding:2px 10px;font-size:10px" onclick="markFaryqResponded(${i}, ${c.id})">⏳ بانتظار الرد — تأكيد الرد</button>`
+            }
+          </div>
+        `).join('')}
+      </div>
+    ` : '';
+
+    return `
     <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:rgba(15,118,110,0.04)">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
         <div style="min-width:0">
@@ -3369,8 +3442,10 @@ function renderFaryqList() {
         <button class="btn btn-sm" style="background:#25D366;color:#fff;flex:1" onclick="contactFaryqWhatsApp(${i})" ${m.phone ? '' : 'disabled style="opacity:.5"'}>📱 واتساب</button>
         <button class="btn btn-sm btn-primary" style="flex:1" onclick="contactFaryqEmail(${i})" ${m.email ? '' : 'disabled style="opacity:.5"'}>✉️ بريد إلكتروني</button>
       </div>
+      ${commsHTML}
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 function updateFaryqBtnBadge() {
