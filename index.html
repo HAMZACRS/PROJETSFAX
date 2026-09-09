@@ -1858,10 +1858,10 @@ body.guest-mode .form-guest-lock::after {
             <button onclick="closeIdariyaModal()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
           </div>
           <div style="padding:16px;display:flex;flex-direction:column;gap:0;flex:1;">
-            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">بيانات آخر وثيقة إدارية متعلقة بالمشروع (مراسلة صادرة أو واردة).</p>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">أضف كل مراسلة إدارية (صادرة أو واردة) متعلقة بالمشروع — ستظهر مرتّبة على محور زمني حسب تاريخها.</p>
             <div class="form-grid">
               <div class="form-group full">
-                <label>📄 آخر وثيقة إدارية</label>
+                <label>📄 موضوع المراسلة</label>
                 <input type="text" id="f-akhir_wathiqa_idariya" placeholder="عنوان أو موضوع الوثيقة">
               </div>
               <div class="form-group">
@@ -1889,6 +1889,14 @@ body.guest-mode .form-guest-lock::after {
                 </select>
               </div>
             </div>
+            <button class="btn btn-outline btn-sm" onclick="addIdariyaRow()" style="margin:10px 0 16px">➕ إضافة إلى المحور الزمني</button>
+
+            <div class="section-divider">
+              <div class="divider-line"></div>
+              <div class="divider-label">🕒 المحور الزمني للمراسلات</div>
+              <div class="divider-line"></div>
+            </div>
+            <div id="idariyaTimeline" style="margin-top:10px"></div>
           </div>
           <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0;flex-shrink:0;">
             <button class="btn btn-outline" onclick="closeIdariyaModal()">إغلاق</button>
@@ -3180,20 +3188,82 @@ function closeIdariyaModal() {
   document.body.style.overflow = '';
   updateIdariyaBtnBadge();
 }
+let idariyaMashrouRows = [];
+
+function addIdariyaRow(existing) {
+  let subject, date, source, num, link, nawa;
+  if (existing) {
+    subject = existing.subject || ''; date = existing.date || ''; source = existing.source || '';
+    num = existing.num || ''; link = existing.link || ''; nawa = existing.nawa || '';
+  } else {
+    subject = (document.getElementById('f-akhir_wathiqa_idariya').value || '').trim();
+    date    = (document.getElementById('f-tarikh_wathiqa_idariya').value || '').trim();
+    source  = (document.getElementById('f-masdar_wathiqa_idariya').value || '').trim();
+    num     = (document.getElementById('f-adad_wathiqa_idariya').value || '').trim();
+    link    = (document.getElementById('f-rabit_wathiqa_idariya').value || '').trim();
+    nawa    = (document.getElementById('f-nawa_wathiqa_idariya').value || '').trim();
+    if (!subject) { showNotification('⚠️ يرجى إدخال موضوع المراسلة على الأقل', 'error'); return; }
+    ['f-akhir_wathiqa_idariya','f-tarikh_wathiqa_idariya','f-masdar_wathiqa_idariya','f-adad_wathiqa_idariya','f-rabit_wathiqa_idariya','f-nawa_wathiqa_idariya']
+      .forEach(id => { document.getElementById(id).value = ''; });
+  }
+  idariyaMashrouRows.push({ subject, date, source, num, link, nawa });
+  renderIdariyaTimeline();
+  showNotification('✅ تمت إضافة المراسلة إلى المحور الزمني للمشروع');
+}
+
+function deleteIdariyaRow(idx) {
+  if (!confirm('حذف هذه المراسلة من المحور الزمني؟')) return;
+  idariyaMashrouRows.splice(idx, 1);
+  renderIdariyaTimeline();
+}
+
+function renderIdariyaTimeline() {
+  if (typeof updateIdariyaBtnBadge === 'function') updateIdariyaBtnBadge();
+  const container = document.getElementById('idariyaTimeline');
+  if (!container) return;
+  if (!idariyaMashrouRows.length) {
+    container.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:8px 4px;font-style:italic">لا توجد مراسلات مضافة بعد</div>';
+    return;
+  }
+  // ترتيب تصاعدي حسب التاريخ (الأقدم أولاً)، وضع المراسلات بدون تاريخ في الآخر
+  const sorted = idariyaMashrouRows.map((r, i) => ({ ...r, _idx: i }))
+    .sort((a, b) => (a.date || '9999') < (b.date || '9999') ? -1 : 1);
+
+  const fmtDate = d => { if (!d) return 'بدون تاريخ'; try { return new Date(d).toLocaleDateString('ar-TN', { year:'numeric', month:'long', day:'numeric' }); } catch(e){ return d; } };
+
+  container.innerHTML = `<div style="position:relative;padding-right:22px">
+    <div style="position:absolute;right:6px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,#0891b2,rgba(8,145,178,0.15))"></div>
+    ${sorted.map(r => `
+      <div style="position:relative;margin-bottom:14px">
+        <div style="position:absolute;right:-22px;top:4px;width:12px;height:12px;border-radius:50%;background:${r.nawa === 'صادر' ? '#0891b2' : r.nawa === 'وارد' ? '#d97706' : '#9ca3af'};border:2px solid var(--surface);box-shadow:0 0 0 2px ${r.nawa === 'صادر' ? '#0891b2' : r.nawa === 'وارد' ? '#d97706' : '#9ca3af'}"></div>
+        <div style="background:rgba(8,145,178,0.05);border:1px solid rgba(8,145,178,0.15);border-radius:10px;padding:10px 12px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+            <div style="min-width:0">
+              <div style="font-size:11px;font-weight:700;color:#0e7490">${fmtDate(r.date)}${r.nawa ? ' — ' + (r.nawa === 'صادر' ? '↗️ صادر' : '↙️ وارد') : ''}</div>
+              <div style="font-size:13px;font-weight:700;color:#111827;margin-top:2px">${r.subject}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${[r.source, r.num ? 'عدد: ' + r.num : ''].filter(Boolean).join(' · ')}</div>
+            </div>
+            <button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="deleteIdariyaRow(${r._idx})">🗑️</button>
+          </div>
+          ${r.link ? `<a href="${r.link}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="margin-top:8px;display:inline-block">🔗 فتح الوثيقة</a>` : ''}
+        </div>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
 function updateIdariyaBtnBadge() {
   const badge = document.getElementById('idariya-btn-badge');
   const summaryBar = document.getElementById('idariya-summary-bar');
   if (!badge) return;
-  const titre = (document.getElementById('f-akhir_wathiqa_idariya')?.value || '').trim();
-  const nawa  = (document.getElementById('f-nawa_wathiqa_idariya')?.value || '').trim();
-  const parts = [];
-  if (nawa)  parts.push(nawa);
-  if (titre) parts.push(titre.length > 18 ? titre.slice(0, 18) + '…' : titre);
-  badge.textContent = parts.length > 0 ? '(' + parts.join(' · ') + ')' : '';
+  const n = idariyaMashrouRows.length;
+  badge.textContent = n > 0 ? '(' + n + ' مراسلة)' : '';
   if (summaryBar) {
-    if (parts.length > 0) {
+    if (n > 0) {
       summaryBar.style.display = 'flex';
-      summaryBar.innerHTML = parts.map(p => '<span style="background:rgba(8,145,178,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(8,145,178,0.2)">📌 ' + p + '</span>').join('');
+      summaryBar.innerHTML = idariyaMashrouRows.map(r =>
+        '<span style="background:rgba(8,145,178,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(8,145,178,0.2)">📌 ' + r.subject + '</span>'
+      ).join('');
     } else {
       summaryBar.style.display = 'none';
     }
@@ -4767,6 +4837,9 @@ function clearForm() {
   faryqMashrouRows = [];
   const fl = document.getElementById('faryqList');
   if (fl) fl.innerHTML = '';
+  idariyaMashrouRows = [];
+  const it = document.getElementById('idariyaTimeline');
+  if (it) it.innerHTML = '';
   if (typeof updateJalasatBtnBadge  === 'function') updateJalasatBtnBadge();
   if (typeof updateItimadatBtnBadge === 'function') updateItimadatBtnBadge();
   if (typeof updateIdariyaBtnBadge  === 'function') updateIdariyaBtnBadge();
@@ -4816,12 +4889,16 @@ function fillForm(p) {
   faryqMashrouRows = Array.isArray(p.faryq_mashrou) ? [...p.faryq_mashrou] : [];
   renderFaryqList();
 
+  // Charger المحور الزمني للمتابعة الإدارية
+  idariyaMashrouRows = Array.isArray(p.idariya_mashrou) ? [...p.idariya_mashrou] : [];
+  renderIdariyaTimeline();
+
   // Rafraîchir les badges des 7 boutons popup (دراسات، جلسات المتابعة، أشغال، اعتمادات، متابعة إدارية، وثائق، فريق)
   if (typeof updateDirassatBtnBadge === 'function') updateDirassatBtnBadge();
   if (typeof updateJalasatBtnBadge  === 'function') updateJalasatBtnBadge();
   if (typeof updateAshghalBtnBadge  === 'function') updateAshghalBtnBadge();
   if (typeof updateItimadatBtnBadge === 'function') updateItimadatBtnBadge();
-  if (typeof updateIdariyaBtnBadge  === 'function') updateIdariyaBtnBadge();
+  // updateIdariyaBtnBadge() est déjà appelée à l'intérieur de renderIdariyaTimeline()
   // updateWathaiqBtnBadge() et updateFaryqBtnBadge() sont déjà appelées dans leurs render() respectifs
 }
 
@@ -4845,6 +4922,7 @@ function getFormData() {
   data.jalasat_mutaba   = getJalasatData();
   data.wathaiq_mashrou  = wathaiqMashrouRows.filter(w => w !== null);
   data.faryq_mashrou    = faryqMashrouRows.filter(m => m !== null);
+  data.idariya_mashrou  = idariyaMashrouRows.filter(r => r !== null);
 
   // ⚠️ Les colonnes Supabase de type "date" refusent une chaîne vide ("") —
   // elles n'acceptent qu'une vraie date ou NULL. Un champ <input type="date">
