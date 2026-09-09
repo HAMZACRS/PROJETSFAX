@@ -1796,6 +1796,21 @@ body.guest-mode .form-guest-lock::after {
       </div>
 
       <!-- ═══════════════════════════════
+           المحور الزمني للمتابعة الإدارية — معروض مباشرة في الفيش (قبل شبكة الأزرار)
+      ═══════════════════════════════ -->
+      <div class="card" id="form-idariya-inline-section" style="border-radius:0;border-top:none;border-bottom:none">
+        <div class="card-body">
+          <div class="section-divider" style="margin-top:0">
+            <div class="divider-line"></div>
+            <div class="divider-label" id="idariyaTimelineTitleHome">🕒 المحور الزمني للمشروع</div>
+            <div class="divider-line"></div>
+          </div>
+          <div id="idariyaTimelineHome" class="idariya-timeline-render-target" style="margin-top:10px;margin-bottom:10px"></div>
+          <button type="button" class="btn btn-outline btn-sm" onclick="openIdariyaModal()">➕ إضافة وثيقة</button>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════
            شبكة أزرار مربّعة: دراسات / جلسات المتابعة / أشغال / اعتمادات محالة / متابعة إدارية
       ═══════════════════════════════ -->
       <div class="card" id="form-popup-buttons-section" style="border-radius:0;border-top:none;border-bottom:none">
@@ -1858,45 +1873,49 @@ body.guest-mode .form-guest-lock::after {
             <button onclick="closeIdariyaModal()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
           </div>
           <div style="padding:16px;display:flex;flex-direction:column;gap:0;flex:1;">
-            <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">أضف كل مراسلة إدارية (صادرة أو واردة) متعلقة بالمشروع — ستظهر مرتّبة على محور زمني حسب تاريخها.</p>
-            <div class="form-grid">
-              <div class="form-group full">
-                <label>📄 موضوع المراسلة</label>
-                <input type="text" id="f-akhir_wathiqa_idariya" placeholder="عنوان أو موضوع الوثيقة">
-              </div>
-              <div class="form-group">
-                <label>📅 تاريخ الوثيقة</label>
-                <input type="date" id="f-tarikh_wathiqa_idariya">
-              </div>
-              <div class="form-group">
-                <label>🏢 المصدر</label>
-                <input type="text" id="f-masdar_wathiqa_idariya" placeholder="الجهة المصدرة">
-              </div>
-              <div class="form-group">
-                <label>🔢 عدد الوثيقة</label>
-                <input type="text" id="f-adad_wathiqa_idariya" placeholder="رقم الوثيقة">
-              </div>
-              <div class="form-group">
-                <label>🔗 رابط الوثيقة</label>
-                <input type="url" id="f-rabit_wathiqa_idariya" placeholder="https://" dir="ltr" style="text-align:left">
-              </div>
-              <div class="form-group">
-                <label>↔️ نوع الوثيقة</label>
-                <select id="f-nawa_wathiqa_idariya">
-                  <option value="">— اختر —</option>
-                  <option value="صادر">صادر</option>
-                  <option value="وارد">وارد</option>
-                </select>
-              </div>
+            <div class="section-divider" style="margin-top:0">
+              <div class="divider-line"></div>
+              <div class="divider-label" id="idariyaTimelineTitle">🕒 المحور الزمني للمشروع</div>
+              <div class="divider-line"></div>
             </div>
-            <button class="btn btn-outline btn-sm" onclick="addIdariyaRow()" style="margin:10px 0 16px">➕ إضافة إلى المحور الزمني</button>
+            <div id="idariyaTimeline" class="idariya-timeline-render-target" style="margin-top:10px;margin-bottom:14px"></div>
 
-            <div class="section-divider">
-              <div class="divider-line"></div>
-              <div class="divider-label">🕒 المحور الزمني للمراسلات</div>
-              <div class="divider-line"></div>
+            <button type="button" class="btn btn-primary btn-sm" onclick="toggleIdariyaAddForm()" id="idariya-toggle-add-btn" style="margin-bottom:10px">➕ إضافة وثيقة</button>
+
+            <div id="idariya-add-form" style="display:none">
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">أضف مراسلة إدارية (صادرة أو واردة) متعلقة بالمشروع — ستظهر مرتّبة على المحور الزمني أعلاه حسب تاريخها.</p>
+              <div class="form-grid">
+                <div class="form-group full">
+                  <label>📄 موضوع المراسلة</label>
+                  <input type="text" id="f-akhir_wathiqa_idariya" placeholder="عنوان أو موضوع الوثيقة">
+                </div>
+                <div class="form-group">
+                  <label>📅 تاريخ الوثيقة</label>
+                  <input type="date" id="f-tarikh_wathiqa_idariya">
+                </div>
+                <div class="form-group">
+                  <label>🏢 المصدر</label>
+                  <input type="text" id="f-masdar_wathiqa_idariya" placeholder="الجهة المصدرة">
+                </div>
+                <div class="form-group">
+                  <label>🔢 عدد الوثيقة</label>
+                  <input type="text" id="f-adad_wathiqa_idariya" placeholder="رقم الوثيقة">
+                </div>
+                <div class="form-group">
+                  <label>🔗 رابط الوثيقة</label>
+                  <input type="url" id="f-rabit_wathiqa_idariya" placeholder="https://" dir="ltr" style="text-align:left">
+                </div>
+                <div class="form-group">
+                  <label>↔️ نوع الوثيقة</label>
+                  <select id="f-nawa_wathiqa_idariya">
+                    <option value="">— اختر —</option>
+                    <option value="صادر">صادر</option>
+                    <option value="وارد">وارد</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="addIdariyaRow()" style="margin:10px 0 4px">✅ إضافة إلى المحور الزمني</button>
             </div>
-            <div id="idariyaTimeline" style="margin-top:10px"></div>
           </div>
           <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;background:var(--surface);position:sticky;bottom:0;flex-shrink:0;">
             <button class="btn btn-outline" onclick="closeIdariyaModal()">إغلاق</button>
@@ -3061,21 +3080,24 @@ function updateDirassatBtnBadge() {
   const summaryBar = document.getElementById('dirassat-summary-bar');
   if (!badge) return;
 
-  const bab = (document.getElementById('f-dirassat_bab')?.value || '').trim();
-  const rowCount = dirassatRows.length;
-  const lajnahCount = (window.currentLajnahRecords || []).length;
+  const rows = getDirassatData();
+  const totalCost = rows.reduce((s, r) => s + parseNum(r.kulfa), 0);
+  const avgProgress = rows.length
+    ? Math.round(rows.reduce((s, r) => s + parseNum(r.nisbat_dirassat), 0) / rows.length)
+    : 0;
 
   const parts = [];
-  if (bab) parts.push('باب: ' + bab);
-  if (rowCount > 0) parts.push(rowCount + ' قسط');
-  if (lajnahCount > 0) parts.push(lajnahCount + ' محضر');
+  if (rows.length > 0) {
+    parts.push('💰 ' + totalCost.toLocaleString('ar-TN') + ' د.ت');
+    parts.push('📊 ' + avgProgress + '%');
+  }
 
-  badge.textContent = parts.length > 0 ? '(' + parts.join(' · ') + ')' : '';
+  badge.textContent = rows.length > 0 ? '(' + totalCost.toLocaleString('ar-TN') + ' د.ت · ' + avgProgress + '%)' : '';
 
   if (summaryBar) {
     if (parts.length > 0) {
       summaryBar.style.display = 'flex';
-      summaryBar.innerHTML = parts.map(p => '<span style="background:rgba(37,99,235,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(37,99,235,0.2)">📌 ' + p + '</span>').join('');
+      summaryBar.innerHTML = parts.map(p => '<span style="background:rgba(37,99,235,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(37,99,235,0.2)">' + p + '</span>').join('');
     } else {
       summaryBar.style.display = 'none';
     }
@@ -3128,18 +3150,19 @@ function updateAshghalBtnBadge() {
   const badge = document.getElementById('ashghal-btn-badge');
   const summaryBar = document.getElementById('ashghal-summary-bar');
   if (!badge) return;
-  const mukallaf = (document.getElementById('f-mukallaf_binjaz')?.value || '').trim();
-  const nisba = (document.getElementById('f-nisbat_injaz')?.value || '').trim();
-  const hadhiraCount = (typeof hadhiraRecords !== 'undefined' ? hadhiraRecords.filter(r=>r!==null) : []).length;
-  const parts = [];
-  if (mukallaf) parts.push(mukallaf);
-  if (nisba)    parts.push(nisba + '%');
-  if (hadhiraCount > 0) parts.push(hadhiraCount + ' محضر حضيرة');
-  badge.textContent = parts.length > 0 ? '(' + parts.join(' · ') + ')' : '';
+  // الكلفة الحالية للأشغال (تشمل الملاحق تلقائياً، لأنها تُحدَّث مباشرة في نفس الحقل)
+  const totalCost = parseNum(document.getElementById('f-kulfa')?.value);
+  const progress  = parseNum(document.getElementById('f-nisbat_injaz')?.value);
+  const hasData = totalCost > 0 || progress > 0;
+
+  badge.textContent = hasData ? '(' + totalCost.toLocaleString('ar-TN') + ' د.ت · ' + progress + '%)' : '';
+
   if (summaryBar) {
-    if (parts.length > 0) {
+    if (hasData) {
       summaryBar.style.display = 'flex';
-      summaryBar.innerHTML = parts.map(p => '<span style="background:rgba(46,125,50,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(46,125,50,0.2)">📌 ' + p + '</span>').join('');
+      summaryBar.innerHTML =
+        '<span style="background:rgba(46,125,50,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(46,125,50,0.2)">💰 ' + totalCost.toLocaleString('ar-TN') + ' د.ت</span>'
+        + '<span style="background:rgba(46,125,50,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(46,125,50,0.2)">📊 ' + progress + '%</span>';
     } else {
       summaryBar.style.display = 'none';
     }
@@ -3162,14 +3185,15 @@ function updateItimadatBtnBadge() {
   const badge = document.getElementById('itimadat-btn-badge');
   const summaryBar = document.getElementById('itimadat-summary-bar');
   if (!badge) return;
-  const rowCount = (typeof itimadatMuhalaRows !== 'undefined' ? itimadatMuhalaRows.filter(r=>r!==null) : []).length;
-  const parts = [];
-  if (rowCount > 0) parts.push(rowCount + ' اعتماد');
-  badge.textContent = parts.length > 0 ? '(' + parts.join(' · ') + ')' : '';
+  const rows = (typeof itimadatMuhalaRows !== 'undefined' ? itimadatMuhalaRows.filter(r=>r!==null) : []);
+  const total = rows.reduce((s, r) => s + parseNum(r.itimad_tahhud_muhal), 0);
+
+  badge.textContent = rows.length > 0 ? '(' + total.toLocaleString('ar-TN') + ' د.ت)' : '';
+
   if (summaryBar) {
-    if (parts.length > 0) {
+    if (rows.length > 0) {
       summaryBar.style.display = 'flex';
-      summaryBar.innerHTML = parts.map(p => '<span style="background:rgba(124,58,237,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(124,58,237,0.2)">📌 ' + p + '</span>').join('');
+      summaryBar.innerHTML = '<span style="background:rgba(124,58,237,0.1);border-radius:20px;padding:2px 10px;border:1px solid rgba(124,58,237,0.2)">💰 المجموع: ' + total.toLocaleString('ar-TN') + ' د.ت</span>';
     } else {
       summaryBar.style.display = 'none';
     }
@@ -3181,12 +3205,25 @@ function openIdariyaModal() {
   const overlay = document.getElementById('idariyaModalOverlay');
   overlay.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+  // Toujours ouvrir sur l'axe de temps (formulaire d'ajout replié par défaut)
+  const addForm = document.getElementById('idariya-add-form');
+  const toggleBtn = document.getElementById('idariya-toggle-add-btn');
+  if (addForm) addForm.style.display = 'none';
+  if (toggleBtn) toggleBtn.textContent = '➕ إضافة وثيقة';
+  renderIdariyaTimeline();
 }
 function closeIdariyaModal() {
   const overlay = document.getElementById('idariyaModalOverlay');
   overlay.style.display = 'none';
   document.body.style.overflow = '';
   updateIdariyaBtnBadge();
+}
+function toggleIdariyaAddForm() {
+  const addForm = document.getElementById('idariya-add-form');
+  const toggleBtn = document.getElementById('idariya-toggle-add-btn');
+  const isHidden = addForm.style.display === 'none';
+  addForm.style.display = isHidden ? 'block' : 'none';
+  toggleBtn.textContent = isHidden ? '✕ إلغاء الإضافة' : '➕ إضافة وثيقة';
 }
 let idariyaMashrouRows = [];
 
@@ -3208,6 +3245,11 @@ function addIdariyaRow(existing) {
   }
   idariyaMashrouRows.push({ subject, date, source, num, link, nawa });
   renderIdariyaTimeline();
+  // Replier le formulaire d'ajout et revenir à l'affichage de l'axe de temps
+  const addForm = document.getElementById('idariya-add-form');
+  const toggleBtn = document.getElementById('idariya-toggle-add-btn');
+  if (addForm) addForm.style.display = 'none';
+  if (toggleBtn) toggleBtn.textContent = '➕ إضافة وثيقة';
   showNotification('✅ تمت إضافة المراسلة إلى المحور الزمني للمشروع');
 }
 
@@ -3219,37 +3261,49 @@ function deleteIdariyaRow(idx) {
 
 function renderIdariyaTimeline() {
   if (typeof updateIdariyaBtnBadge === 'function') updateIdariyaBtnBadge();
-  const container = document.getElementById('idariyaTimeline');
-  if (!container) return;
+
+  // Titre dynamique : المحور الزمني لمشروع + بيان المشروع (dans la popup ET dans la fiche)
+  const projTitle = (document.getElementById('f-bayan_mashrou')?.value || '').trim();
+  ['idariyaTimelineTitle', 'idariyaTimelineTitleHome'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '🕒 المحور الزمني لمشروع' + (projTitle ? ' ' + projTitle : '');
+  });
+
+  const containers = document.querySelectorAll('.idariya-timeline-render-target');
+  if (!containers.length) return;
+
+  let html;
   if (!idariyaMashrouRows.length) {
-    container.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:8px 4px;font-style:italic">لا توجد مراسلات مضافة بعد</div>';
-    return;
-  }
-  // ترتيب تصاعدي حسب التاريخ (الأقدم أولاً)، وضع المراسلات بدون تاريخ في الآخر
-  const sorted = idariyaMashrouRows.map((r, i) => ({ ...r, _idx: i }))
-    .sort((a, b) => (a.date || '9999') < (b.date || '9999') ? -1 : 1);
+    html = '<div style="font-size:13px;color:var(--text-muted);padding:8px 4px;font-style:italic">لا توجد مراسلات مضافة بعد</div>';
+  } else {
+    // ترتيب تصاعدي حسب التاريخ (الأقدم أولاً)، وضع المراسلات بدون تاريخ في الآخر
+    const sorted = idariyaMashrouRows.map((r, i) => ({ ...r, _idx: i }))
+      .sort((a, b) => (a.date || '9999') < (b.date || '9999') ? -1 : 1);
 
-  const fmtDate = d => { if (!d) return 'بدون تاريخ'; try { return new Date(d).toLocaleDateString('ar-TN', { year:'numeric', month:'long', day:'numeric' }); } catch(e){ return d; } };
+    const fmtDate = d => { if (!d) return 'بدون تاريخ'; try { return new Date(d).toLocaleDateString('ar-TN', { year:'numeric', month:'long', day:'numeric' }); } catch(e){ return d; } };
 
-  container.innerHTML = `<div style="position:relative;padding-right:22px">
-    <div style="position:absolute;right:6px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,#0891b2,rgba(8,145,178,0.15))"></div>
-    ${sorted.map(r => `
-      <div style="position:relative;margin-bottom:14px">
-        <div style="position:absolute;right:-22px;top:4px;width:12px;height:12px;border-radius:50%;background:${r.nawa === 'صادر' ? '#0891b2' : r.nawa === 'وارد' ? '#d97706' : '#9ca3af'};border:2px solid var(--surface);box-shadow:0 0 0 2px ${r.nawa === 'صادر' ? '#0891b2' : r.nawa === 'وارد' ? '#d97706' : '#9ca3af'}"></div>
-        <div style="background:rgba(8,145,178,0.05);border:1px solid rgba(8,145,178,0.15);border-radius:10px;padding:10px 12px">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-            <div style="min-width:0">
-              <div style="font-size:11px;font-weight:700;color:#0e7490">${fmtDate(r.date)}${r.nawa ? ' — ' + (r.nawa === 'صادر' ? '↗️ صادر' : '↙️ وارد') : ''}</div>
-              <div style="font-size:13px;font-weight:700;color:#111827;margin-top:2px">${r.subject}</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${[r.source, r.num ? 'عدد: ' + r.num : ''].filter(Boolean).join(' · ')}</div>
+    html = `<div style="position:relative;padding-right:22px">
+      <div style="position:absolute;right:6px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,#0891b2,rgba(8,145,178,0.15))"></div>
+      ${sorted.map(r => `
+        <div style="position:relative;margin-bottom:14px">
+          <div style="position:absolute;right:-22px;top:4px;width:12px;height:12px;border-radius:50%;background:${r.nawa === 'صادر' ? '#0891b2' : r.nawa === 'وارد' ? '#d97706' : '#9ca3af'};border:2px solid var(--surface);box-shadow:0 0 0 2px ${r.nawa === 'صادر' ? '#0891b2' : r.nawa === 'وارد' ? '#d97706' : '#9ca3af'}"></div>
+          <div style="background:rgba(8,145,178,0.05);border:1px solid rgba(8,145,178,0.15);border-radius:10px;padding:10px 12px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+              <div style="min-width:0">
+                <div style="font-size:11px;font-weight:700;color:#0e7490">${fmtDate(r.date)}${r.nawa ? ' — ' + (r.nawa === 'صادر' ? '↗️ صادر' : '↙️ وارد') : ''}</div>
+                <div style="font-size:13px;font-weight:700;color:#111827;margin-top:2px">${r.subject}</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${[r.source, r.num ? 'عدد: ' + r.num : ''].filter(Boolean).join(' · ')}</div>
+              </div>
+              <button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="deleteIdariyaRow(${r._idx})">🗑️</button>
             </div>
-            <button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="deleteIdariyaRow(${r._idx})">🗑️</button>
+            ${r.link ? `<a href="${r.link}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="margin-top:8px;display:inline-block">🔗 فتح الوثيقة</a>` : ''}
           </div>
-          ${r.link ? `<a href="${r.link}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="margin-top:8px;display:inline-block">🔗 فتح الوثيقة</a>` : ''}
         </div>
-      </div>
-    `).join('')}
-  </div>`;
+      `).join('')}
+    </div>`;
+  }
+
+  containers.forEach(c => { c.innerHTML = html; });
 }
 
 function updateIdariyaBtnBadge() {
