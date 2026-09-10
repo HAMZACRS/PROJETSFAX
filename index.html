@@ -4067,6 +4067,31 @@ function addJalasaRow(data = {}) {
   container.appendChild(div);
 }
 
+// Version lecture seule de l'axe de temps (sans bouton de suppression), utilisée
+// dans la fiche de consultation du projet ("بطاقة مشروع").
+function buildIdariyaTimelineReadOnly(rows) {
+  if (!rows || !rows.length) {
+    return '<div style="font-size:13px;color:var(--text-muted);padding:8px 4px;font-style:italic">لا توجد مراسلات مضافة بعد</div>';
+  }
+  const sorted = [...rows].sort((a, b) => (a.date || '9999') < (b.date || '9999') ? -1 : 1);
+  const fmtDateFull = d => { if (!d) return 'بدون تاريخ'; try { return new Date(d).toLocaleDateString('ar-TN', { year:'numeric', month:'long', day:'numeric' }); } catch(e){ return d; } };
+
+  return `<div style="position:relative;padding-right:22px">
+    <div style="position:absolute;right:6px;top:6px;bottom:6px;width:2px;background:linear-gradient(180deg,#0891b2,rgba(8,145,178,0.15))"></div>
+    ${sorted.map(r => `
+      <div style="position:relative;margin-bottom:14px">
+        <div style="position:absolute;right:-22px;top:4px;width:12px;height:12px;border-radius:50%;background:${r.nawa === 'صادر' ? '#0891b2' : r.nawa === 'وارد' ? '#d97706' : '#9ca3af'};border:2px solid var(--surface);box-shadow:0 0 0 2px ${r.nawa === 'صادر' ? '#0891b2' : r.nawa === 'وارد' ? '#d97706' : '#9ca3af'}"></div>
+        <div style="background:rgba(8,145,178,0.05);border:1px solid rgba(8,145,178,0.15);border-radius:10px;padding:10px 12px">
+          <div style="font-size:11px;font-weight:700;color:#0e7490">${fmtDateFull(r.date)}${r.nawa ? ' — ' + (r.nawa === 'صادر' ? '↗️ صادر' : '↙️ وارد') : ''}</div>
+          <div style="font-size:13px;font-weight:700;color:#111827;margin-top:2px">${r.subject || ''}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${[r.source, r.num ? 'عدد: ' + r.num : ''].filter(Boolean).join(' · ')}</div>
+          ${r.link ? `<a href="${r.link}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="margin-top:8px;display:inline-block">🔗 فتح الوثيقة</a>` : ''}
+        </div>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
 function buildJalasatMutabaSection(records) {
   if (!records || !records.length) return '';
   const items = records.map((r, i) => {
@@ -5081,6 +5106,29 @@ async function renderDetail(p) {
   }
 
   document.getElementById('detailContent').innerHTML = `
+    <!-- بطاقة مشروع — ملخّص مطابق للنموذج المعتمد -->
+    <div class="card" style="border:2px solid var(--primary);margin-bottom:16px">
+      <div class="card-header" style="background:linear-gradient(135deg,var(--primary),#1e4d7a);color:#fff">
+        <h3>📇 بطاقة مشروع</h3>
+      </div>
+      <div class="card-body">
+        <div class="detail-row"><span class="detail-label">موضوع المشروع:</span><span class="detail-value">${p.bayan_mashrou || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">سنة البرمجة:</span><span class="detail-value">${p.sana_barmaja || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">الاعتماد المبرمج:</span><span class="detail-value">${p.aitimed_mubarmaj ? fmtNum(p.aitimed_mubarmaj) : '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">تاريخ انطلاق الدراسات:</span><span class="detail-value">${formatDate(p.tarikh_intilaq_dirassat) || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">كلفة الدراسات:</span><span class="detail-value">${conclusion.d_kulfa ? fmtNum(conclusion.d_kulfa) : '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">كلفة الأشغال:</span><span class="detail-value">${conclusion.a_kulfa ? fmtNum(conclusion.a_kulfa) : (p.kulfa || '—')}</span></div>
+        <div class="detail-row"><span class="detail-label">تاريخ انطلاق الأشغال:</span><span class="detail-value">${formatDate(p.tarikh_intilaq_ashghal) || '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">نسبة تقدم الانجاز:</span><span class="detail-value" style="color:${statusColor};font-weight:700">${nisbat}%</span></div>
+        <div class="detail-row"><span class="detail-label">مجموع الاعتمادات المحالة تعهد:</span><span class="detail-value">${conclusion.muhal_tahhud ? fmtNum(conclusion.muhal_tahhud) : '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">مجموع الاعتمادات المحالة دفع:</span><span class="detail-value">${conclusion.muhal_daf ? fmtNum(conclusion.muhal_daf) : '—'}</span></div>
+        <div class="detail-row"><span class="detail-label">تاريخ آخر جلسة متابعة:</span><span class="detail-value">${(() => {
+          const dates = (Array.isArray(p.jalasat_mutaba) ? p.jalasat_mutaba : []).map(j => j && j.tarikh_jalasa).filter(Boolean).sort();
+          return dates.length ? formatDate(dates[dates.length - 1]) : '—';
+        })()}</span></div>
+      </div>
+    </div>
+
     <!-- Official Header -->
     <div class="card">
       <div class="official-header" style="border-radius:var(--radius) var(--radius) 0 0;display:flex;align-items:center;justify-content:center;gap:14px">
@@ -5117,79 +5165,6 @@ async function renderDetail(p) {
         </div>
       </div>
     </div>
-
-    <!-- Studies -->
-    <div class="card">
-      <div class="card-header">
-        <h3>📐 الدراسات</h3>
-      </div>
-      <div class="card-body">
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px">
-          <div style="background:rgba(37,99,235,0.06);border-radius:7px;padding:12px;text-align:center;border:1px solid rgba(37,99,235,0.15)">
-            <div style="font-size:11px;color:var(--text-muted);font-weight:700">الباب</div>
-            <div style="font-size:18px;font-weight:700;color:var(--primary)">${p.dirassat_bab||'—'}</div>
-          </div>
-          <div style="background:rgba(37,99,235,0.06);border-radius:7px;padding:12px;text-align:center;border:1px solid rgba(37,99,235,0.15)">
-            <div style="font-size:11px;color:var(--text-muted);font-weight:700">الفصل</div>
-            <div style="font-size:18px;font-weight:700;color:var(--primary)">${p.dirassat_fasl||'—'}</div>
-          </div>
-          <div style="background:rgba(37,99,235,0.06);border-radius:7px;padding:12px;text-align:center;border:1px solid rgba(37,99,235,0.15)">
-            <div style="font-size:11px;color:var(--text-muted);font-weight:700">الفقرة</div>
-            <div style="font-size:18px;font-weight:700;color:var(--primary)">${p.dirassat_fiqra||'—'}</div>
-          </div>
-          <div style="background:rgba(37,99,235,0.06);border-radius:7px;padding:12px;text-align:center;border:1px solid rgba(37,99,235,0.15)">
-            <div style="font-size:11px;color:var(--text-muted);font-weight:700">تاريخ انطلاق الدراسات</div>
-            <div style="font-size:15px;font-weight:700;color:var(--primary)">${formatDate(p.tarikh_intilaq_dirassat)||'—'}</div>
-          </div>
-        </div>
-        ${dirassatTable}
-        ${buildAvenantsDirassatHTML(p.dirassat_details, false)}
-        ${buildLajnahDetailSection(p.lajnah_records)}
-        ${p.dirassat_details && p.dirassat_details.length ? buildDirassatGauge(p.dirassat_details) : ''}
-      </div>
-    </div>
-
-    <!-- Works -->
-    <div class="card">
-      <div class="card-header green">
-        <h3>🏗️ الأشغال</h3>
-      </div>
-      <div class="card-body">
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
-          <div style="background:rgba(5,150,105,0.06);border-radius:7px;padding:12px;text-align:center;border:1px solid rgba(5,150,105,0.2)">
-            <div style="font-size:11px;color:var(--text-muted);font-weight:700">الباب</div>
-            <div style="font-size:18px;font-weight:700;color:var(--green)">${p.ashghal_bab||'—'}</div>
-          </div>
-          <div style="background:rgba(5,150,105,0.06);border-radius:7px;padding:12px;text-align:center;border:1px solid rgba(5,150,105,0.2)">
-            <div style="font-size:11px;color:var(--text-muted);font-weight:700">الفصل</div>
-            <div style="font-size:18px;font-weight:700;color:var(--green)">${p.ashghal_fasl||'—'}</div>
-          </div>
-          <div style="background:rgba(5,150,105,0.06);border-radius:7px;padding:12px;text-align:center;border:1px solid rgba(5,150,105,0.2)">
-            <div style="font-size:11px;color:var(--text-muted);font-weight:700">الفقرة</div>
-            <div style="font-size:18px;font-weight:700;color:var(--green)">${p.ashghal_fiqra||'—'}</div>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px">
-          <div class="detail-row"><span class="detail-label">تاريخ انطلاق الأشغال:</span><span class="detail-value">${formatDate(p.tarikh_intilaq_ashghal)||'—'}</span></div>
-          <div class="detail-row"><span class="detail-label">تاريخ الانتهاء (الصفقة):</span><span class="detail-value">${formatDate(p.tarikh_intiha_ashghal)||'—'}</span></div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
-          <div class="detail-row"><span class="detail-label">المكلف بالإنجاز:</span><span class="detail-value ${window._guestMode?'blur-name':''}">${p.mukallaf_binjaz||'—'}</span></div>
-          <div class="detail-row"><span class="detail-label">الكلفة:</span><span class="detail-value">${p.kulfa||'—'}</span></div>
-          <div class="detail-row"><span class="detail-label">الاعتماد المحال - تعهد:</span><span class="detail-value">${p.itimad_tahawwul_tahhud||'—'}</span></div>
-          <div class="detail-row"><span class="detail-label">الاعتماد المحال - دفع:</span><span class="detail-value">${p.itimad_tahawwul_daf||'—'}</span></div>
-          <div class="detail-row"><span class="detail-label">دفوعات:</span><span class="detail-value">${p.dufuat||'—'}</span></div>
-          <div class="detail-row"><span class="detail-label">تاريخ المصادقة:</span><span class="detail-value">${formatDate(p.tarikh_musadaqa)||'—'}</span></div>
-          <div class="detail-row"><span class="detail-label">مدة الإنجاز:</span><span class="detail-value">${p.muddat_injaz||'—'}</span></div>
-          <div class="detail-row"><span class="detail-label">التعطيلات:</span><span class="detail-value">${p.tatilat||'—'}</span></div>
-          ${p.mulahazat_ashghal ? `<div class="detail-row" style="grid-column:1/-1"><span class="detail-label">الملاحظات:</span><span class="detail-value">${p.mulahazat_ashghal}</span></div>` : ''}
-        </div>
-        ${buildHadhiraDetailSection(p.hadhira_records)}
-        ${buildAvenantsAshghalHTML(p.avenants_ashghal, false)}
-      </div>
-    </div>
-
-    ${buildItimadatMuhalaDetailHTML(p)}
 
     <!-- جلسات المتابعة -->
     ${buildJalasatMutabaSection(p.jalasat_mutaba)}
@@ -5253,6 +5228,16 @@ async function renderDetail(p) {
       </div>
       <div style="font-size:12px;color:var(--text-muted)">
         آخر تحديث: ${new Date(p.updated_at).toLocaleString('ar-TN')}
+      </div>
+    </div>
+
+    <!-- Axe du temps du projet — المحور الزمني للمتابعة الإدارية -->
+    <div class="card" style="margin-top:16px">
+      <div class="card-header" style="background:linear-gradient(135deg,#0891b2,#0e7490)">
+        <h3>🕒 المحور الزمني للمشروع</h3>
+      </div>
+      <div class="card-body">
+        ${buildIdariyaTimelineReadOnly(p.idariya_mashrou)}
       </div>
     </div>
   `;
